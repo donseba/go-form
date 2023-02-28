@@ -12,8 +12,9 @@ var inputTpl = `<div>
   <div class="mt-1">
 	{{ if eq .Type "dropdown" }}
 	<select {{with .Id}}id="{{.}}"{{end}} name="{{.Name}}" class="bg-white block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+	  {{ $value := .Value }}
 	  {{ range $k, $option := .Values }}
-		<option value="{{$option.Id}}">{{$option.Name}}</option>
+		<option value="{{$option.Value}}" {{ if eq $value $option.Value }}selected{{ end }} {{ if eq $option.Disabled true }}disabled{{ end }}>{{$option.Name}}</option>
 	  {{ end }}
     </select>
 	{{ else if eq .Type "checkbox" }}
@@ -79,8 +80,9 @@ func main() {
 					State:   "NY",
 					Zip:     "11765",
 				},
-				CheckBox:  true,
-				CheckBox2: false,
+				InputTypes: form.InputFieldTypeEmail,
+				CheckBox:   true,
+				CheckBox2:  false,
 			},
 			Errors: []form.FieldError{
 				fieldError{

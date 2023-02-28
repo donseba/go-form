@@ -40,11 +40,9 @@ func (i InputFieldType) Enum() []any {
 }
 
 type FieldValue struct {
-	Id       string `json:"id,omitempty"`
 	Name     string `json:"name,omitempty"`
 	Value    string `json:"value,omitempty"`
 	Disabled bool   `json:"disabled,omitempty"`
-	Group    string `json:"group,omitempty"`
 }
 
 type FormField struct {

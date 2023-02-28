@@ -80,7 +80,7 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			var fieldValue []FieldValue
 			for _, v := range enums {
 				fieldValue = append(fieldValue, FieldValue{
-					Id:       fmt.Sprint(v),
+					Value:    fmt.Sprint(v),
 					Name:     fmt.Sprint(v),
 					Disabled: false,
 				})
