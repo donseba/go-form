@@ -36,7 +36,8 @@ data := struct {
 }
 ```
 
-into : 
+into:
+
 ![](example/example-go-form.png)
 
 Call `form_render` inside the template and pass it the `form struct` and the `errors` : 
