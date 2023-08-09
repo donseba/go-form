@@ -53,18 +53,18 @@ Call `form_render` inside the template and pass it the `form struct` and the `er
 There is currently only one template file for all the currently supported templates. I'm thinking of making a mini template for each type. 
 ```html
 <div>
-    <label {{with .Id}}for="{{.}}"{{end}} class="block text-sm font-medium text-gray-700">{{.Label}}{{ if eq .Required true }}*{{end}}</label>
+    <label {{with .Field.Id}}for="{{.}}"{{end}} class="block text-sm font-medium text-gray-700">{{.Field.Label}}{{ if eq .Field.Required true }}*{{end}}</label>
     <div class="mt-1">
-        {{ if eq .Type "dropdown" }}
-        <select {{with .Id}}id="{{.}}"{{end}} name="{{.Name}}" class="bg-white block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-            {{ range $k, $option := .Values }}
+        {{ if eq .Field.Type "dropdown" }}
+        <select {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Name}}" class="bg-white block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+            {{ range $k, $option := .Field.Values }}
             <option value="{{$option.Id}}">{{$option.Name}}</option>
             {{ end }}
         </select>
         {{ else if eq .Type "checkbox" }}
-        <input {{with .Id}}id="{{.}}"{{end}} name="{{.Name}}" type="checkbox" {{ if eq .Required true }}required{{end}} {{ if eq .Value true }}checked{{end}} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+        <input {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" type="checkbox" {{ if eq .Field.Required true }}required{{end}} {{ if eq .Field.Value true }}checked{{end}} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
         {{ else }}
-        <input {{with .Id}}id="{{.}}"{{end}} name="{{.Name}}" placeholder="{{.Placeholder}}" {{with .Value}}value="{{.}}"{{end}} {{ if eq .Required true }}required{{end}} class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+        <input {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" placeholder="{{.Field.Placeholder}}" {{with .Field.Value}}value="{{.}}"{{end}} {{ if eq .Field.Required true }}required{{end}} class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
         {{ end }}
         
         {{range errors}}
