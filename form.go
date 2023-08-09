@@ -1,6 +1,7 @@
 package form
 
 import (
+	"errors"
 	"html/template"
 	"strings"
 )
@@ -23,13 +24,28 @@ func (f *Form) FuncMap() template.FuncMap {
 	}
 }
 
-func (f *Form) formRender(v interface{}, errs []FieldError) (template.HTML, error) {
+func (f *Form) formRender(v interface{}, errs []FieldError, kv ...any) (template.HTML, error) {
 	tr, err := NewTransformer(v)
 	if err != nil {
 		return "", err
 	}
 
 	fieldErrors := scanError(errs)
+
+	var data = make(map[string]any)
+	if len(kv) > 0 {
+		if len(kv)%2 != 0 {
+			return "", errors.New("invalid dict call")
+		}
+
+		for i := 0; i < len(kv); i += 2 {
+			key, ok := kv[i].(string)
+			if !ok {
+				return "", errors.New("dict keys must be strings")
+			}
+			data[key] = kv[i+1]
+		}
+	}
 
 	var html template.HTML
 	for _, field := range tr.Fields {
@@ -45,7 +61,10 @@ func (f *Form) formRender(v interface{}, errs []FieldError) (template.HTML, erro
 					var subhtml template.HTML
 
 					for _, subField := range field.Fields {
-						fieldhtml, err := f.formFieldHTML(subField, fieldErrors)
+						fMap := copyMap(data)
+						fMap["Field"] = field
+
+						fieldhtml, err := f.formFieldHTML(subField, fieldErrors, fMap)
 						if err != nil {
 							continue
 						}
@@ -57,7 +76,10 @@ func (f *Form) formRender(v interface{}, errs []FieldError) (template.HTML, erro
 				},
 			})
 
-			err = gtpl.Execute(&sb, field)
+			fMap := copyMap(data)
+			fMap["Field"] = field
+
+			err = gtpl.Execute(&sb, fMap)
 			if err != nil {
 				return "", err
 			}
@@ -66,7 +88,7 @@ func (f *Form) formRender(v interface{}, errs []FieldError) (template.HTML, erro
 			continue
 		}
 
-		fieldHTML, err := f.formFieldHTML(field, fieldErrors)
+		fieldHTML, err := f.formFieldHTML(field, fieldErrors, data)
 		if err != nil {
 			return "", err
 		}
@@ -76,7 +98,7 @@ func (f *Form) formRender(v interface{}, errs []FieldError) (template.HTML, erro
 	return html, nil
 }
 
-func (f *Form) formFieldHTML(field FormField, errors map[string][]string) (template.HTML, error) {
+func (f *Form) formFieldHTML(field FormField, errors map[string][]string, data map[string]any) (template.HTML, error) {
 	tpl, err := f.template.Clone()
 	if err != nil {
 		return "", err
@@ -91,7 +113,11 @@ func (f *Form) formFieldHTML(field FormField, errors map[string][]string) (templ
 			return nil
 		},
 	})
-	err = tpl.Execute(&sb, field)
+
+	fMap := copyMap(data)
+	fMap["Field"] = field
+
+	err = tpl.Execute(&sb, fMap)
 	if err != nil {
 		return "", err
 	}
@@ -110,4 +136,12 @@ func scanError(errs []FieldError) map[string][]string {
 		ret[field] = append(ret[field], fieldErr)
 	}
 	return ret
+}
+
+func copyMap[K, V comparable](m map[K]V) map[K]V {
+	result := make(map[K]V)
+	for k, v := range m {
+		result[k] = v
+	}
+	return result
 }

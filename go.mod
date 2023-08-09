@@ -1,3 +1,3 @@
 module github.com/donseba/go-form
 
-go 1.19
+go 1.20
