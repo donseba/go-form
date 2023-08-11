@@ -3,15 +3,16 @@ package form
 type FieldType string
 
 const (
-	FieldTypeGroup     FieldType = "group"
-	FieldTypeCheckbox  FieldType = "checkbox"
-	FieldTypeChecklist FieldType = "checklist"
-	FieldTypeInput     FieldType = "input"
-	FieldTypeLabel     FieldType = "label"
-	FieldTypeRadios    FieldType = "radios"
-	FieldTypeDropdown  FieldType = "dropdown"
-	FieldTypeSubmit    FieldType = "submit"
-	FieldTypeTextArea  FieldType = "textArea"
+	FieldTypeGroup          FieldType = "group"
+	FieldTypeCheckbox       FieldType = "checkbox"
+	FieldTypeChecklist      FieldType = "checklist"
+	FieldTypeInput          FieldType = "input"
+	FieldTypeLabel          FieldType = "label"
+	FieldTypeRadios         FieldType = "radios"
+	FieldTypeDropdown       FieldType = "dropdown"
+	FieldTypeDropdownMapped FieldType = "dropdownmapped"
+	FieldTypeSubmit         FieldType = "submit"
+	FieldTypeTextArea       FieldType = "textArea"
 )
 
 type InputFieldType string

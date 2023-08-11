@@ -9,10 +9,15 @@ import (
 
 type (
 	Enumerator interface{ Enum() []any }
+	Mapper     interface {
+		Mapper() map[string]string
+		String() string
+	}
 )
 
 var (
-	enumType = reflect.TypeOf((*Enumerator)(nil)).Elem()
+	enumType   = reflect.TypeOf((*Enumerator)(nil)).Elem()
+	mapperType = reflect.TypeOf((*Mapper)(nil)).Elem()
 )
 
 type Transformer struct {
@@ -91,6 +96,24 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 			fields = append(fields, field)
 
+			continue
+		}
+
+		if rType.Field(i).Type.Implements(mapperType) {
+			maps := rValue.Field(i).Interface().(Mapper).Mapper()
+			var fieldValue []FieldValue
+			for k, v := range maps {
+				fieldValue = append(fieldValue, FieldValue{
+					Value:    k,
+					Name:     v,
+					Disabled: false,
+				})
+			}
+
+			field.Type = FieldTypeDropdownMapped
+			field.Values = fieldValue
+
+			fields = append(fields, field)
 			continue
 		}
 
