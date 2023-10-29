@@ -13,11 +13,25 @@ type (
 		Mapper() map[string]string
 		String() string
 	}
+
+	// SortedMapper is new addition to provide sorted key value pairs
+	SortedMapper interface {
+		String() string
+		SortedMapper() []SortedMap
+	}
+
+	SortedMap interface {
+		Key() string
+		Value() string
+	}
 )
 
 var (
 	enumType   = reflect.TypeOf((*Enumerator)(nil)).Elem()
 	mapperType = reflect.TypeOf((*Mapper)(nil)).Elem()
+
+	//new addition to provide sorted key value pairs
+	sortedMapperType = reflect.TypeOf((*SortedMapper)(nil)).Elem()
 )
 
 type Transformer struct {
@@ -106,6 +120,25 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				fieldValue = append(fieldValue, FieldValue{
 					Value:    k,
 					Name:     v,
+					Disabled: false,
+				})
+			}
+
+			field.Type = FieldTypeDropdownMapped
+			field.Values = fieldValue
+
+			fields = append(fields, field)
+			continue
+		}
+
+		//new addition to provide sorted key value pairs
+		if rType.Field(i).Type.Implements(sortedMapperType) {
+			maps := rValue.Field(i).Interface().(SortedMapper).SortedMapper()
+			var fieldValue []FieldValue
+			for _, v := range maps {
+				fieldValue = append(fieldValue, FieldValue{
+					Value:    v.Key(),
+					Name:     v.Value(),
 					Disabled: false,
 				})
 			}

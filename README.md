@@ -61,6 +61,13 @@ There is currently only one template file for all the currently supported templa
             <option value="{{$option.Id}}">{{$option.Name}}</option>
             {{ end }}
         </select>
+        {{ else if eq .Field.Type "dropdownmapped" }}
+        <select {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" class="text-gray-700 dark:text-gray-200 dark:bg-gray-700 bg-white block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+            {{ $value := .Field.Value }}
+            {{ range $k, $option := .Field.Values }}
+            <option value="{{$option.Value}}" {{ if eq $value.String $option.Value }}selected{{ end }} {{ if eq $option.Disabled true }}disabled{{ end }}>{{$option.Name}}</option>
+            {{ end }}
+        </select>
         {{ else if eq .Type "checkbox" }}
         <input {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" type="checkbox" {{ if eq .Field.Required true }}required{{end}} {{ if eq .Field.Value true }}checked{{end}} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
         {{ else }}
@@ -98,6 +105,41 @@ func (fe fieldError) FieldError() (field, err string) {
     return fe.Field, fe.Issue
 }
 ```
+
+Support for sorted maps is also included. 
+
+```go
+type CountryListOption struct {
+	Selected     string
+	SortedValues []form.SortedMap
+}
+
+type SortedMap struct {
+	SKey   string
+	SValue string
+}
+
+func (s SortedMap) Key() string   { return s.SKey }
+func (s SortedMap) Value() string { return s.SValue }
+
+func (t *CountryListOption) SortedMapper() []form.SortedMap {
+	return t.SortedValues
+}
+
+func (t *CountryListOption) String() string {
+	return t.Selected
+}
+```
+
+Now in the struct that contains the form you can add the following: 
+
+```go
+UserForm struct {
+    Country *CountryListOption
+}
+```
+
+however the downside is that you create a direct dependancy to the `form.SortedMap` interface.
 
 supported tags
 - label
