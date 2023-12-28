@@ -6,24 +6,30 @@ Please note that this package is a pre-alfa release and mainly only a visualizat
 I am also trying to keep the footprint as low as possible without using third party packages.
 
 it can convert to following data: 
-```go		
+```go	
 data := struct {
     Form   ExampleForm
-    Errors []error
+    Errors []form.FieldError
 }{
     Form: ExampleForm{
-        Name:  "John Wick",
-        Email: "john.wick@gmail.com",
+        Name:     "John Wick",
+        Email:    "john.wick@gmail.com",
+        Date:     "1991-11-11",
+        Password: "Secret123!",
         Address: &AddressBlock{
             Street1: "121 Mill Neck",
             City:    "Long Island",
             State:   "NY",
             Zip:     "11765",
         },
+        Enums:     ExampleEnumFieldValue2,
         CheckBox:  true,
         CheckBox2: false,
+        RadioGroup: &RadioGroupBlock{
+            Option2: true,
+        },
     },
-    Errors: []error{
+    Errors: []form.FieldError{
         fieldError{
             Field: "Email",
             Issue: "is already taken",
