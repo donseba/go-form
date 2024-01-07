@@ -18,9 +18,11 @@ var inputTpl = `<div>
 	  {{ end }}
     </select>
 	{{ else if eq .Field.Type "checkbox" }}
-	<input {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" type="checkbox" {{ if eq .Required true }}required{{end}} {{ if eq .Field.Value true }}checked{{end}} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+	<input id="{{.Field.Id}}" name="{{.Field.Name}}" type="checkbox" {{ if eq .Required true }}required{{end}} {{ if eq .Field.Value true }}checked{{end}} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"> 
+    {{ else if eq .Field.Type "radios" }}
+	<input id="{{.Field.Id}}" name="{{.Field.Name}}" type="radio" {{ if eq .Required true }}required{{end}} {{ if eq .Field.Value true }}checked{{end}} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"> 
     {{ else }}
-	<input {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" placeholder="{{.Field.Placeholder}}" {{with .Field.Value}}value="{{.}}"{{end}} {{ if eq .Required true }}required{{end}} class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+	<input id="{{.Field.Id}}" name="{{.Field.Name}}" type="{{.Field.InputType}}" placeholder="{{.Field.Placeholder}}" {{with .Field.Value}}value="{{.}}"{{end}} {{ if eq .Required true }}required{{end}} class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
     {{ end }}
 	{{range errors}}
      <span class="text-sm text-red-600">{{.}}</span>
@@ -30,7 +32,7 @@ var inputTpl = `<div>
 
 var groupTpl = `<div class="mb-4 bg-gray-50 p-2 rounded-md">
   <label class="block text-grey-darker text-sm font-bold mb-2">
-	{{.Name }}
+	{{.Field.Label }}
   </label>
   {{ fields }}
 </div>`
@@ -72,17 +74,22 @@ func main() {
 			Errors []form.FieldError
 		}{
 			Form: ExampleForm{
-				Name:  "John Wick",
-				Email: "john.wick@gmail.com",
+				Name:     "John Wick",
+				Email:    "john.wick@gmail.com",
+				Date:     "1991-11-11",
+				Password: "Secret123!",
 				Address: &AddressBlock{
 					Street1: "121 Mill Neck",
 					City:    "Long Island",
 					State:   "NY",
 					Zip:     "11765",
 				},
-				InputTypes: form.InputFieldTypeEmail,
-				CheckBox:   true,
-				CheckBox2:  false,
+				Enums:     ExampleEnumFieldValue2,
+				CheckBox:  true,
+				CheckBox2: false,
+				RadioGroup: &RadioGroupBlock{
+					Option2: true,
+				},
 			},
 			Errors: []form.FieldError{
 				fieldError{
@@ -113,10 +120,13 @@ func main() {
 type ExampleForm struct {
 	Name       string
 	Email      string `required:"true"`
+	Password   string `inputType:"password"`
+	Date       string `inputType:"date"`
 	Address    *AddressBlock
-	InputTypes form.InputFieldType `label:"Enum Example"`
+	Enums      ExampleEnumField `label:"Enum Example"`
 	CheckBox   bool
 	CheckBox2  bool
+	RadioGroup *RadioGroupBlock `label:"Radios Example"`
 }
 
 type AddressBlock struct {
@@ -124,6 +134,27 @@ type AddressBlock struct {
 	City    string
 	State   string
 	Zip     string `label:"Postal Code"`
+}
+
+type ExampleEnumField string
+
+const (
+	ExampleEnumFieldValue1 ExampleEnumField = "Value 1"
+	ExampleEnumFieldValue2 ExampleEnumField = "Value 2"
+	ExampleEnumFieldValue3 ExampleEnumField = "Value 3"
+	ExampleEnumFieldNone   ExampleEnumField = ""
+)
+
+func (i ExampleEnumField) String() string {
+	return string(i)
+}
+func (i ExampleEnumField) Enum() []any {
+	return []interface{}{ExampleEnumFieldValue1, ExampleEnumFieldValue2, ExampleEnumFieldValue3, ExampleEnumFieldNone}
+}
+
+type RadioGroupBlock struct {
+	Option1 bool `name:"RadioGroup" label:"first option"`
+	Option2 bool `name:"RadioGroup" label:"second option"`
 }
 
 type fieldError struct {

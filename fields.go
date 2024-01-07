@@ -23,6 +23,7 @@ const (
 	InputFieldTypeEmail    InputFieldType = "email"
 	InputFieldTypeTel      InputFieldType = "tel"
 	InputFieldTypeNumber   InputFieldType = "number"
+	InputFieldTypeDate     InputFieldType = "date"
 	InputFieldTypeNone     InputFieldType = ""
 )
 

@@ -196,7 +196,13 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			field.Step = "any"
 
 		case reflect.Bool:
-			field.Type = FieldTypeCheckbox
+			fieldType := FieldTypeCheckbox
+			if len(names) > 0 && names[len(names)-1] == name {
+				// radio-options use the same 'name' as their parent for grouping
+				fieldType = FieldTypeRadios
+			}
+
+			field.Type = fieldType
 		case reflect.Slice, reflect.Array:
 		case reflect.Map:
 		case reflect.Struct:
