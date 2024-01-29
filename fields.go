@@ -12,7 +12,7 @@ const (
 	FieldTypeDropdown       FieldType = "dropdown"
 	FieldTypeDropdownMapped FieldType = "dropdownmapped"
 	FieldTypeSubmit         FieldType = "submit"
-	FieldTypeTextArea       FieldType = "textArea"
+	FieldTypeTextArea       FieldType = "textarea"
 )
 
 type InputFieldType string
@@ -23,7 +23,6 @@ const (
 	InputFieldTypeEmail    InputFieldType = "email"
 	InputFieldTypeTel      InputFieldType = "tel"
 	InputFieldTypeNumber   InputFieldType = "number"
-	InputFieldTypeDate     InputFieldType = "date"
 	InputFieldTypeNone     InputFieldType = ""
 )
 
@@ -56,6 +55,8 @@ type FormField struct {
 	InputType   InputFieldType `json:"inputType,omitempty"`
 	Label       string         `json:"label,omitempty"`
 	Step        string         `json:"step,omitempty"`
+	Rows        string         `json:"rows,omitempty"`
+	Cols        string         `json:"cols,omitempty"`
 	Values      []FieldValue   `json:"values,omitempty"`
 	Required    bool           `json:"required"`
 	Fields      []FormField    `json:"fields,omitempty"`

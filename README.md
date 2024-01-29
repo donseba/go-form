@@ -67,6 +67,8 @@ There is currently only one template file for all the currently supported templa
             <option value="{{$option.Id}}">{{$option.Name}}</option>
             {{ end }}
         </select>
+        {{ else if eq .Field.Type "textarea" }}
+        <textarea {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" {{with .Field.Id}}rows="{{.}}"{{end}} {{with .Field.Cols}}cols="{{.}}"{{end}} placeholder="{{.Field.Placeholder}}" {{ if eq .Field.Required true }}required{{end}} class="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
         {{ else if eq .Field.Type "dropdownmapped" }}
         <select {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" class="text-gray-700 dark:text-gray-200 dark:bg-gray-700 bg-white block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
             {{ $value := .Field.Value }}
@@ -152,6 +154,9 @@ supported tags
 - placeholder
 - name
 - required
+- cols
+- rows
+- step
 
 
 ## TODO 
