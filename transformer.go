@@ -7,6 +7,19 @@ import (
 	"strings"
 )
 
+const (
+	tagName        = "name"
+	tagLabel       = "label"
+	tagPlaceholder = "placeholder"
+	tagRequired    = "required"
+	tagInputType   = "inputType"
+	tagLegend      = "legend"
+	tagType        = "type"
+	tagStep        = "step"
+	tagRows        = "rows"
+	tagCols        = "cols"
+)
+
 type (
 	Enumerator interface{ Enum() []any }
 	Mapper     interface {
@@ -56,6 +69,8 @@ func NewTransformer(model interface{}) (*Transformer, error) {
 
 	tr.Fields = fields
 
+	fmt.Printf("tr: %+v\n", tr.Fields)
+
 	return tr, nil
 }
 
@@ -72,7 +87,7 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 	for i := 0; i < rType.NumField(); i++ {
 		tags := rType.Field(i).Tag
 
-		name := tags.Get("name")
+		name := tags.Get(tagName)
 		if name == "" {
 			name = rType.Field(i).Name
 		}
@@ -80,8 +95,8 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		nname := append(names, name)
 
 		field := FormField{
-			Label:       tags.Get("label"),
-			Placeholder: tags.Get("placeholder"),
+			Label:       tags.Get(tagLabel),
+			Placeholder: tags.Get(tagPlaceholder),
 			Name:        strings.Join(nname, "."),
 			Value:       rValue.Field(i).Interface(),
 		}
@@ -90,7 +105,7 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			field.Label = name
 		}
 
-		if tags.Get("required") == "true" {
+		if tags.Get(tagRequired) == "true" {
 			field.Required = true
 		}
 
@@ -150,7 +165,7 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			continue
 		}
 
-		inputType := InputFieldType(tags.Get("inputType"))
+		inputType := InputFieldType(tags.Get(tagInputType))
 
 		fType := rType.Field(i).Type
 		fValue := rValue.Field(i)
@@ -167,14 +182,23 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 		switch fType.Kind() {
 		case reflect.String:
-
 			if inputType == "" {
 				inputType = InputFieldTypeText
 			}
 
-			field.Type = FieldTypeInput
-			field.InputType = inputType
+			typ := FieldType(tags.Get(tagType))
+			if typ == "" {
+				typ = FieldTypeInput
+			}
 
+			field.Type = typ
+			field.InputType = inputType
+			if tags.Get(tagRows) != "" {
+				field.Rows = tags.Get(tagRows)
+			}
+			if tags.Get(tagCols) != "" {
+				field.Cols = tags.Get(tagCols)
+			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 
@@ -184,8 +208,12 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 			field.Type = FieldTypeInput
 			field.InputType = inputType
-			field.Step = "1"
 
+			if tags.Get(tagStep) != "" {
+				field.Step = tags.Get(tagStep)
+			} else {
+				field.Step = "1"
+			}
 		case reflect.Float32, reflect.Float64:
 			if inputType == "" {
 				inputType = InputFieldTypeNumber
@@ -193,27 +221,27 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 			field.Type = FieldTypeInput
 			field.InputType = inputType
-			field.Step = "any"
 
-		case reflect.Bool:
-			fieldType := FieldTypeCheckbox
-			if len(names) > 0 && names[len(names)-1] == name {
-				// radio-options use the same 'name' as their parent for grouping
-				fieldType = FieldTypeRadios
+			if tags.Get(tagStep) != "" {
+				field.Step = tags.Get(tagStep)
+			} else {
+				field.Step = "any"
 			}
-
-			field.Type = fieldType
+		case reflect.Bool:
+			field.Type = FieldTypeCheckbox
 		case reflect.Slice, reflect.Array:
 		case reflect.Map:
 		case reflect.Struct:
 			field.Type = FieldTypeGroup
-			field.Legend = tags.Get("legend")
+			field.Legend = tags.Get(tagLegend)
 
 			var err error
 			field.Fields, err = t.scanModel(fValue, fType, nname...)
 			if err != nil {
 				return nil, err
 			}
+		default:
+			return nil, fmt.Errorf("unsupported type: %s", fType.Kind())
 		}
 
 		fields = append(fields, field)
