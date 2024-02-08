@@ -74,6 +74,12 @@ func (f *Form) formRender(v interface{}, errs []FieldError, kv ...any) (template
 
 					return subhtml
 				},
+				"errors": func() []string {
+					if errs, ok := fieldErrors[field.Name]; ok {
+						return errs
+					}
+					return nil
+				},
 			})
 
 			fMap := copyMap(data)

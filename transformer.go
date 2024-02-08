@@ -69,8 +69,6 @@ func NewTransformer(model interface{}) (*Transformer, error) {
 
 	tr.Fields = fields
 
-	fmt.Printf("tr: %+v\n", tr.Fields)
-
 	return tr, nil
 }
 
@@ -88,12 +86,12 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		tags := rType.Field(i).Tag
 
 		name := tags.Get(tagName)
+		fieldName := rType.Field(i).Name
 		if name == "" {
-			name = rType.Field(i).Name
+			name = fieldName
 		}
 
 		nname := append(names, name)
-
 		field := FormField{
 			Label:       tags.Get(tagLabel),
 			Placeholder: tags.Get(tagPlaceholder),
@@ -228,7 +226,17 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				field.Step = "any"
 			}
 		case reflect.Bool:
-			field.Type = FieldTypeCheckbox
+			fieldType := FieldTypeCheckbox
+			if len(names) > 0 && names[len(names)-1] == name {
+				// radio-options use the same 'name' as their parent for grouping
+				fieldType = FieldTypeRadios
+			}
+
+			field.Type = fieldType
+
+			// replace last slice element with the field name
+			nname[len(nname)-1] = fieldName
+			field.Id = strings.Join(nname, ".")
 		case reflect.Slice, reflect.Array:
 		case reflect.Map:
 		case reflect.Struct:
