@@ -12,6 +12,7 @@ const (
 	tagLabel       = "label"
 	tagPlaceholder = "placeholder"
 	tagRequired    = "required"
+	tagPrimary     = "primary"
 	tagInputType   = "inputType"
 	tagLegend      = "legend"
 	tagType        = "type"
@@ -105,6 +106,10 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 		if tags.Get(tagRequired) == "true" {
 			field.Required = true
+		}
+
+		if tags.Get("primary") == "true" {
+			field.Hidden = true
 		}
 
 		if rType.Field(i).Type.Implements(enumType) {

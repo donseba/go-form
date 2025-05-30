@@ -3,7 +3,6 @@ package form
 type FieldType string
 
 const (
-	FieldTypeGroup          FieldType = "group"
 	FieldTypeCheckbox       FieldType = "checkbox"
 	FieldTypeChecklist      FieldType = "checklist"
 	FieldTypeInput          FieldType = "input"
@@ -13,6 +12,11 @@ const (
 	FieldTypeDropdownMapped FieldType = "dropdownmapped"
 	FieldTypeSubmit         FieldType = "submit"
 	FieldTypeTextArea       FieldType = "textarea"
+
+	// FieldTypeGroup and FieldTypeError special non-input types
+	FieldTypeGroup   FieldType = "group"
+	FieldTypeError   FieldType = "error"
+	FieldTypeWrapper FieldType = "wrapper"
 )
 
 type InputFieldType string
@@ -23,7 +27,9 @@ const (
 	InputFieldTypeEmail    InputFieldType = "email"
 	InputFieldTypeTel      InputFieldType = "tel"
 	InputFieldTypeNumber   InputFieldType = "number"
+	InputFieldTypeDate     InputFieldType = "date"
 	InputFieldTypeNone     InputFieldType = ""
+	InputFieldTypeHidden   InputFieldType = "hidden"
 )
 
 func (i InputFieldType) String() string {
@@ -37,6 +43,8 @@ func (i InputFieldType) Enum() []any {
 		InputFieldTypeEmail,
 		InputFieldTypeTel,
 		InputFieldTypeNumber,
+		InputFieldTypeDate,
+		InputFieldTypeHidden,
 	}
 }
 
@@ -61,4 +69,5 @@ type FormField struct {
 	Required    bool           `json:"required"`
 	Fields      []FormField    `json:"fields,omitempty"`
 	Legend      string         `json:"legend,omitempty"`
+	Hidden      bool           `json:"hidden,omitempty"`
 }

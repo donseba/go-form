@@ -2,49 +2,50 @@ package main
 
 import (
 	"fmt"
-	"github.com/donseba/go-form"
 	"html/template"
 	"net/http"
+
+	"github.com/donseba/go-form"
 )
 
-var inputTpl = `<div>
-  <label {{with .Field.Id}}for="{{.}}"{{end}} class="block text-sm font-medium text-gray-700">{{.Field.Label}}{{ if eq .Field.Required true }}*{{end}}</label>
-  <div class="mt-1">
-	{{ if eq .Field.Type "dropdown" }}
-	<select {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" class="bg-white block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-	  {{ $value := .Field.Value }}
-	  {{ range $k, $option := .Field.Values }}
-		<option value="{{$option.Value}}" {{ if eq $value $option.Value }}selected{{ end }} {{ if eq $option.Disabled true }}disabled{{ end }}>{{$option.Name}}</option>
-	  {{ end }}
-    </select>
-	{{ else if eq .Field.Type "checkbox" }}
-	<input id="{{.Field.Id}}" name="{{.Field.Name}}" type="checkbox" {{ if eq .Required true }}required{{end}} {{ if eq .Field.Value true }}checked{{end}} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"> 
-    {{ else if eq .Field.Type "radios" }}
-	<input id="{{.Field.Id}}" name="{{.Field.Name}}" type="radio" {{ if eq .Required true }}required{{end}} {{ if eq .Field.Value true }}checked{{end}} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"> 
-    {{ else }}
-	<input id="{{.Field.Id}}" name="{{.Field.Name}}" type="{{.Field.InputType}}" placeholder="{{.Field.Placeholder}}" {{with .Field.Value}}value="{{.}}"{{end}} {{ if eq .Required true }}required{{end}} class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-    {{ end }}
-	{{range errors}}
-     <span class="text-sm text-red-600">{{.}}</span>
-	{{end}}
-</div>
-</div>`
-
-var groupTpl = `<div class="mb-4 bg-gray-50 p-2 rounded-md">
-  <label class="block text-grey-darker text-sm font-bold mb-2">
-	{{.Field.Label }}
-  </label>
-  {{ fields }}
-</div>`
+//var inputTpl = `<div>
+//  <label {{with .Field.Id}}for="{{.}}"{{end}} class="block text-sm font-medium text-gray-700">{{.Field.Label}}{{ if eq .Field.Required true }}*{{end}}</label>
+//  <div class="mt-1">
+//	{{ if eq .Field.Type "dropdown" }}
+//	<select {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" class="bg-white block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+//	  {{ $value := .Field.Value }}
+//	  {{ range $k, $option := .Field.Values }}
+//		<option value="{{$option.Value}}" {{ if eq $value $option.Value }}selected{{ end }} {{ if eq $option.Disabled true }}disabled{{ end }}>{{$option.Name}}</option>
+//	  {{ end }}
+//    </select>
+//	{{ else if eq .Field.Type "checkbox" }}
+//	<input id="{{.Field.Id}}" name="{{.Field.Name}}" type="checkbox" {{ if eq .Required true }}required{{end}} {{ if eq .Field.Value true }}checked{{end}} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+//    {{ else if eq .Field.Type "radios" }}
+//	<input id="{{.Field.Id}}" name="{{.Field.Name}}" type="radio" {{ if eq .Required true }}required{{end}} {{ if eq .Field.Value true }}checked{{end}} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+//    {{ else }}
+//	<input id="{{.Field.Id}}" name="{{.Field.Name}}" type="{{.Field.InputType}}" placeholder="{{.Field.Placeholder}}" {{with .Field.Value}}value="{{.}}"{{end}} {{ if eq .Required true }}required{{end}} class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+//    {{ end }}
+//	{{range errors}}
+//     <span class="text-sm text-red-600">{{.}}</span>
+//	{{end}}
+//</div>
+//</div>`
+//
+//var groupTpl = `<div class="mb-4 bg-gray-50 p-2 rounded-md">
+//  <label class="block text-grey-darker text-sm font-bold mb-2">
+//	{{.Field.Label }}
+//  </label>
+//  {{ fields }}
+//</div>`
 
 func main() {
-	tpl := template.Must(template.New("").Funcs(template.FuncMap{
-		"errors": func() []form.FieldError { return nil },
-	}).Parse(inputTpl))
-	gtpl := template.Must(template.New("").Funcs(template.FuncMap{
-		"fields": func() template.HTML { return "" },
-	}).Parse(groupTpl))
-	fb := form.NewForm(*tpl, *gtpl)
+	//tpl := template.Must(template.New("").Funcs(template.FuncMap{
+	//	"errors": func() []form.FieldError { return nil },
+	//}).Parse(inputTpl))
+	//gtpl := template.Must(template.New("").Funcs(template.FuncMap{
+	//	"fields": func() template.HTML { return "" },
+	//}).Parse(groupTpl))
+	fb := form.NewForm(form.DefaultTailwindTemplates)
 
 	pageTpl := template.Must(template.New("").Funcs(fb.FuncMap()).Parse(`
 <html>
@@ -118,6 +119,7 @@ func main() {
 }
 
 type ExampleForm struct {
+	ID         string `inputType:"hidden"`
 	Name       string
 	Email      string `required:"true"`
 	Password   string `inputType:"password"`
