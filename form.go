@@ -2,6 +2,7 @@ package form
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"strings"
 
@@ -23,7 +24,7 @@ func NewForm(templateMap map[types.FieldType]map[types.InputFieldType]string) Fo
 	for fieldType, inputTemplates := range templateMap {
 		f.templateMap[fieldType] = make(map[types.InputFieldType]template.Template)
 		for inputType, tpl := range inputTemplates {
-			t, err := template.New("field").Funcs(map[string]any{
+			t, err := template.New(inputType.String()).Funcs(map[string]any{
 				"errors": func() []string { return nil },     // Placeholder for error handling
 				"field":  func() template.HTML { return "" }, // Placeholder for field rendering
 				"fields": func() template.HTML { return "" }, // Placeholder for group fields
@@ -70,10 +71,11 @@ func (f *Form) formRender(v any, errs []FieldError, kv ...any) (template.HTML, e
 
 	var html template.HTML
 
-	var hasFormField bool
-	for _, field := range tr.Fields {
+	var formField *FormField
+	for i, field := range tr.Fields {
 		if field.Type == types.FieldTypeForm {
-			hasFormField = true
+			formField = &tr.Fields[i]
+
 			continue // Skip the form field itself, as it's handled separately
 		}
 
@@ -120,7 +122,7 @@ func (f *Form) formRender(v any, errs []FieldError, kv ...any) (template.HTML, e
 
 			err = gtpl.Execute(&sb, fMap)
 			if err != nil {
-				return "", err
+				return "", fmt.Errorf("error executing group template: %w", err)
 			}
 			html = html + template.HTML(sb.String())
 
@@ -129,12 +131,12 @@ func (f *Form) formRender(v any, errs []FieldError, kv ...any) (template.HTML, e
 
 		fieldHTML, err := f.formFieldHTML(field, fieldErrors, data)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error generating field HTML for field type %s with inputType %s, : %w", field.Type, field.InputType, err)
 		}
 		html = html + fieldHTML
 	}
 
-	if hasFormField {
+	if formField != nil {
 		tmpl, ok := f.templateMap[types.FieldTypeForm][types.InputFieldTypeNone]
 		if !ok {
 			return "", errors.New("form template not found for field type: " + string(types.FieldTypeForm))
@@ -152,7 +154,13 @@ func (f *Form) formRender(v any, errs []FieldError, kv ...any) (template.HTML, e
 			},
 		})
 
-		err = formTmpl.Execute(&sb, data)
+		formData := struct {
+			Field FormField
+		}{
+			Field: *formField,
+		}
+
+		err = formTmpl.Execute(&sb, formData)
 		if err != nil {
 			return "", err
 		}

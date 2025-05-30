@@ -6,6 +6,10 @@ type FieldType string
 // InputFieldType represents the HTML input type
 type InputFieldType string
 
+func (i InputFieldType) String() string {
+	return string(i)
+}
+
 // FieldValue represents a value in a dropdown or radio group
 type FieldValue struct {
 	Value    string `json:"value"`
@@ -54,12 +58,14 @@ const (
 
 // Constants for input types
 const (
-	InputFieldTypeText     InputFieldType = "text"
-	InputFieldTypePassword InputFieldType = "password"
-	InputFieldTypeEmail    InputFieldType = "email"
-	InputFieldTypeTel      InputFieldType = "tel"
-	InputFieldTypeNumber   InputFieldType = "number"
-	InputFieldTypeDate     InputFieldType = "date"
-	InputFieldTypeNone     InputFieldType = ""
-	InputFieldTypeHidden   InputFieldType = "hidden"
+	InputFieldTypeText        InputFieldType = "text"
+	InputFieldTypePassword    InputFieldType = "password"
+	InputFieldTypeEmail       InputFieldType = "email"
+	InputFieldTypeTel         InputFieldType = "tel"
+	InputFieldTypeNumber      InputFieldType = "number"
+	InputFieldTypeDate        InputFieldType = "date"
+	InputFieldTypeNone        InputFieldType = ""
+	InputFieldTypeRadio       InputFieldType = "radio"
+	InputFieldTypeHidden      InputFieldType = "hidden"
+	InputFieldTypeRadioStruct InputFieldType = "radio_struct"
 )

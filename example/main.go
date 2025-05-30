@@ -11,41 +11,70 @@ import (
 	"github.com/donseba/go-form/templates"
 )
 
-type ExampleForm struct {
-	form.Info
-	// Basic input fields
-	Username string `form:"input,text" label:"Username" placeholder:"Enter your username" required:"true"`
-	Password string `form:"input,password" label:"Password" placeholder:"Enter your password" required:"true"`
-	Email    string `form:"input,email" label:"Email" placeholder:"Enter your email" required:"true"`
-	Phone    string `form:"input,tel" label:"Phone" placeholder:"Enter your phone number"`
-	Age      int    `form:"input,number" label:"Age" placeholder:"Enter your age" step:"1"`
-	Birthday string `form:"input,date" label:"Birthday" placeholder:"Enter your birthday"`
+const (
+	GenderMale   Gender = "male"
+	GenderFemale Gender = "female"
+	GenderOther  Gender = "other"
+)
 
-	// Checkbox and radio fields
-	Active bool   `form:"checkbox" label:"Active"`
-	Gender string `form:"radios" label:"Gender" values:"male:Male;female:Female;other:Other"`
+type (
+	Gender      string
+	ExampleForm struct {
+		form.Info
+		ID int `form:"input,hidden"`
+		// Basic input fields
+		Username string `form:"input,text" label:"Username" placeholder:"Enter your username" required:"true"`
+		Password string `form:"input,password" label:"Password" placeholder:"Enter your password" required:"true"`
+		Email    string `form:"input,email" label:"Email" placeholder:"Enter your email" required:"true"`
+		Phone    string `form:"input,tel" label:"Phone label" placeholder:"Enter your phone number"`
+		Age      int    `form:"input,number" label:"Age" placeholder:"Enter your age" step:"1"`
+		Birthday string `form:"input,date" label:"Birthday" placeholder:"Enter your birthday"`
 
-	// Dropdown fields
-	Country string `form:"dropdown" label:"Country" values:"us:United States;ca:Canada;uk:United Kingdom"`
-	Message string `form:"textarea" label:"Message" placeholder:"Enter your message" rows:"5" cols:"50"`
-	Hidden  string `form:"input,hidden" value:"hidden value"`
+		// Checkbox and radio fields
+		Active      bool   `form:"checkbox" label:"Active"`
+		RadioOption string `form:"radios" label:"Radio Option" values:"option1:Option 1;option2:Option 2;option3:Option 3"`
 
-	// Nested group
+		// enum field
+		Gender Gender `label:"Gender"`
+
+		// Dropdown fields
+		Country string `form:"dropdown" label:"Country" values:"us:United States;ca:Canada;uk:United Kingdom"`
+		Message string `form:"textarea" label:"Message" placeholder:"Enter your message" rows:"5" cols:"50"`
+		Hidden  string `form:"input,hidden" value:"hidden value"`
+
+		RadioGroup RadioGroupBlock `form:"radios" label:"Radio Group"`
+
+		// Nested group
+		Address Address `legend:"Address Information"`
+	}
+
+	RadioGroupBlock struct {
+		Option1 bool `name:"RadioGroup" label:"first option"`
+		Option2 bool `name:"RadioGroup" label:"second option"`
+	}
+
 	Address struct {
 		Street1 string `form:"input,text" label:"Street Address" placeholder:"Enter street address" required:"true"`
 		City    string `form:"input,text" label:"City" placeholder:"Enter city" required:"true"`
 		State   string `form:"input,text" label:"State" placeholder:"Enter state" required:"true"`
 		Zip     string `form:"input,text" label:"ZIP Code" placeholder:"Enter ZIP code" required:"true"`
-	} `legend:"Address Information"`
+	}
+)
+
+func (i Gender) String() string {
+	return string(i)
+}
+func (i Gender) Enum() []any {
+	return []interface{}{GenderMale, GenderFemale, GenderOther}
 }
 
 func main() {
-	// Create example form data
 	formData := ExampleForm{
 		Info: form.Info{
 			Target: "/submit",
 			Method: "POST",
 		},
+		ID:       1,
 		Username: "john.doe",
 		Email:    "john.doe@example.com",
 		Phone:    "123-456-7890",
@@ -56,12 +85,11 @@ func main() {
 		Country:  "us",
 		Message:  "Hello, this is a test message!",
 		Hidden:   "secret-value",
-		Address: struct {
-			Street1 string `form:"input,text" label:"Street Address" placeholder:"Enter street address" required:"true"`
-			City    string `form:"input,text" label:"City" placeholder:"Enter city" required:"true"`
-			State   string `form:"input,text" label:"State" placeholder:"Enter state" required:"true"`
-			Zip     string `form:"input,text" label:"ZIP Code" placeholder:"Enter ZIP code" required:"true"`
-		}{
+		RadioGroup: RadioGroupBlock{
+			Option1: true,
+			Option2: false,
+		},
+		Address: Address{
 			Street1: "123 Main St",
 			City:    "New York",
 			State:   "NY",
