@@ -1,52 +1,55 @@
 package form
 
-type FieldType string
+import "github.com/donseba/go-form/types"
 
-const (
-	FieldTypeCheckbox       FieldType = "checkbox"
-	FieldTypeChecklist      FieldType = "checklist"
-	FieldTypeInput          FieldType = "input"
-	FieldTypeLabel          FieldType = "label"
-	FieldTypeRadios         FieldType = "radios"
-	FieldTypeDropdown       FieldType = "dropdown"
-	FieldTypeDropdownMapped FieldType = "dropdownmapped"
-	FieldTypeSubmit         FieldType = "submit"
-	FieldTypeTextArea       FieldType = "textarea"
-
-	// FieldTypeGroup and FieldTypeError special non-input types
-	FieldTypeGroup   FieldType = "group"
-	FieldTypeError   FieldType = "error"
-	FieldTypeWrapper FieldType = "wrapper"
-)
-
-type InputFieldType string
-
-const (
-	InputFieldTypeText     InputFieldType = "text"
-	InputFieldTypePassword InputFieldType = "password"
-	InputFieldTypeEmail    InputFieldType = "email"
-	InputFieldTypeTel      InputFieldType = "tel"
-	InputFieldTypeNumber   InputFieldType = "number"
-	InputFieldTypeDate     InputFieldType = "date"
-	InputFieldTypeNone     InputFieldType = ""
-	InputFieldTypeHidden   InputFieldType = "hidden"
-)
-
-func (i InputFieldType) String() string {
-	return string(i)
-}
-
-func (i InputFieldType) Enum() []any {
-	return []interface{}{
-		InputFieldTypeText,
-		InputFieldTypePassword,
-		InputFieldTypeEmail,
-		InputFieldTypeTel,
-		InputFieldTypeNumber,
-		InputFieldTypeDate,
-		InputFieldTypeHidden,
-	}
-}
+//type FieldType string
+//
+//const (
+//	FieldTypeCheckbox       FieldType = "checkbox"
+//	FieldTypeChecklist      FieldType = "checklist"
+//	FieldTypeInput          FieldType = "input"
+//	FieldTypeLabel          FieldType = "label"
+//	FieldTypeRadios         FieldType = "radios"
+//	FieldTypeDropdown       FieldType = "dropdown"
+//	FieldTypeDropdownMapped FieldType = "dropdownmapped"
+//	FieldTypeSubmit         FieldType = "submit"
+//	FieldTypeTextArea       FieldType = "textarea"
+//	FieldTypeForm           FieldType = "form"
+//
+//	// FieldTypeGroup and FieldTypeError special non-input types
+//	FieldTypeGroup   FieldType = "group"
+//	FieldTypeError   FieldType = "error"
+//	FieldTypeWrapper FieldType = "wrapper"
+//)
+//
+//type InputFieldType string
+//
+//const (
+//	InputFieldTypeText     InputFieldType = "text"
+//	InputFieldTypePassword InputFieldType = "password"
+//	InputFieldTypeEmail    InputFieldType = "email"
+//	InputFieldTypeTel      InputFieldType = "tel"
+//	InputFieldTypeNumber   InputFieldType = "number"
+//	InputFieldTypeDate     InputFieldType = "date"
+//	InputFieldTypeNone     InputFieldType = ""
+//	InputFieldTypeHidden   InputFieldType = "hidden"
+//)
+//
+//func (i InputFieldType) String() string {
+//	return string(i)
+//}
+//
+//func (i InputFieldType) Enum() []any {
+//	return []interface{}{
+//		InputFieldTypeText,
+//		InputFieldTypePassword,
+//		InputFieldTypeEmail,
+//		InputFieldTypeTel,
+//		InputFieldTypeNumber,
+//		InputFieldTypeDate,
+//		InputFieldTypeHidden,
+//	}
+//}
 
 type FieldValue struct {
 	Name     string `json:"name,omitempty"`
@@ -55,19 +58,26 @@ type FieldValue struct {
 }
 
 type FormField struct {
-	Id          string         `json:"id,omitempty"`
-	Placeholder string         `json:"placeholder,omitempty"`
-	Name        string         `json:"name,omitempty"`
-	Value       interface{}    `json:"value,omitempty"`
-	Type        FieldType      `json:"type,omitempty"`
-	InputType   InputFieldType `json:"inputType,omitempty"`
-	Label       string         `json:"label,omitempty"`
-	Step        string         `json:"step,omitempty"`
-	Rows        string         `json:"rows,omitempty"`
-	Cols        string         `json:"cols,omitempty"`
-	Values      []FieldValue   `json:"values,omitempty"`
-	Required    bool           `json:"required"`
-	Fields      []FormField    `json:"fields,omitempty"`
-	Legend      string         `json:"legend,omitempty"`
-	Hidden      bool           `json:"hidden,omitempty"`
+	Id          string               `json:"id,omitempty"`
+	Placeholder string               `json:"placeholder,omitempty"`
+	Name        string               `json:"name,omitempty"`
+	Value       interface{}          `json:"value,omitempty"`
+	Type        types.FieldType      `json:"type,omitempty"`
+	InputType   types.InputFieldType `json:"inputType,omitempty"`
+	Label       string               `json:"label,omitempty"`
+	Step        string               `json:"step,omitempty"`
+	Rows        string               `json:"rows,omitempty"`
+	Cols        string               `json:"cols,omitempty"`
+	Values      []FieldValue         `json:"values,omitempty"`
+	Required    bool                 `json:"required"`
+	Fields      []FormField          `json:"fields,omitempty"`
+	Legend      string               `json:"legend,omitempty"`
+	Hidden      bool                 `json:"hidden,omitempty"`
+	Target      string               `json:"target,omitempty"`
+	Method      string               `json:"method,omitempty"`
+}
+
+type Info struct {
+	Target string `json:"target,omitempty"`
+	Method string `json:"method,omitempty"`
 }

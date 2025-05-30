@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/donseba/go-form/types"
 )
 
 const (
@@ -12,7 +14,6 @@ const (
 	tagLabel       = "label"
 	tagPlaceholder = "placeholder"
 	tagRequired    = "required"
-	tagPrimary     = "primary"
 	tagInputType   = "inputType"
 	tagLegend      = "legend"
 	tagType        = "type"
@@ -28,7 +29,7 @@ type (
 		String() string
 	}
 
-	// SortedMapper is new addition to provide sorted key value pairs
+	// SortedMapper is a new addition to provide sorted key value pairs
 	SortedMapper interface {
 		String() string
 		SortedMapper() []SortedMap
@@ -83,7 +84,23 @@ func (t *Transformer) JSON() json.RawMessage {
 func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names ...string) ([]FormField, error) {
 	var fields []FormField
 
+	// Check for form metadata
+	if rType.Field(0).Anonymous && rType.Field(0).Type == reflect.TypeOf(Info{}) {
+		info := rValue.Field(0).Interface().(Info)
+		formField := FormField{
+			Type:   types.FieldTypeForm,
+			Target: info.Target,
+			Method: info.Method,
+		}
+		fields = append(fields, formField)
+	}
+
 	for i := 0; i < rType.NumField(); i++ {
+		// Skip the Info field as we've already processed it
+		if i == 0 && rType.Field(i).Anonymous && rType.Field(i).Type == reflect.TypeOf(Info{}) {
+			continue
+		}
+
 		tags := rType.Field(i).Tag
 
 		name := tags.Get(tagName)
@@ -123,7 +140,7 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				})
 			}
 
-			field.Type = FieldTypeDropdown
+			field.Type = types.FieldTypeDropdown
 			field.Values = fieldValue
 
 			fields = append(fields, field)
@@ -142,7 +159,7 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				})
 			}
 
-			field.Type = FieldTypeDropdownMapped
+			field.Type = types.FieldTypeDropdownMapped
 			field.Values = fieldValue
 
 			fields = append(fields, field)
@@ -161,14 +178,14 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				})
 			}
 
-			field.Type = FieldTypeDropdownMapped
+			field.Type = types.FieldTypeDropdownMapped
 			field.Values = fieldValue
 
 			fields = append(fields, field)
 			continue
 		}
 
-		inputType := InputFieldType(tags.Get(tagInputType))
+		inputType := types.InputFieldType(tags.Get(tagInputType))
 
 		fType := rType.Field(i).Type
 		fValue := rValue.Field(i)
@@ -186,12 +203,12 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		switch fType.Kind() {
 		case reflect.String:
 			if inputType == "" {
-				inputType = InputFieldTypeText
+				inputType = types.InputFieldTypeText
 			}
 
-			typ := FieldType(tags.Get(tagType))
+			typ := types.FieldType(tags.Get(tagType))
 			if typ == "" {
-				typ = FieldTypeInput
+				typ = types.FieldTypeInput
 			}
 
 			field.Type = typ
@@ -206,10 +223,10 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 
 			if inputType == "" {
-				inputType = InputFieldTypeNumber
+				inputType = types.InputFieldTypeNumber
 			}
 
-			field.Type = FieldTypeInput
+			field.Type = types.FieldTypeInput
 			field.InputType = inputType
 
 			if tags.Get(tagStep) != "" {
@@ -219,10 +236,10 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			}
 		case reflect.Float32, reflect.Float64:
 			if inputType == "" {
-				inputType = InputFieldTypeNumber
+				inputType = types.InputFieldTypeNumber
 			}
 
-			field.Type = FieldTypeInput
+			field.Type = types.FieldTypeInput
 			field.InputType = inputType
 
 			if tags.Get(tagStep) != "" {
@@ -231,22 +248,25 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				field.Step = "any"
 			}
 		case reflect.Bool:
-			fieldType := FieldTypeCheckbox
+			fieldType := types.FieldTypeCheckbox
 			if len(names) > 0 && names[len(names)-1] == name {
 				// radio-options use the same 'name' as their parent for grouping
-				fieldType = FieldTypeRadios
+				fieldType = types.FieldTypeRadios
 			}
 
 			field.Type = fieldType
 
-			// replace last slice element with the field name
+			// replace the last slice element with the field name
 			nname[len(nname)-1] = fieldName
 			field.Id = strings.Join(nname, ".")
 		case reflect.Slice, reflect.Array:
 		case reflect.Map:
 		case reflect.Struct:
-			field.Type = FieldTypeGroup
+			field.Type = types.FieldTypeGroup
 			field.Legend = tags.Get(tagLegend)
+			if field.Legend == "" {
+				field.Legend = field.Label
+			}
 
 			var err error
 			field.Fields, err = t.scanModel(fValue, fType, nname...)

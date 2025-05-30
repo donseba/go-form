@@ -4,22 +4,24 @@ import (
 	"errors"
 	"html/template"
 	"strings"
+
+	"github.com/donseba/go-form/types"
 )
 
 type Form struct {
 	//template      template.Template
 	//groupTemplate template.Template
 
-	templateMap map[FieldType]map[InputFieldType]template.Template
+	templateMap map[types.FieldType]map[types.InputFieldType]template.Template
 }
 
-func NewForm(templateMap map[FieldType]map[InputFieldType]string) Form {
+func NewForm(templateMap map[types.FieldType]map[types.InputFieldType]string) Form {
 	f := Form{
-		templateMap: make(map[FieldType]map[InputFieldType]template.Template),
+		templateMap: make(map[types.FieldType]map[types.InputFieldType]template.Template),
 	}
 
 	for fieldType, inputTemplates := range templateMap {
-		f.templateMap[fieldType] = make(map[InputFieldType]template.Template)
+		f.templateMap[fieldType] = make(map[types.InputFieldType]template.Template)
 		for inputType, tpl := range inputTemplates {
 			t, err := template.New("field").Funcs(map[string]any{
 				"errors": func() []string { return nil },     // Placeholder for error handling
@@ -43,7 +45,7 @@ func (f *Form) FuncMap() template.FuncMap {
 	}
 }
 
-func (f *Form) formRender(v interface{}, errs []FieldError, kv ...any) (template.HTML, error) {
+func (f *Form) formRender(v any, errs []FieldError, kv ...any) (template.HTML, error) {
 	tr, err := NewTransformer(v)
 	if err != nil {
 		return "", err
@@ -67,9 +69,16 @@ func (f *Form) formRender(v interface{}, errs []FieldError, kv ...any) (template
 	}
 
 	var html template.HTML
+
+	var hasFormField bool
 	for _, field := range tr.Fields {
-		if field.Type == FieldTypeGroup {
-			tmpl, ok := f.templateMap[FieldTypeGroup][InputFieldTypeNone]
+		if field.Type == types.FieldTypeForm {
+			hasFormField = true
+			continue // Skip the form field itself, as it's handled separately
+		}
+
+		if field.Type == types.FieldTypeGroup {
+			tmpl, ok := f.templateMap[types.FieldTypeGroup][types.InputFieldTypeNone]
 			if !ok {
 				return "", errors.New("group template not found for field type: " + string(field.InputType))
 			}
@@ -122,9 +131,35 @@ func (f *Form) formRender(v interface{}, errs []FieldError, kv ...any) (template
 		if err != nil {
 			return "", err
 		}
-
 		html = html + fieldHTML
 	}
+
+	if hasFormField {
+		tmpl, ok := f.templateMap[types.FieldTypeForm][types.InputFieldTypeNone]
+		if !ok {
+			return "", errors.New("form template not found for field type: " + string(types.FieldTypeForm))
+		}
+
+		formTmpl, err := tmpl.Clone()
+		if err != nil {
+			return "", err
+		}
+
+		var sb strings.Builder
+		formTmpl = formTmpl.Funcs(template.FuncMap{
+			"fields": func() template.HTML {
+				return html
+			},
+		})
+
+		err = formTmpl.Execute(&sb, data)
+		if err != nil {
+			return "", err
+		}
+
+		return template.HTML(sb.String()), nil
+	}
+
 	return html, nil
 }
 
@@ -143,9 +178,9 @@ func (f *Form) formFieldHTML(field FormField, errorMap map[string][]string, data
 	fMap["Field"] = field
 
 	// generate label for the field
-	labelTmp, ok := f.templateMap[FieldTypeLabel][InputFieldTypeNone]
+	labelTmp, ok := f.templateMap[types.FieldTypeLabel][types.InputFieldTypeNone]
 	if !ok {
-		return "", errors.New("label template not found for field type: " + string(FieldTypeLabel))
+		return "", errors.New("label template not found for field type: " + string(types.FieldTypeLabel))
 	}
 
 	labelTpl, err := labelTmp.Clone()
@@ -178,12 +213,12 @@ func (f *Form) formFieldHTML(field FormField, errorMap map[string][]string, data
 	}
 
 	// Skip wrapper for hidden fields
-	if field.InputType == InputFieldTypeHidden {
+	if field.InputType == types.InputFieldTypeHidden {
 		return template.HTML(fieldSb.String()), nil
 	}
 
 	// Check if we have a wrapper template
-	if wrapperTmp, ok := f.templateMap[FieldTypeWrapper][InputFieldTypeNone]; ok {
+	if wrapperTmp, ok := f.templateMap[types.FieldTypeWrapper][types.InputFieldTypeNone]; ok {
 		wrapperTpl, err := wrapperTmp.Clone()
 		if err != nil {
 			return "", err
