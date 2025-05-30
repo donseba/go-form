@@ -10,9 +10,6 @@ import (
 )
 
 type Form struct {
-	//template      template.Template
-	//groupTemplate template.Template
-
 	templateMap map[types.FieldType]map[types.InputFieldType]template.Template
 }
 
