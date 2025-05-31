@@ -9,6 +9,11 @@ import (
 	"github.com/donseba/go-form/types"
 )
 
+type Info struct {
+	Target string `json:"target,omitempty"`
+	Method string `json:"method,omitempty"`
+}
+
 type Form struct {
 	templateMap map[types.FieldType]map[types.InputFieldType]template.Template
 }
@@ -18,14 +23,50 @@ func NewForm(templateMap map[types.FieldType]map[types.InputFieldType]string) Fo
 		templateMap: make(map[types.FieldType]map[types.InputFieldType]template.Template),
 	}
 
+	// First, create the base input template
+	baseInputTpl, _ := template.New("baseInput").Parse(templateMap[types.FieldTypeBase][types.InputFieldTypeNone])
+
 	for fieldType, inputTemplates := range templateMap {
 		f.templateMap[fieldType] = make(map[types.InputFieldType]template.Template)
 		for inputType, tpl := range inputTemplates {
-			t, err := template.New(inputType.String()).Funcs(map[string]any{
+			// Skip the base template as it's already created
+			if fieldType == types.FieldTypeInput && inputType == types.InputFieldTypeNone {
+				f.templateMap[fieldType][inputType] = *baseInputTpl
+				continue
+			}
+
+			// Create a new template with the base template defined
+			t := template.New(inputType.String())
+			t, err := t.Funcs(map[string]any{
 				"errors": func() []string { return nil },     // Placeholder for error handling
 				"field":  func() template.HTML { return "" }, // Placeholder for field rendering
 				"fields": func() template.HTML { return "" }, // Placeholder for group fields
 				"label":  func() template.HTML { return "" }, // Placeholder for label rendering
+				"baseInput": func(kv ...any) template.HTML {
+					if baseInputTpl == nil {
+						return template.HTML("base input template not defined")
+					}
+
+					if len(kv)%2 != 0 {
+						return template.HTML("need an even number of arguments for dict")
+					}
+
+					data := make(map[string]any)
+					for i := 0; i < len(kv); i += 2 {
+						key, ok := kv[i].(string)
+						if !ok {
+							return template.HTML("dict keys must be strings")
+						}
+						data[key] = kv[i+1]
+					}
+
+					var sb strings.Builder
+					err := baseInputTpl.Execute(&sb, data)
+					if err != nil {
+						panic(err) // Handle error appropriately in production code
+					}
+					return template.HTML(sb.String())
+				},
 			}).Parse(tpl)
 			if err != nil {
 				panic(err) // Handle error appropriately in production code
@@ -68,7 +109,7 @@ func (f *Form) formRender(v any, errs []FieldError, kv ...any) (template.HTML, e
 
 	var html template.HTML
 
-	var formField *FormField
+	var formField *types.FormField
 	for i, field := range tr.Fields {
 		if field.Type == types.FieldTypeForm {
 			formField = &tr.Fields[i]
@@ -152,7 +193,7 @@ func (f *Form) formRender(v any, errs []FieldError, kv ...any) (template.HTML, e
 		})
 
 		formData := struct {
-			Field FormField
+			Field types.FormField
 		}{
 			Field: *formField,
 		}
@@ -168,7 +209,7 @@ func (f *Form) formRender(v any, errs []FieldError, kv ...any) (template.HTML, e
 	return html, nil
 }
 
-func (f *Form) formFieldHTML(field FormField, errorMap map[string][]string, data map[string]any) (template.HTML, error) {
+func (f *Form) formFieldHTML(field types.FormField, errorMap map[string][]string, data map[string]any) (template.HTML, error) {
 	tmp, ok := f.templateMap[field.Type][field.InputType]
 	if !ok {
 		return "", errors.New("template not found for field type: " + string(field.Type) + " and input type: " + string(field.InputType))

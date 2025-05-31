@@ -34,6 +34,18 @@ type (
 		Active      bool   `form:"checkbox" label:"Active"`
 		RadioOption string `form:"radios" label:"Radio Option" values:"option1:Option 1;option2:Option 2;option3:Option 3"`
 
+		// Color field
+		Color string `form:"input,color" label:"Favorite Color" placeholder:"Select your favorite color"`
+
+		// Range field
+		RangeValue int `form:"input,range" label:"Range Value" min:"25" max:"75" step:"1"`
+
+		//date and time fields
+		DateTimeLocal string `form:"input,datetime-local" label:"Date and Time" placeholder:"Select date and time"`
+		Time          string `form:"input,time" label:"Time" placeholder:"Select time"`
+		Week          string `form:"input,week" label:"Week" placeholder:"Select week"`
+		Month         string `form:"input,month" label:"Month" placeholder:"Select month"`
+
 		// enum field
 		Gender Gender `label:"Gender"`
 

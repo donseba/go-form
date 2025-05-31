@@ -1,89 +1,93 @@
 # go-form
 
-A flexible Go package for generating and rendering HTML forms from struct definitions, supporting multiple template engines and easy customization.
+A Go library for rendering HTML forms from Go structs using struct tags and Go templates. Supports multiple template styles (Plain, Bootstrap 5, Tailwind CSS) and a wide range of HTML input types.
+
+---
 
 ## Features
 
-- **Automatic form generation** from Go structs and tags
-- **Multiple template sets**: Plain HTML, Bootstrap 5, Tailwind CSS, or your own
-- **Supports all common field types**: input, checkbox, radio, dropdown, textarea
-- **Nested groups** and fieldsets
-- **Customizable error handling and validation**
-- **Easy integration** with `html/template`
+- Define forms as Go structs with struct tags for field type, label, placeholder, and more
+- Supports many HTML input types: text, password, email, tel, number, date, color, range, datetime-local, time, week, month, hidden
+- Checkbox, radio, dropdown, and textarea fields
+- Grouping and nested struct support for form sections
+- Built-in template sets: Plain, Bootstrap 5, Tailwind CSS
+- Integrates with `html/template` via a FuncMap
+
+---
 
 ## Installation
 
-```bash
+```
 go get github.com/donseba/go-form
 ```
+
+---
 
 ## Quick Start
 
 ```go
 import (
     "github.com/donseba/go-form"
+    "github.com/donseba/go-form/templates"
     "html/template"
 )
 
-type MyForm struct {
-    Username string `form:"input,text" label:"Username" required:"true"`
-    Password string `form:"input,password" label:"Password" required:"true"`
-    Email    string `form:"input,email" label:"Email"`
+type ExampleForm struct {
+    Username string `form:"input,text" label:"Username" placeholder:"Enter your username" required:"true"`
+    Password string `form:"input,password" label:"Password" placeholder:"Enter your password" required:"true"`
+    Email    string `form:"input,email" label:"Email" placeholder:"Enter your email" required:"true"`
+    Age      int    `form:"input,number" label:"Age" placeholder:"Enter your age" step:"1"`
 }
 
-f := form.NewForm(form.DefaultTemplates) // or form.DefaultBootstrapTemplates, etc.
-tmpl := template.Must(template.New("page").Funcs(f.FuncMap()).Parse(`{{ form_render .Form .Errors }}`))
+f := form.NewForm(templates.Plain) // or templates.BootstrapV5, templates.TailwindV3
+funcMap := f.FuncMap()
+tmpl := template.Must(template.New("form").Funcs(funcMap).Parse(`{{ form_render .Form nil }}`))
 ```
 
-## Templates
+---
 
-Choose from built-in template sets or define your own. Example sets:
-- `form.DefaultTemplates` (plain HTML)
-- `form.DefaultBootstrapTemplates` (Bootstrap 5)
-- `form.DefaultTailwindTemplates` (Tailwind CSS)
+## Supported Templates
 
-You can also register custom templates for each field type.
+| Template Name            | Description                |
+|-------------------------|----------------------------|
+| `templates.Plain`       | Plain HTML, minimal styles |
+| `templates.BootstrapV5` | Bootstrap 5 form styles    |
+| `templates.TailwindV3`  | Tailwind CSS v3 styles     |
 
-## Supported Field Types
+---
 
-```go
-Username string `form:"input,text" label:"Username" required:"true"`
-Password string `form:"input,password" label:"Password" required:"true"`
-Email    string `form:"input,email" label:"Email"`
-Age      int    `form:"input,number" label:"Age" step:"1"`
-Country  string `form:"dropdown" label:"Country" values:"us:United States;ca:Canada"`
-Message  string `form:"textarea" label:"Message" rows:"5"`
-```
+## Supported Input Fields & Options
 
-### Checkboxes and Radios
+| Field Type / Tag Example         | Description         | Options (Struct Tags)                                  |
+|----------------------------------|---------------------|-------------------------------------------------------|
+| `form:"input,text"`             | Text input          | `label`, `placeholder`, `required`, `maxlength`        |
+| `form:"input,password"`         | Password input      | `label`, `placeholder`, `required`                     |
+| `form:"input,email"`            | Email input         | `label`, `placeholder`, `required`                     |
+| `form:"input,number"`           | Number input        | `label`, `placeholder`, `required`, `min`, `max`, `step`|
+| `form:"input,date"`             | Date input          | `label`, `placeholder`, `required`                     |
+| `form:"input,datetime-local"`   | DateTime input      | `label`, `placeholder`, `required`                     |
+| `form:"input,time"`             | Time input          | `label`, `placeholder`, `required`                     |
+| `form:"input,week"`             | Week input          | `label`, `placeholder`, `required`                     |
+| `form:"input,month"`            | Month input         | `label`, `placeholder`, `required`                     |
+| `form:"input,color"`            | Color input         | `label`, `placeholder`, `required`                     |
+| `form:"input,range"`            | Range input         | `label`, `min`, `max`, `step`                          |
+| `form:"input,hidden"`           | Hidden input        | `value`                                               |
+| `form:"input,search"`           | Search input        | `label`, `placeholder`                                 |
+| `form:"input,url"`              | URL input           | `label`, `placeholder`                                 |
+| `form:"input,tel"`              | Telephone input     | `label`, `placeholder`                                 |
+| `form:"input,image"`            | Image input         | `label`, `src`, `alt`                                  |
+| `form:"checkbox"`               | Checkbox            | `label`, `required`                                    |
+| `form:"radios"`                 | Radio group         | `label`, `values` (e.g. `a:A;b:B`), `required`         |
+| `form:"dropdown"`               | Dropdown/select     | `label`, `values` (e.g. `a:A;b:B`), `required`         |
+| `form:"textarea"`               | Multi-line text     | `label`, `placeholder`, `rows`, `cols`, `maxlength`    |
 
-```go
-AcceptTerms bool   `form:"checkbox" label:"Accept Terms" required
-```
+Other supported tags:
+- `legend` — For grouping/nested structs (section title)
+- `description` — Field description/help text
 
-## Error Handling
-
-Implement the `FieldError` interface to handle form validation errors:
-
-```go
-type fieldError struct {
-    Field string
-    Issue string
-}
-
-func (fe fieldError) Error() string {
-    return fmt.Sprintf("%s: %s", fe.Field, fe.Issue)
-}
-
-func (fe fieldError) FieldError() (field, err string) {
-    return fe.Field, fe.Issue
-}
-```
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+---
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
