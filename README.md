@@ -84,6 +84,39 @@ tmpl := template.Must(template.New("form").Funcs(funcMap).Parse(`{{ form_render 
 Other supported tags:
 - `legend` — For grouping/nested structs (section title)
 - `description` — Field description/help text
+- `maxLength` — Maximum length for textarea or string input
+
+---
+
+## Validation
+
+### Built-in Validation
+- **required**: Ensures the field is not empty.
+- **min, max, step**: For numeric fields, enforces minimum, maximum, and step values.
+- **minLength, maxLength**: For string/textarea fields, enforces minimum and maximum character count (Unicode-aware).
+- **values**: For radios/dropdowns, ensures the value is one of the allowed options.
+- **Email format**: Checks for a valid email address format (basic @ check).
+- **Enumerator, Mapper, SortedMapper**: If a field implements one of these interfaces, the value must be present in the allowed set returned by Enum(), Mapper(), or SortedMapper().
+
+### Custom Validation
+You can add your own validation logic using the `validate` struct tag and by registering a custom validation function:
+
+```go
+// 1. Define your validation function (must return form.FieldErrors)
+func isHexColor(val any, field reflect.StructField) form.FieldErrors { /* ... */ }
+
+// 2. Register it with your Form instance
+f.RegisterValidationMethod("isHexColor", isHexColor)
+
+// 3. Use it in your struct
+type MyForm struct {
+    Color string `form:"input,text" label:"Color" validate:"isHexColor"`
+}
+
+// 4. Call f.ValidateForm(&myForm) to run both built-in and custom validations
+```
+
+Custom validators can be chained with commas in the `validate` tag. All errors are collected and can be rendered in your template.
 
 ---
 

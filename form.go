@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"reflect"
 	"strings"
 
 	"github.com/donseba/go-form/types"
@@ -14,13 +15,17 @@ type Info struct {
 	Method string `json:"method,omitempty"`
 }
 
+type ValidationFunc func(fieldValue any, fieldStruct reflect.StructField) FieldErrors
+
 type Form struct {
 	templateMap map[types.FieldType]map[types.InputFieldType]template.Template
+	validators  map[string]ValidationFunc
 }
 
 func NewForm(templateMap map[types.FieldType]map[types.InputFieldType]string) Form {
 	f := Form{
 		templateMap: make(map[types.FieldType]map[types.InputFieldType]template.Template),
+		validators:  make(map[string]ValidationFunc),
 	}
 
 	// First, create the base input template
@@ -84,7 +89,7 @@ func (f *Form) FuncMap() template.FuncMap {
 	}
 }
 
-func (f *Form) formRender(v any, errs []FieldError, kv ...any) (template.HTML, error) {
+func (f *Form) formRender(v any, errs FieldErrors, kv ...any) (template.HTML, error) {
 	tr, err := NewTransformer(v)
 	if err != nil {
 		return "", err
@@ -296,11 +301,22 @@ func (f *Form) formFieldHTML(field types.FormField, errorMap map[string][]string
 	return template.HTML(fieldSb.String()), nil
 }
 
+func (f *Form) RegisterValidationMethod(name string, fn ValidationFunc) {
+	f.validators[name] = fn
+}
+
+func (f *Form) GetValidationMethod(name string) (ValidationFunc, bool) {
+	fn, ok := f.validators[name]
+	return fn, ok
+}
+
+type FieldErrors []FieldError
+
 type FieldError interface {
 	FieldError() (field, err string)
 }
 
-func scanError(errs []FieldError) map[string][]string {
+func scanError(errs FieldErrors) map[string][]string {
 	ret := make(map[string][]string)
 	for _, err := range errs {
 		field, fieldErr := err.FieldError()
