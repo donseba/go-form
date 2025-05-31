@@ -4,7 +4,7 @@ import "github.com/donseba/go-form/types"
 
 var Plain = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeBase: {
-		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{.Field.Placeholder}}" {{if .Field.Required}}required{{end}} style="width: 100%; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #212529; background-color: #fff; border: 1px solid #ced4da; border-radius: 0.25rem; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
+		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{if .Field.Required}}required{{end}} style="width: 100%; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #212529; background-color: #fff; border: 1px solid #ced4da; border-radius: 0.25rem; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
 	},
 	types.FieldTypeInput: {
 		types.InputFieldTypeNone: `{{ baseInput "Type" "text" "Field" .Field}}`,
@@ -34,7 +34,7 @@ var Plain = map[types.FieldType]map[types.InputFieldType]string{
   <span id="{{.Field.Id}}_value" style="font-size: 0.875rem; color: #6c757d; min-width: 3rem; text-align: right;" aria-hidden="true">{{.Field.Value}}</span>
 </div>`,
 		types.InputFieldTypeImage:  `<input type="image" id="{{.Field.Id}}" name="{{.Field.Name}}" src="{{.Field.Value}}" alt="{{.Field.Label}}" style="width: 100%; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #212529; background-color: #fff; border: 1px solid #ced4da; border-radius: 0.25rem; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
-		types.InputFieldTypeSubmit: `<button type="submit" style="display: inline-block; font-weight: 400; text-align: center; white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; border-radius: 0.25rem; color: #fff; background-color: #0d6efd; border-color: #0d6efd; cursor: pointer; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;" {{ if eq .Field.Disabled true }}disabled{{end}} aria-labelledby="{{.Field.Id}}_label">{{.Field.Label}}</button>`,
+		types.InputFieldTypeSubmit: `<button type="submit" style="display: inline-block; font-weight: 400; text-align: center; white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; border-radius: 0.25rem; color: #fff; background-color: #0d6efd; border-color: #0d6efd; cursor: pointer; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;" {{ if eq .Field.Disabled true }}disabled{{end}} aria-labelledby="{{.Field.Id}}_label">{{ form_print .Loc .Field.Label }}</button>`,
 		types.InputFieldTypeHidden: `<input type="hidden" name="{{.Field.Name}}" value="{{.Field.Value}}">`,
 	},
 	types.FieldTypeCheckbox: {
@@ -73,7 +73,7 @@ var Plain = map[types.FieldType]map[types.InputFieldType]string{
 	},
 	types.FieldTypeTextArea: {
 		types.InputFieldTypeNone: `<div style="position: relative;">
-  <textarea id="{{.Field.Id}}" name="{{.Field.Name}}" rows="{{.Field.Rows}}" cols="{{.Field.Cols}}" placeholder="{{.Field.Placeholder}}" {{ if eq .Field.Required true }}required{{end}} style="width: 100%; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #212529; background-color: #fff; border: 1px solid #ced4da; border-radius: 0.25rem; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>{{.Field.Value}}</textarea>
+  <textarea id="{{.Field.Id}}" name="{{.Field.Name}}" rows="{{.Field.Rows}}" cols="{{.Field.Cols}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{ if eq .Field.Required true }}required{{end}} style="width: 100%; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #212529; background-color: #fff; border: 1px solid #ced4da; border-radius: 0.25rem; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>{{.Field.Value}}</textarea>
   {{ if .Field.MaxLength }}
   <div style="position: absolute; bottom: 0.5rem; right: 0.5rem; font-size: 0.75rem; color: #6c757d;" id="{{.Field.Id}}_count" aria-hidden="true">0/{{.Field.MaxLength}}</div>
   {{ end }}
@@ -93,7 +93,7 @@ var Plain = map[types.FieldType]map[types.InputFieldType]string{
 		types.InputFieldTypeNone: `{{range errors}}<div style="display: block; width: 100%; margin-top: 0.25rem; font-size: 0.75rem; color: #dc3545;" role="alert">{{.}}</div>{{end}}`,
 	},
 	types.FieldTypeLabel: {
-		types.InputFieldTypeNone: `<label {{with .Field.Id}}for="{{.}}"{{end}} style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 500; color: #212529;" {{with .Field.Id}}id="{{.}}_label"{{end}}>{{.Field.Label}}{{ if eq .Field.Required true }}<span style="color: #dc3545;" aria-hidden="true">*</span><span style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">(required)</span>{{end}}</label>`,
+		types.InputFieldTypeNone: `<label {{with .Field.Id}}for="{{.}}"{{end}} style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 500; color: #212529;" {{with .Field.Id}}id="{{.}}_label"{{end}}>{{ form_print .Loc .Field.Label}}{{ if eq .Field.Required true }}<span style="color: #dc3545;" aria-hidden="true">*</span><span style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">(required)</span>{{end}}</label>`,
 	},
 	types.FieldTypeWrapper: {
 		types.InputFieldTypeNone: `<div style="margin-bottom: 0.5rem;">
@@ -111,7 +111,7 @@ var Plain = map[types.FieldType]map[types.InputFieldType]string{
 		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" style="max-width: 32rem; margin: 0 auto; padding: 1rem; border: 1px solid #dee2e6; border-radius: 0.25rem; background-color: #fff; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);" novalidate>
   {{ fields }}
   <div style="margin-top: 1rem; text-align: right;">
-    <button type="submit" style="display: inline-block; font-weight: 400; text-align: center; white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; border-radius: 0.25rem; color: #fff; background-color: #0d6efd; border-color: #0d6efd; cursor: pointer; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;">Submit</button>
+    <button type="submit" style="display: inline-block; font-weight: 400; text-align: center; white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; border-radius: 0.25rem; color: #fff; background-color: #0d6efd; border-color: #0d6efd; cursor: pointer; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;">{{ form_print .Loc .Field.Label }}</button>
   </div>
 </form>`,
 	},

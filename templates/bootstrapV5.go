@@ -4,7 +4,7 @@ import "github.com/donseba/go-form/types"
 
 var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeBase: {
-		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{.Field.Placeholder}}" {{if .Field.Required}}required{{end}} class="form-control" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
+		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{if .Field.Required}}required{{end}} class="form-control" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
 	},
 	types.FieldTypeInput: {
 		types.InputFieldTypeNone: `{{ baseInput "Type" "text" "Field" .Field}}`,
@@ -41,7 +41,7 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
   <span id="{{.Field.Id}}_value" class="small text-muted" style="min-width: 3rem; text-align: right;" aria-hidden="true">{{.Field.Value}}</span>
 </div>`,
 		types.InputFieldTypeImage:  `<input type="image" id="{{.Field.Id}}" name="{{.Field.Name}}" src="{{.Field.Value}}" alt="{{.Field.Label}}" class="form-control" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
-		types.InputFieldTypeSubmit: `<button type="submit" class="btn btn-primary btn-sm" {{ if eq .Field.Disabled true }}disabled{{end}} aria-labelledby="{{.Field.Id}}_label">{{.Field.Label}}</button>`,
+		types.InputFieldTypeSubmit: `<button type="submit" class="btn btn-primary btn-sm" {{ if eq .Field.Disabled true }}disabled{{end}} aria-labelledby="{{.Field.Id}}_label">{{ form_print .Loc .Field.Label }}</button>`,
 		types.InputFieldTypeHidden: `<input type="hidden" name="{{.Field.Name}}" value="{{.Field.Value}}">`,
 	},
 	types.FieldTypeCheckbox: {
@@ -102,7 +102,7 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 		types.InputFieldTypeNone: `{{range errors}}<div class="invalid-feedback d-block small" role="alert">{{.}}</div>{{end}}`,
 	},
 	types.FieldTypeLabel: {
-		types.InputFieldTypeNone: `<label {{with .Field.Id}}for="{{.}}"{{end}} class="form-label small mb-1" {{with .Field.Id}}id="{{.}}_label"{{end}}>{{.Field.Label}}{{ if eq .Field.Required true }}<span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span>{{end}}</label>`,
+		types.InputFieldTypeNone: `<label {{with .Field.Id}}for="{{.}}"{{end}} class="form-label small mb-1" {{with .Field.Id}}id="{{.}}_label"{{end}}>{{ form_print .Loc .Field.Label }}{{ if eq .Field.Required true }}<span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden">(required)</span>{{end}}</label>`,
 	},
 	types.FieldTypeWrapper: {
 		types.InputFieldTypeNone: `<div class="mb-2">
@@ -120,7 +120,7 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" class="mx-auto border rounded shadow-sm p-3" style="max-width: 32rem;" novalidate>
   {{ fields }}
   <div class="d-grid gap-2 mt-3">
-    <button type="submit" class="btn btn-primary btn-sm" >Submit</button>
+    <button type="submit" class="btn btn-primary btn-sm">{{ form_print .Loc .Field.Label }}</button>
   </div>
 </form>`,
 	},

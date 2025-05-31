@@ -60,9 +60,11 @@ func TestValidateForm(t *testing.T) {
 		},
 	}
 
+	f := NewForm(nil)
+
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			errList := ValidateForm(&c.form)
+			errList := f.internalFormValidation(&c.form, &DefaultLocalizer{})
 			if len(errList) != c.errors {
 				t.Errorf("expected %d errors, got %d: %+v", c.errors, len(errList), errList)
 			}
@@ -97,9 +99,11 @@ func TestValidateForm_Values(t *testing.T) {
 		},
 	}
 
+	f := NewForm(nil)
+
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			errList := ValidateForm(&c.form)
+			errList := f.internalFormValidation(&c.form, &DefaultLocalizer{})
 			if len(errList) != c.errors {
 				t.Errorf("expected %d errors, got %d: %+v", c.errors, len(errList), errList)
 			}
@@ -175,7 +179,7 @@ func TestValidateForm_CustomValidation(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			errList := f.ValidateForm(&c.form)
+			errList := f.ValidateForm(&c.form, &DefaultLocalizer{})
 			if len(errList) != c.errors {
 				t.Errorf("expected %d errors, got %d: %+v", c.errors, len(errList), errList)
 			}
@@ -203,9 +207,12 @@ func TestValidateForm_Enumerator(t *testing.T) {
 		{"invalid enum", EnumForm{Color: "yellow"}, 1},
 		{"empty enum", EnumForm{Color: ""}, 0},
 	}
+
+	f := NewForm(nil)
+
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			errList := ValidateForm(&c.form)
+			errList := f.internalFormValidation(&c.form, &DefaultLocalizer{})
 			if len(errList) != c.errors {
 				t.Errorf("expected %d errors, got %d: %+v", c.errors, len(errList), errList)
 			}
@@ -235,9 +242,12 @@ func TestValidateForm_Mapper(t *testing.T) {
 		{"invalid map", MapForm{Color: "x"}, 1},
 		{"empty map", MapForm{Color: ""}, 0},
 	}
+
+	f := NewForm(nil)
+
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			errList := ValidateForm(&c.form)
+			errList := f.internalFormValidation(&c.form, &DefaultLocalizer{})
 			if len(errList) != c.errors {
 				t.Errorf("expected %d errors, got %d: %+v", c.errors, len(errList), errList)
 			}
@@ -278,9 +288,12 @@ func TestValidateForm_SortedMapper(t *testing.T) {
 		{"invalid sortedmap", SortedMapForm{Color: "x"}, 1},
 		{"empty sortedmap", SortedMapForm{Color: ""}, 0},
 	}
+
+	f := NewForm(nil)
+
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			errList := ValidateForm(&c.form)
+			errList := f.internalFormValidation(&c.form, &DefaultLocalizer{})
 			if len(errList) != c.errors {
 				t.Errorf("expected %d errors, got %d: %+v", c.errors, len(errList), errList)
 			}

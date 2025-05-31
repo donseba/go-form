@@ -96,7 +96,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			Type:   types.FieldTypeForm,
 			Target: info.Target,
 			Method: info.Method,
+			Label:  info.SubmitText,
 		}
+
 		fields = append(fields, formField)
 	}
 

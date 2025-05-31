@@ -8,6 +8,19 @@ import (
 	"unicode/utf8"
 )
 
+var (
+	TranslationKeyRequired            = "form.validation.required"
+	TranslationKeyMin                 = "form.validation.min"
+	TranslationKeyMax                 = "form.validation.max"
+	TranslationKeyMaxLength           = "form.validation.maxLength"
+	TranslationKeyMinLength           = "form.validation.minLength"
+	TranslationKeyInvalidValue        = "form.validation.invalidValue"
+	TranslationKeyInvalidEmail        = "form.validation.invalidEmail"
+	TranslationKeyInvalidEnum         = "form.validation.invalidEnum"
+	TranslationKeyInvalidMapper       = "form.validation.invalidMapper"
+	TranslationKeyInvalidSortedMapper = "form.validation.invalidSortedMapper"
+)
+
 type FieldValidationError struct {
 	Field string
 	Err   string
@@ -21,9 +34,9 @@ func (e FieldValidationError) FieldError() (field, err string) {
 	return e.Field, e.Err
 }
 
-// ValidateForm validates struct fields based on struct tags.
-// Returns a slice of FieldValidationError.
-func ValidateForm(form any) FieldErrors {
+// internalFormValidation validates struct fields based on struct tags.
+// Returns FieldErrors a slice or FieldError.
+func (f *Form) internalFormValidation(form any, loc Localizer) FieldErrors {
 	var errList FieldErrors
 	v := reflect.ValueOf(form)
 	if v.Kind() == reflect.Ptr {
@@ -39,7 +52,7 @@ func ValidateForm(form any) FieldErrors {
 		req := field.Tag.Get("required")
 		if req == "true" {
 			if isEmptyValue(value) {
-				errList = append(errList, FieldValidationError{Field: name, Err: "is required"})
+				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyRequired, nil)})
 			}
 		}
 
@@ -52,15 +65,15 @@ func ValidateForm(form any) FieldErrors {
 				val = value.Float()
 			}
 			if minTag := field.Tag.Get("min"); minTag != "" {
-				min, _ := strconv.ParseFloat(minTag, 64)
-				if val < min {
-					errList = append(errList, FieldValidationError{Field: name, Err: fmt.Sprintf("must be >= %v", min)})
+				minVal, _ := strconv.ParseFloat(minTag, 64)
+				if val < minVal {
+					errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyMin, minVal)})
 				}
 			}
 			if maxTag := field.Tag.Get("max"); maxTag != "" {
-				max, _ := strconv.ParseFloat(maxTag, 64)
-				if val > max {
-					errList = append(errList, FieldValidationError{Field: name, Err: fmt.Sprintf("must be <= %v", max)})
+				maxVal, _ := strconv.ParseFloat(maxTag, 64)
+				if val > maxVal {
+					errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyMax, maxVal)})
 				}
 			}
 		}
@@ -69,7 +82,7 @@ func ValidateForm(form any) FieldErrors {
 		if (value.Kind() == reflect.String) && field.Tag.Get("maxLength") != "" {
 			maxLen, err := strconv.Atoi(field.Tag.Get("maxLength"))
 			if err == nil && utf8.RuneCountInString(value.String()) > maxLen {
-				errList = append(errList, FieldValidationError{Field: name, Err: fmt.Sprintf("must be at most %d characters", maxLen)})
+				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyMaxLength, maxLen)})
 			}
 		}
 
@@ -77,7 +90,7 @@ func ValidateForm(form any) FieldErrors {
 		if (value.Kind() == reflect.String) && field.Tag.Get("minLength") != "" {
 			minLen, err := strconv.Atoi(field.Tag.Get("minLength"))
 			if err == nil && utf8.RuneCountInString(value.String()) < minLen {
-				errList = append(errList, FieldValidationError{Field: name, Err: fmt.Sprintf("must be at least %d characters", minLen)})
+				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyMinLength, minLen)})
 			}
 		}
 
@@ -94,7 +107,7 @@ func ValidateForm(form any) FieldErrors {
 			}
 			if value.String() != "" {
 				if _, ok := allowed[value.String()]; !ok {
-					errList = append(errList, FieldValidationError{Field: name, Err: "has an invalid value"})
+					errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyInvalidValue, value.String())})
 				}
 			}
 		}
@@ -102,7 +115,7 @@ func ValidateForm(form any) FieldErrors {
 		// Email format (simple check)
 		if field.Tag.Get("form") == "input,email" && value.Kind() == reflect.String {
 			if val := value.String(); val != "" && !strings.Contains(val, "@") {
-				errList = append(errList, FieldValidationError{Field: name, Err: "must be a valid email address"})
+				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyInvalidEmail, nil)})
 			}
 		}
 
@@ -118,7 +131,7 @@ func ValidateForm(form any) FieldErrors {
 				}
 			}
 			if !found && valStr != "" {
-				errList = append(errList, FieldValidationError{Field: name, Err: "has an invalid value (not in Enum)"})
+				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyInvalidEnum, valStr)})
 			}
 		}
 
@@ -127,7 +140,7 @@ func ValidateForm(form any) FieldErrors {
 			maps := value.Interface().(Mapper).Mapper()
 			valStr := fmt.Sprint(value.Interface())
 			if _, ok := maps[valStr]; !ok && valStr != "" {
-				errList = append(errList, FieldValidationError{Field: name, Err: "has an invalid value (not in Mapper)"})
+				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyInvalidMapper, valStr)})
 			}
 		}
 
@@ -143,15 +156,26 @@ func ValidateForm(form any) FieldErrors {
 				}
 			}
 			if !found && valStr != "" {
-				errList = append(errList, FieldValidationError{Field: name, Err: "has an invalid value (not in SortedMapper)"})
+				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyInvalidSortedMapper, valStr)})
 			}
 		}
 	}
 	return errList
 }
 
-func (f *Form) ValidateForm(form any) FieldErrors {
-	errList := ValidateForm(form) // built-in validations
+func (f *Form) validationErrorTranslated(loc Localizer, key string, args ...any) string {
+	if f.translationEnabled && f.translationFunc != nil {
+		if len(args) == 1 && args[0] == nil {
+			return f.translationFunc(loc, key)
+		}
+
+		return f.translationFunc(loc, key, args...)
+	}
+	return fmt.Sprintf(key, args...)
+}
+
+func (f *Form) ValidateForm(form any, loc Localizer) FieldErrors {
+	errList := f.internalFormValidation(form, loc) // built-in validations
 
 	v := reflect.ValueOf(form)
 	if v.Kind() == reflect.Ptr {
@@ -192,6 +216,9 @@ func isEmptyValue(v reflect.Value) bool {
 		return v.Len() == 0
 	case reflect.Ptr, reflect.Interface:
 		return v.IsNil()
+	default:
+		// For unhandled kinds, treat as empty only if zero value
+		z := reflect.Zero(v.Type())
+		return reflect.DeepEqual(v.Interface(), z.Interface())
 	}
-	return false
 }

@@ -120,6 +120,54 @@ Custom validators can be chained with commas in the `validate` tag. All errors a
 
 ---
 
+## Translation / Internationalization
+
+go-form supports translation of form labels, error messages, and other UI text. You can provide your own translation function and a Localizer implementation to render forms in different languages or customize the wording for your application.
+
+### How to Use
+
+1. **Create a translation function**: This function receives a Localizer, a key, and optional arguments, and returns the translated string.
+2. **Implement a Localizer**: This determines the current locale (e.g., from the user session or request).
+3. **Create the form with translation support**: Use `form.NewTranslatedForm(template, translateFunc)`.
+4. **Pass your Localizer when rendering or validating**: The form will use your translation function and Localizer to fetch translations.
+
+```go
+// Example translation function and Localizer
+var translations = map[string]map[string]string{
+    "en": {"Name": "Name", "form.validation.required": "is required"},
+    "it": {"Name": "Nome", "form.validation.required": "è obbligatorio"},
+}
+
+type MyLocalizer struct { Locale string }
+func (l MyLocalizer) GetLocale() string { return l.Locale }
+
+func myTranslate(loc form.Localizer, key string, args ...any) string {
+    locale := "en"
+    if l, ok := loc.(MyLocalizer); ok {
+        locale = l.Locale
+    }
+    msg := key
+    if m, ok := translations[locale]; ok {
+        if t, ok := m[key]; ok {
+            msg = t
+        }
+    }
+    if len(args) > 0 {
+        return fmt.Sprintf(msg, args...)
+    }
+    return msg
+}
+
+f := form.NewTranslatedForm(templates.Plain, myTranslate)
+// When rendering or validating, pass your Localizer:
+loc := MyLocalizer{Locale: "it"}
+// ...
+```
+
+See the example in `example/translation/main.go` for a complete usage demonstration.
+
+---
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

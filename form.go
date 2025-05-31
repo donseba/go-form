@@ -10,26 +10,69 @@ import (
 	"github.com/donseba/go-form/types"
 )
 
-type Info struct {
-	Target string `json:"target,omitempty"`
-	Method string `json:"method,omitempty"`
+type (
+	Localizer interface {
+		// GetLocale returns the locale of the localizer, ie. "en_US"
+		GetLocale() string
+	}
+
+	DefaultLocalizer struct{}
+
+	TranslationFunc func(loc Localizer, key string, args ...any) string
+	ValidationFunc  func(fieldValue any, fieldStruct reflect.StructField) FieldErrors
+
+	FieldErrors []FieldError
+
+	FieldError interface {
+		FieldError() (field, err string)
+	}
+
+	Info struct {
+		Target     string `json:"target,omitempty"`
+		Method     string `json:"method,omitempty"`
+		SubmitText string `json:"submit,omitempty"`
+	}
+
+	Form struct {
+		templateMap        map[types.FieldType]map[types.InputFieldType]template.Template
+		validators         map[string]ValidationFunc
+		translationEnabled bool
+		translationFunc    TranslationFunc
+	}
+)
+
+func (d *DefaultLocalizer) GetLocale() string {
+	return "en" // Default locale
 }
 
-type ValidationFunc func(fieldValue any, fieldStruct reflect.StructField) FieldErrors
-
-type Form struct {
-	templateMap map[types.FieldType]map[types.InputFieldType]template.Template
-	validators  map[string]ValidationFunc
-}
-
-func NewForm(templateMap map[types.FieldType]map[types.InputFieldType]string) Form {
-	f := Form{
+func NewTranslatedForm(templateMap map[types.FieldType]map[types.InputFieldType]string, translationFunc TranslationFunc) *Form {
+	f := &Form{
 		templateMap: make(map[types.FieldType]map[types.InputFieldType]template.Template),
 		validators:  make(map[string]ValidationFunc),
 	}
 
+	f.enableTranslation(translationFunc)
+
+	return f.init(templateMap)
+}
+
+func NewForm(templateMap map[types.FieldType]map[types.InputFieldType]string) *Form {
+	f := &Form{
+		templateMap: make(map[types.FieldType]map[types.InputFieldType]template.Template),
+		validators:  make(map[string]ValidationFunc),
+	}
+
+	return f.init(templateMap)
+}
+
+func (f *Form) init(templateMap map[types.FieldType]map[types.InputFieldType]string) *Form {
 	// First, create the base input template
-	baseInputTpl, _ := template.New("baseInput").Parse(templateMap[types.FieldTypeBase][types.InputFieldTypeNone])
+	baseInputTpl, err := template.New("baseInput").Funcs(map[string]any{
+		"form_print": func(loc Localizer, key string, args ...any) string { return "" },
+	}).Parse(templateMap[types.FieldTypeBase][types.InputFieldTypeNone])
+	if err != nil {
+		panic(fmt.Errorf("error parsing base input template: %w", err))
+	}
 
 	for fieldType, inputTemplates := range templateMap {
 		f.templateMap[fieldType] = make(map[types.InputFieldType]template.Template)
@@ -47,6 +90,17 @@ func NewForm(templateMap map[types.FieldType]map[types.InputFieldType]string) Fo
 				"field":  func() template.HTML { return "" }, // Placeholder for field rendering
 				"fields": func() template.HTML { return "" }, // Placeholder for group fields
 				"label":  func() template.HTML { return "" }, // Placeholder for label rendering
+				"form_print": func(loc Localizer, key string, args ...any) string {
+					if f.translationEnabled && f.translationFunc != nil {
+						return f.translationFunc(loc, key, args...)
+					}
+
+					if len(args) > 0 {
+						return fmt.Sprintf(key, args...)
+					}
+
+					return key
+				},
 				"baseInput": func(kv ...any) template.HTML {
 					if baseInputTpl == nil {
 						return template.HTML("base input template not defined")
@@ -83,13 +137,30 @@ func NewForm(templateMap map[types.FieldType]map[types.InputFieldType]string) Fo
 	return f
 }
 
+// EnableTranslation enables translation support for the form package.
+func (f *Form) enableTranslation(fn TranslationFunc) {
+	f.translationEnabled = true
+	f.translationFunc = fn
+}
+
 func (f *Form) FuncMap() template.FuncMap {
-	return template.FuncMap{
-		"form_render": f.formRender,
+	funcMap := template.FuncMap{
+		"form_render":           f.formRender,
+		"form_render_localized": f.formRenderLocalized,
 	}
+
+	return funcMap
 }
 
 func (f *Form) formRender(v any, errs FieldErrors, kv ...any) (template.HTML, error) {
+	return f.formRenderFunc(&DefaultLocalizer{}, v, errs, kv...)
+}
+
+func (f *Form) formRenderLocalized(loc Localizer, v any, errs FieldErrors, kv ...any) (template.HTML, error) {
+	return f.formRenderFunc(loc, v, errs, kv...)
+}
+
+func (f *Form) formRenderFunc(loc Localizer, v any, errs FieldErrors, kv ...any) (template.HTML, error) {
 	tr, err := NewTransformer(v)
 	if err != nil {
 		return "", err
@@ -134,23 +205,24 @@ func (f *Form) formRender(v any, errs FieldErrors, kv ...any) (template.HTML, er
 			}
 
 			var sb strings.Builder
-			gtpl = gtpl.Funcs(template.FuncMap{
+
+			funcMap := template.FuncMap{
 				"fields": func() template.HTML {
-					var subhtml template.HTML
+					var subHTML template.HTML
 
 					for _, subField := range field.Fields {
 						fMap := copyMap(data)
 						fMap["Field"] = field
 
-						fieldhtml, err := f.formFieldHTML(subField, fieldErrors, fMap)
+						fieldHTML, err := f.formFieldHTML(loc, subField, fieldErrors, fMap)
 						if err != nil {
 							continue
 						}
 
-						subhtml = subhtml + fieldhtml
+						subHTML = subHTML + fieldHTML
 					}
 
-					return subhtml
+					return subHTML
 				},
 				"errors": func() []string {
 					if errs, ok := fieldErrors[field.Name]; ok {
@@ -158,10 +230,13 @@ func (f *Form) formRender(v any, errs FieldErrors, kv ...any) (template.HTML, er
 					}
 					return nil
 				},
-			})
+			}
+
+			gtpl = gtpl.Funcs(funcMap)
 
 			fMap := copyMap(data)
 			fMap["Field"] = field
+			fMap["Loc"] = loc
 
 			err = gtpl.Execute(&sb, fMap)
 			if err != nil {
@@ -172,7 +247,7 @@ func (f *Form) formRender(v any, errs FieldErrors, kv ...any) (template.HTML, er
 			continue
 		}
 
-		fieldHTML, err := f.formFieldHTML(field, fieldErrors, data)
+		fieldHTML, err := f.formFieldHTML(loc, field, fieldErrors, data)
 		if err != nil {
 			return "", fmt.Errorf("error generating field HTML for field type %s with inputType %s, : %w", field.Type, field.InputType, err)
 		}
@@ -199,8 +274,10 @@ func (f *Form) formRender(v any, errs FieldErrors, kv ...any) (template.HTML, er
 
 		formData := struct {
 			Field types.FormField
+			Loc   Localizer
 		}{
 			Field: *formField,
+			Loc:   loc,
 		}
 
 		err = formTmpl.Execute(&sb, formData)
@@ -214,7 +291,7 @@ func (f *Form) formRender(v any, errs FieldErrors, kv ...any) (template.HTML, er
 	return html, nil
 }
 
-func (f *Form) formFieldHTML(field types.FormField, errorMap map[string][]string, data map[string]any) (template.HTML, error) {
+func (f *Form) formFieldHTML(loc Localizer, field types.FormField, errorMap map[string][]string, data map[string]any) (template.HTML, error) {
 	tmp, ok := f.templateMap[field.Type][field.InputType]
 	if !ok {
 		return "", errors.New("template not found for field type: " + string(field.Type) + " and input type: " + string(field.InputType))
@@ -227,6 +304,7 @@ func (f *Form) formFieldHTML(field types.FormField, errorMap map[string][]string
 
 	fMap := copyMap(data)
 	fMap["Field"] = field
+	fMap["Loc"] = loc
 
 	// generate label for the field
 	labelTmp, ok := f.templateMap[types.FieldTypeLabel][types.InputFieldTypeNone]
@@ -308,12 +386,6 @@ func (f *Form) RegisterValidationMethod(name string, fn ValidationFunc) {
 func (f *Form) GetValidationMethod(name string) (ValidationFunc, bool) {
 	fn, ok := f.validators[name]
 	return fn, ok
-}
-
-type FieldErrors []FieldError
-
-type FieldError interface {
-	FieldError() (field, err string)
 }
 
 func scanError(errs FieldErrors) map[string][]string {

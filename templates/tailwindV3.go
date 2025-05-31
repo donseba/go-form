@@ -4,7 +4,7 @@ import "github.com/donseba/go-form/types"
 
 var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeBase: {
-		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{.Field.Placeholder}}" {{if .Field.Required}}required{{end}} class="border border-gray-200 block w-full rounded-md px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
+		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{if .Field.Required}}required{{end}} class="border border-gray-200 block w-full rounded-md px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
 	},
 	types.FieldTypeInput: {
 		types.InputFieldTypeNone: `{{ baseInput "Type" "text" "Field" .Field}}`,
@@ -34,7 +34,7 @@ var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
   <span id="{{.Field.Id}}_value" class="text-sm text-gray-500 min-w-[3rem] text-right" aria-hidden="true">{{.Field.Value}}</span>
 </div>`,
 		types.InputFieldTypeImage:  `<input type="image" id="{{.Field.Id}}" name="{{.Field.Name}}" src="{{.Field.Value}}" alt="{{.Field.Label}}" class="border border-gray-200 block w-full rounded-md px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
-		types.InputFieldTypeSubmit: `<button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed" {{ if eq .Field.Disabled true }}disabled{{end}} aria-labelledby="{{.Field.Id}}_label">{{.Field.Label}}</button>`,
+		types.InputFieldTypeSubmit: `<button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed" {{ if eq .Field.Disabled true }}disabled{{end}} aria-labelledby="{{.Field.Id}}_label">{{ form_print .Loc .Field.Label }}</button>`,
 		types.InputFieldTypeHidden: `<input type="hidden" name="{{.Field.Name}}" value="{{.Field.Value}}">`,
 	},
 	types.FieldTypeCheckbox: {
@@ -93,7 +93,7 @@ var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
 		types.InputFieldTypeNone: `{{range errors}}<div class="mt-1 text-sm text-red-600" role="alert">{{.}}</div>{{end}}`,
 	},
 	types.FieldTypeLabel: {
-		types.InputFieldTypeNone: `<label {{with .Field.Id}}for="{{.}}"{{end}} class="block text-sm font-medium leading-6 text-gray-900" {{with .Field.Id}}id="{{.}}_label"{{end}}>{{.Field.Label}}{{ if eq .Field.Required true }}<span class="text-red-500" aria-hidden="true">*</span><span class="sr-only">(required)</span>{{end}}</label>`,
+		types.InputFieldTypeNone: `<label {{with .Field.Id}}for="{{.}}"{{end}} class="block text-sm font-medium leading-6 text-gray-900" {{with .Field.Id}}id="{{.}}_label"{{end}}>{{ form_print .Loc .Field.Label}}{{ if eq .Field.Required true }}<span class="text-red-500" aria-hidden="true">*</span><span class="sr-only">(required)</span>{{end}}</label>`,
 	},
 	types.FieldTypeWrapper: {
 		types.InputFieldTypeNone: `<div class="mb-2">
@@ -111,7 +111,7 @@ var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
 		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" class="mx-auto max-w-md rounded-lg border border-gray-200 bg-white p-4 shadow-sm" novalidate>
   {{ fields }}
   <div class="mt-4 flex justify-end">
-    <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">Submit</button>
+    <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">{{ form_print .Loc .Field.Label }}</button>
   </div>
 </form>`,
 	},
