@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/donseba/go-form/types"
 )
 
 const (
@@ -12,9 +14,9 @@ const (
 	tagLabel       = "label"
 	tagPlaceholder = "placeholder"
 	tagRequired    = "required"
-	tagInputType   = "inputType"
 	tagLegend      = "legend"
-	tagType        = "type"
+	tagValues      = "values"
+	tagForm        = "form"
 	tagStep        = "step"
 	tagRows        = "rows"
 	tagCols        = "cols"
@@ -27,7 +29,7 @@ type (
 		String() string
 	}
 
-	// SortedMapper is new addition to provide sorted key value pairs
+	// SortedMapper is a new addition to provide sorted key value pairs
 	SortedMapper interface {
 		String() string
 		SortedMapper() []SortedMap
@@ -82,7 +84,24 @@ func (t *Transformer) JSON() json.RawMessage {
 func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names ...string) ([]FormField, error) {
 	var fields []FormField
 
+	// Check for form metadata
+	if rType.Field(0).Anonymous && rType.Field(0).Type == reflect.TypeOf(Info{}) {
+		info := rValue.Field(0).Interface().(Info)
+
+		formField := FormField{
+			Type:   types.FieldTypeForm,
+			Target: info.Target,
+			Method: info.Method,
+		}
+		fields = append(fields, formField)
+	}
+
 	for i := 0; i < rType.NumField(); i++ {
+		// Skip the Info field as we've already processed it
+		if i == 0 && rType.Field(i).Anonymous && rType.Field(i).Type == reflect.TypeOf(Info{}) {
+			continue
+		}
+
 		tags := rType.Field(i).Tag
 
 		name := tags.Get(tagName)
@@ -93,10 +112,21 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 		nname := append(names, name)
 		field := FormField{
+			Id:          strings.Join(nname, "."),
 			Label:       tags.Get(tagLabel),
 			Placeholder: tags.Get(tagPlaceholder),
 			Name:        strings.Join(nname, "."),
 			Value:       rValue.Field(i).Interface(),
+		}
+
+		formTag := tags.Get(tagForm)
+		if strings.Contains(formTag, ",") {
+			// If the tag contains a comma, it is a form field
+			field.Type = types.FieldType(strings.Split(formTag, ",")[0])
+			field.InputType = types.InputFieldType(strings.Split(formTag, ",")[1])
+		} else {
+			// Otherwise, it is a regular input field
+			field.Type = types.FieldType(formTag)
 		}
 
 		if field.Label == "" {
@@ -118,11 +148,50 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				})
 			}
 
-			field.Type = FieldTypeDropdown
+			field.Type = types.FieldTypeDropdown
 			field.Values = fieldValue
 
 			fields = append(fields, field)
 
+			continue
+		}
+
+		if rType.Field(i).Tag.Get(tagValues) != "" {
+			// If the tag contains values, it is a dropdown or radio field
+			values := strings.Split(rType.Field(i).Tag.Get(tagValues), ";")
+			var fieldValue []FieldValue
+			for _, v := range values {
+				if strings.Contains(v, ":") {
+					parts := strings.SplitN(v, ":", 2)
+					if len(parts) != 2 {
+						return nil, fmt.Errorf("invalid value format in tag %s for field %s", tagValues, fieldName)
+					}
+					fieldValue = append(fieldValue, FieldValue{
+						Value:    strings.TrimSpace(parts[0]),
+						Name:     strings.TrimSpace(parts[1]),
+						Disabled: false,
+					})
+					continue
+				}
+
+				fieldValue = append(fieldValue, FieldValue{
+					Value:    v,
+					Name:     v,
+					Disabled: false,
+				})
+			}
+
+			// Set the field type based on the form tag
+			if field.Type == types.FieldTypeRadios {
+				field.Values = fieldValue
+			} else if field.Type == types.FieldTypeDropdown {
+				field.Values = fieldValue
+			} else {
+				field.Type = types.FieldTypeDropdown
+				field.Values = fieldValue
+			}
+
+			fields = append(fields, field)
 			continue
 		}
 
@@ -137,7 +206,7 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				})
 			}
 
-			field.Type = FieldTypeDropdownMapped
+			field.Type = types.FieldTypeDropdownMapped
 			field.Values = fieldValue
 
 			fields = append(fields, field)
@@ -156,14 +225,12 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				})
 			}
 
-			field.Type = FieldTypeDropdownMapped
+			field.Type = types.FieldTypeDropdownMapped
 			field.Values = fieldValue
 
 			fields = append(fields, field)
 			continue
 		}
-
-		inputType := InputFieldType(tags.Get(tagInputType))
 
 		fType := rType.Field(i).Type
 		fValue := rValue.Field(i)
@@ -180,17 +247,6 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 		switch fType.Kind() {
 		case reflect.String:
-			if inputType == "" {
-				inputType = InputFieldTypeText
-			}
-
-			typ := FieldType(tags.Get(tagType))
-			if typ == "" {
-				typ = FieldTypeInput
-			}
-
-			field.Type = typ
-			field.InputType = inputType
 			if tags.Get(tagRows) != "" {
 				field.Rows = tags.Get(tagRows)
 			}
@@ -200,12 +256,11 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 
-			if inputType == "" {
-				inputType = InputFieldTypeNumber
+			if field.InputType == "" {
+				field.InputType = types.InputFieldTypeNumber
 			}
 
-			field.Type = FieldTypeInput
-			field.InputType = inputType
+			field.Type = types.FieldTypeInput
 
 			if tags.Get(tagStep) != "" {
 				field.Step = tags.Get(tagStep)
@@ -213,12 +268,11 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				field.Step = "1"
 			}
 		case reflect.Float32, reflect.Float64:
-			if inputType == "" {
-				inputType = InputFieldTypeNumber
+			if field.InputType == "" {
+				field.InputType = types.InputFieldTypeNumber
 			}
 
-			field.Type = FieldTypeInput
-			field.InputType = inputType
+			field.Type = types.FieldTypeInput
 
 			if tags.Get(tagStep) != "" {
 				field.Step = tags.Get(tagStep)
@@ -226,22 +280,35 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				field.Step = "any"
 			}
 		case reflect.Bool:
-			fieldType := FieldTypeCheckbox
+			fieldType := types.FieldTypeCheckbox
 			if len(names) > 0 && names[len(names)-1] == name {
 				// radio-options use the same 'name' as their parent for grouping
-				fieldType = FieldTypeRadios
+				fieldType = types.FieldTypeRadios
+				field.InputType = types.InputFieldTypeRadioStruct // Set the new input type for struct-based radio buttons
 			}
 
 			field.Type = fieldType
 
-			// replace last slice element with the field name
+			// replace the last slice element with the field name
 			nname[len(nname)-1] = fieldName
 			field.Id = strings.Join(nname, ".")
+
+			// For radio buttons, set the value to the field name if checked
+			if fieldType == types.FieldTypeRadios {
+				if rValue.Field(i).Bool() {
+					field.Value = fieldName
+				} else {
+					field.Value = "" // Set empty value when false
+				}
+			}
 		case reflect.Slice, reflect.Array:
 		case reflect.Map:
 		case reflect.Struct:
-			field.Type = FieldTypeGroup
+			field.Type = types.FieldTypeGroup
 			field.Legend = tags.Get(tagLegend)
+			if field.Legend == "" {
+				field.Legend = field.Label
+			}
 
 			var err error
 			field.Fields, err = t.scanModel(fValue, fType, nname...)

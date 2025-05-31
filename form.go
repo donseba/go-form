@@ -2,20 +2,39 @@ package form
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"strings"
+
+	"github.com/donseba/go-form/types"
 )
 
 type Form struct {
-	template      template.Template
-	groupTemplate template.Template
+	templateMap map[types.FieldType]map[types.InputFieldType]template.Template
 }
 
-func NewForm(template, groupTemplate template.Template) Form {
-	return Form{
-		template:      template,
-		groupTemplate: groupTemplate,
+func NewForm(templateMap map[types.FieldType]map[types.InputFieldType]string) Form {
+	f := Form{
+		templateMap: make(map[types.FieldType]map[types.InputFieldType]template.Template),
 	}
+
+	for fieldType, inputTemplates := range templateMap {
+		f.templateMap[fieldType] = make(map[types.InputFieldType]template.Template)
+		for inputType, tpl := range inputTemplates {
+			t, err := template.New(inputType.String()).Funcs(map[string]any{
+				"errors": func() []string { return nil },     // Placeholder for error handling
+				"field":  func() template.HTML { return "" }, // Placeholder for field rendering
+				"fields": func() template.HTML { return "" }, // Placeholder for group fields
+				"label":  func() template.HTML { return "" }, // Placeholder for label rendering
+			}).Parse(tpl)
+			if err != nil {
+				panic(err) // Handle error appropriately in production code
+			}
+			f.templateMap[fieldType][inputType] = *t
+		}
+	}
+
+	return f
 }
 
 func (f *Form) FuncMap() template.FuncMap {
@@ -24,7 +43,7 @@ func (f *Form) FuncMap() template.FuncMap {
 	}
 }
 
-func (f *Form) formRender(v interface{}, errs []FieldError, kv ...any) (template.HTML, error) {
+func (f *Form) formRender(v any, errs []FieldError, kv ...any) (template.HTML, error) {
 	tr, err := NewTransformer(v)
 	if err != nil {
 		return "", err
@@ -48,9 +67,22 @@ func (f *Form) formRender(v interface{}, errs []FieldError, kv ...any) (template
 	}
 
 	var html template.HTML
-	for _, field := range tr.Fields {
-		if field.Type == FieldTypeGroup {
-			gtpl, err := f.groupTemplate.Clone()
+
+	var formField *FormField
+	for i, field := range tr.Fields {
+		if field.Type == types.FieldTypeForm {
+			formField = &tr.Fields[i]
+
+			continue // Skip the form field itself, as it's handled separately
+		}
+
+		if field.Type == types.FieldTypeGroup {
+			tmpl, ok := f.templateMap[types.FieldTypeGroup][types.InputFieldTypeNone]
+			if !ok {
+				return "", errors.New("group template not found for field type: " + string(field.InputType))
+			}
+
+			gtpl, err := tmpl.Clone()
 			if err != nil {
 				return "", err
 			}
@@ -87,7 +119,7 @@ func (f *Form) formRender(v interface{}, errs []FieldError, kv ...any) (template
 
 			err = gtpl.Execute(&sb, fMap)
 			if err != nil {
-				return "", err
+				return "", fmt.Errorf("error executing group template: %w", err)
 			}
 			html = html + template.HTML(sb.String())
 
@@ -96,39 +128,131 @@ func (f *Form) formRender(v interface{}, errs []FieldError, kv ...any) (template
 
 		fieldHTML, err := f.formFieldHTML(field, fieldErrors, data)
 		if err != nil {
+			return "", fmt.Errorf("error generating field HTML for field type %s with inputType %s, : %w", field.Type, field.InputType, err)
+		}
+		html = html + fieldHTML
+	}
+
+	if formField != nil {
+		tmpl, ok := f.templateMap[types.FieldTypeForm][types.InputFieldTypeNone]
+		if !ok {
+			return "", errors.New("form template not found for field type: " + string(types.FieldTypeForm))
+		}
+
+		formTmpl, err := tmpl.Clone()
+		if err != nil {
 			return "", err
 		}
 
-		html = html + fieldHTML
+		var sb strings.Builder
+		formTmpl = formTmpl.Funcs(template.FuncMap{
+			"fields": func() template.HTML {
+				return html
+			},
+		})
+
+		formData := struct {
+			Field FormField
+		}{
+			Field: *formField,
+		}
+
+		err = formTmpl.Execute(&sb, formData)
+		if err != nil {
+			return "", err
+		}
+
+		return template.HTML(sb.String()), nil
 	}
+
 	return html, nil
 }
 
-func (f *Form) formFieldHTML(field FormField, errors map[string][]string, data map[string]any) (template.HTML, error) {
-	tpl, err := f.template.Clone()
+func (f *Form) formFieldHTML(field FormField, errorMap map[string][]string, data map[string]any) (template.HTML, error) {
+	tmp, ok := f.templateMap[field.Type][field.InputType]
+	if !ok {
+		return "", errors.New("template not found for field type: " + string(field.Type) + " and input type: " + string(field.InputType))
+	}
+
+	tpl, err := tmp.Clone()
 	if err != nil {
 		return "", err
 	}
 
-	var sb strings.Builder
+	fMap := copyMap(data)
+	fMap["Field"] = field
+
+	// generate label for the field
+	labelTmp, ok := f.templateMap[types.FieldTypeLabel][types.InputFieldTypeNone]
+	if !ok {
+		return "", errors.New("label template not found for field type: " + string(types.FieldTypeLabel))
+	}
+
+	labelTpl, err := labelTmp.Clone()
+	if err != nil {
+		return "", err
+	}
+
+	var labelSb strings.Builder
+	err = labelTpl.Execute(&labelSb, fMap)
+	if err != nil {
+		return "", err
+	}
+
+	var fieldSb strings.Builder
 	tpl = tpl.Funcs(template.FuncMap{
+		"label": func() template.HTML {
+			return template.HTML(labelSb.String())
+		},
 		"errors": func() []string {
-			if errs, ok := errors[field.Name]; ok {
+			if errs, ok := errorMap[field.Name]; ok {
 				return errs
 			}
 			return nil
 		},
 	})
 
-	fMap := copyMap(data)
-	fMap["Field"] = field
-
-	err = tpl.Execute(&sb, fMap)
+	err = tpl.Execute(&fieldSb, fMap)
 	if err != nil {
 		return "", err
 	}
 
-	return template.HTML(sb.String()), nil
+	// Skip wrapper for hidden fields
+	if field.InputType == types.InputFieldTypeHidden {
+		return template.HTML(fieldSb.String()), nil
+	}
+
+	// Check if we have a wrapper template
+	if wrapperTmp, ok := f.templateMap[types.FieldTypeWrapper][types.InputFieldTypeNone]; ok {
+		wrapperTpl, err := wrapperTmp.Clone()
+		if err != nil {
+			return "", err
+		}
+
+		var wrapperSb strings.Builder
+		wrapperTpl = wrapperTpl.Funcs(template.FuncMap{
+			"field": func() template.HTML {
+				return template.HTML(fieldSb.String())
+			},
+			"label": func() template.HTML {
+				return template.HTML(labelSb.String())
+			},
+			"errors": func() []string {
+				if errs, ok := errorMap[field.Name]; ok {
+					return errs
+				}
+				return nil
+			},
+		})
+
+		err = wrapperTpl.Execute(&wrapperSb, fMap)
+		if err != nil {
+			return "", err
+		}
+		return template.HTML(wrapperSb.String()), nil
+	}
+
+	return template.HTML(fieldSb.String()), nil
 }
 
 type FieldError interface {

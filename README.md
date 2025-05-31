@@ -1,103 +1,69 @@
 # go-form
 
-Render forms in go based on struct layout, and tags. 
+A flexible Go package for generating and rendering HTML forms from struct definitions, supporting multiple template engines and easy customization.
 
-Please note that this package is a pre-alfa release and mainly only a visualization of my initial thought. 
-I am also trying to keep the footprint as low as possible without using third party packages.
+## Features
 
-it can convert to following data: 
-```go	
-data := struct {
-    Form   ExampleForm
-    Errors []form.FieldError
-}{
-    Form: ExampleForm{
-        Name:     "John Wick",
-        Email:    "john.wick@gmail.com",
-        Date:     "1991-11-11",
-        Password: "Secret123!",
-        Address: &AddressBlock{
-            Street1: "121 Mill Neck",
-            City:    "Long Island",
-            State:   "NY",
-            Zip:     "11765",
-        },
-        Enums:     ExampleEnumFieldValue2,
-        CheckBox:  true,
-        CheckBox2: false,
-        RadioGroup: &RadioGroupBlock{
-            Option2: true,
-        },
-    },
-    Errors: []form.FieldError{
-        fieldError{
-            Field: "Email",
-            Issue: "is already taken",
-        },
-        fieldError{
-            Field: "Address.Street1",
-            Issue: "is required",
-        },
-    },
+- **Automatic form generation** from Go structs and tags
+- **Multiple template sets**: Plain HTML, Bootstrap 5, Tailwind CSS, or your own
+- **Supports all common field types**: input, checkbox, radio, dropdown, textarea
+- **Nested groups** and fieldsets
+- **Customizable error handling and validation**
+- **Easy integration** with `html/template`
+
+## Installation
+
+```bash
+go get github.com/donseba/go-form
+```
+
+## Quick Start
+
+```go
+import (
+    "github.com/donseba/go-form"
+    "html/template"
+)
+
+type MyForm struct {
+    Username string `form:"input,text" label:"Username" required:"true"`
+    Password string `form:"input,password" label:"Password" required:"true"`
+    Email    string `form:"input,email" label:"Email"`
 }
+
+f := form.NewForm(form.DefaultTemplates) // or form.DefaultBootstrapTemplates, etc.
+tmpl := template.Must(template.New("page").Funcs(f.FuncMap()).Parse(`{{ form_render .Form .Errors }}`))
 ```
 
-into:
+## Templates
 
-![](example/example-go-form.png)
+Choose from built-in template sets or define your own. Example sets:
+- `form.DefaultTemplates` (plain HTML)
+- `form.DefaultBootstrapTemplates` (Bootstrap 5)
+- `form.DefaultTailwindTemplates` (Tailwind CSS)
 
-Call `form_render` inside the template and pass it the `form struct` and the `errors` : 
-```html
-<form class="space-y-6" action="#" method="POST">
-    {{ form_render .Form .Errors }}
-    <div class="flex items-center justify-between">
-        <button type="submit" class="flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Signup</button>
-    </div>
-</form>
+You can also register custom templates for each field type.
+
+## Supported Field Types
+
+```go
+Username string `form:"input,text" label:"Username" required:"true"`
+Password string `form:"input,password" label:"Password" required:"true"`
+Email    string `form:"input,email" label:"Email"`
+Age      int    `form:"input,number" label:"Age" step:"1"`
+Country  string `form:"dropdown" label:"Country" values:"us:United States;ca:Canada"`
+Message  string `form:"textarea" label:"Message" rows:"5"`
 ```
 
-There is currently only one template file for all the currently supported templates. I'm thinking of making a mini template for each type. 
-```html
-<div>
-    <label {{with .Field.Id}}for="{{.}}"{{end}} class="block text-sm font-medium text-gray-700">{{.Field.Label}}{{ if eq .Field.Required true }}*{{end}}</label>
-    <div class="mt-1">
-        {{ if eq .Field.Type "dropdown" }}
-        <select {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Name}}" class="bg-white block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-            {{ range $k, $option := .Field.Values }}
-            <option value="{{$option.Id}}">{{$option.Name}}</option>
-            {{ end }}
-        </select>
-        {{ else if eq .Field.Type "textarea" }}
-        <textarea {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" {{with .Field.Id}}rows="{{.}}"{{end}} {{with .Field.Cols}}cols="{{.}}"{{end}} placeholder="{{.Field.Placeholder}}" {{ if eq .Field.Required true }}required{{end}} class="block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
-        {{ else if eq .Field.Type "dropdownmapped" }}
-        <select {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" class="text-gray-700 dark:text-gray-200 dark:bg-gray-700 bg-white block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-            {{ $value := .Field.Value }}
-            {{ range $k, $option := .Field.Values }}
-            <option value="{{$option.Value}}" {{ if eq $value.String $option.Value }}selected{{ end }} {{ if eq $option.Disabled true }}disabled{{ end }}>{{$option.Name}}</option>
-            {{ end }}
-        </select>
-        {{ else if eq .Type "checkbox" }}
-        <input {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" type="checkbox" {{ if eq .Field.Required true }}required{{end}} {{ if eq .Field.Value true }}checked{{end}} class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-        {{ else }}
-        <input {{with .Field.Id}}id="{{.}}"{{end}} name="{{.Field.Name}}" placeholder="{{.Field.Placeholder}}" {{with .Field.Value}}value="{{.}}"{{end}} {{ if eq .Field.Required true }}required{{end}} class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-        {{ end }}
-        
-        {{range errors}}
-        <span class="text-sm text-red-600">{{.}}</span>
-        {{end}}
-    </div>
-</div>
+### Checkboxes and Radios
+
+```go
+AcceptTerms bool   `form:"checkbox" label:"Accept Terms" required
 ```
 
-Groups (nested structs) have their own template 
-```html
-<div class="mb-4 bg-gray-50 p-2 rounded-md">
-  <label class="block text-grey-darker text-sm font-bold mb-2">{{.Name }}</label>
-  {{ fields }}
-</div>
-```
+## Error Handling
 
-please note that the errors need to implement with the `FieldError` interface. otherwise they will be silently skipped. You can achieve that doing so : 
+Implement the `FieldError` interface to handle form validation errors:
 
 ```go
 type fieldError struct {
@@ -106,7 +72,7 @@ type fieldError struct {
 }
 
 func (fe fieldError) Error() string {
-    return fmt.Sprintf("%s:%s", fe.Field, fe.Issue)
+    return fmt.Sprintf("%s: %s", fe.Field, fe.Issue)
 }
 
 func (fe fieldError) FieldError() (field, err string) {
@@ -114,51 +80,10 @@ func (fe fieldError) FieldError() (field, err string) {
 }
 ```
 
-Support for sorted maps is also included. 
+## Contributing
 
-```go
-type CountryListOption struct {
-	Selected     string
-	SortedValues []form.SortedMap
-}
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-type SortedMap struct {
-	SKey   string
-	SValue string
-}
+## License
 
-func (s SortedMap) Key() string   { return s.SKey }
-func (s SortedMap) Value() string { return s.SValue }
-
-func (t *CountryListOption) SortedMapper() []form.SortedMap {
-	return t.SortedValues
-}
-
-func (t *CountryListOption) String() string {
-	return t.Selected
-}
-```
-
-Now in the struct that contains the form you can add the following: 
-
-```go
-UserForm struct {
-    Country *CountryListOption
-}
-```
-
-however the downside is that you create a direct dependancy to the `form.SortedMap` interface.
-
-supported tags
-- label
-- placeholder
-- name
-- required
-- cols
-- rows
-- step
-
-
-## TODO 
-- better tag handling. maybe group all possible options into one tag or keep it as is. 
-- add validation to process the form once posted.
+This project is licensed under the MIT License - see the LICENSE file for details.
