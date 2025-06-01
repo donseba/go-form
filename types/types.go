@@ -26,8 +26,12 @@ type FormField struct {
 	Label       string         `json:"label,omitempty"`
 	Value       interface{}    `json:"value,omitempty"`
 	Placeholder string         `json:"placeholder,omitempty"`
+	Description string         `json:"description,omitempty"`
 	Required    bool           `json:"required,omitempty"`
 	Hidden      bool           `json:"hidden,omitempty"`
+	Min         string         `json:"min,omitempty"`
+	Max         string         `json:"max,omitempty"`
+	MaxLength   string         `json:"maxLength,omitempty"`
 	Step        string         `json:"step,omitempty"`
 	Rows        string         `json:"rows,omitempty"`
 	Cols        string         `json:"cols,omitempty"`
@@ -43,6 +47,7 @@ type TemplateMap map[FieldType]map[InputFieldType]string
 
 // Constants for field types
 const (
+	FieldTypeBase           FieldType = "base"
 	FieldTypeInput          FieldType = "input"
 	FieldTypeCheckbox       FieldType = "checkbox"
 	FieldTypeRadios         FieldType = "radios"
@@ -58,14 +63,23 @@ const (
 
 // Constants for input types
 const (
-	InputFieldTypeText        InputFieldType = "text"
-	InputFieldTypePassword    InputFieldType = "password"
-	InputFieldTypeEmail       InputFieldType = "email"
-	InputFieldTypeTel         InputFieldType = "tel"
-	InputFieldTypeNumber      InputFieldType = "number"
-	InputFieldTypeDate        InputFieldType = "date"
-	InputFieldTypeNone        InputFieldType = ""
-	InputFieldTypeRadio       InputFieldType = "radio"
-	InputFieldTypeHidden      InputFieldType = "hidden"
-	InputFieldTypeRadioStruct InputFieldType = "radio_struct"
+	InputFieldTypeColor         InputFieldType = "color"
+	InputFieldTypeDate          InputFieldType = "date"
+	InputFieldTypeDateTimeLocal InputFieldType = "datetime-local"
+	InputFieldTypeEmail         InputFieldType = "email"
+	InputFieldTypeHidden        InputFieldType = "hidden"
+	InputFieldTypeImage         InputFieldType = "image"
+	InputFieldTypeMonth         InputFieldType = "month"
+	InputFieldTypeNumber        InputFieldType = "number"
+	InputFieldTypePassword      InputFieldType = "password"
+	InputFieldTypeRadioStruct   InputFieldType = "radio_struct"
+	InputFieldTypeRange         InputFieldType = "range"
+	InputFieldTypeSearch        InputFieldType = "search"
+	InputFieldTypeSubmit        InputFieldType = "submit"
+	InputFieldTypeTel           InputFieldType = "tel"
+	InputFieldTypeText          InputFieldType = "text"
+	InputFieldTypeTime          InputFieldType = "time"
+	InputFieldTypeUrl           InputFieldType = "url"
+	InputFieldTypeWeek          InputFieldType = "week"
+	InputFieldTypeNone          InputFieldType = ""
 )

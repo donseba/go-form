@@ -34,6 +34,18 @@ type (
 		Active      bool   `form:"checkbox" label:"Active"`
 		RadioOption string `form:"radios" label:"Radio Option" values:"option1:Option 1;option2:Option 2;option3:Option 3"`
 
+		// Color field
+		Color string `form:"input,color" label:"Favorite Color" placeholder:"Select your favorite color"`
+
+		// Range field
+		RangeValue int `form:"input,range" label:"Range Value" min:"25" max:"75" step:"1"`
+
+		//date and time fields
+		DateTimeLocal string `form:"input,datetime-local" label:"Date and Time" placeholder:"Select date and time"`
+		Time          string `form:"input,time" label:"Time" placeholder:"Select time"`
+		Week          string `form:"input,week" label:"Week" placeholder:"Select week"`
+		Month         string `form:"input,month" label:"Month" placeholder:"Select month"`
+
 		// enum field
 		Gender Gender `label:"Gender"`
 
@@ -103,6 +115,9 @@ func main() {
 			"form_render": func(formInstance form.Form, errors []form.FieldError) template.HTML {
 				return template.HTML("")
 			},
+			"form_render_localized": func(loc form.Localizer, formInstance form.Form, errors []form.FieldError) template.HTML {
+				return template.HTML("")
+			},
 		}).
 		Parse(`
 <!DOCTYPE html>
@@ -142,7 +157,10 @@ func main() {
 <body>
     <div class="container py-4">
         <h1 class="mb-4">Form Template Examples</h1>
-        
+        <div style="margin-bottom:1em">
+			<a href="http://localhost:8081/">Validation Example</a> |
+			<a href="http://localhost:8082/">Translation Example</a>
+		</div>
         <div class="nav-links">
             <a href="/plain">Plain Template</a>
             <a href="/bootstrap">Bootstrap 5 Template</a>
@@ -181,13 +199,13 @@ func main() {
 	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3000"
+		port = "8080"
 	}
 	fmt.Printf("Server starting on port %s...\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-func renderPage(w http.ResponseWriter, formInstance form.Form, formData ExampleForm, tmpl *template.Template) {
+func renderPage(w http.ResponseWriter, formInstance *form.Form, formData ExampleForm, tmpl *template.Template) {
 	data := struct {
 		Form   ExampleForm
 		Errors []form.FieldError

@@ -20,6 +20,10 @@ const (
 	tagStep        = "step"
 	tagRows        = "rows"
 	tagCols        = "cols"
+	tagMin         = "min"
+	tagMax         = "max"
+	tagMaxLength   = "maxLength"
+	tagDescription = "description"
 )
 
 type (
@@ -50,7 +54,7 @@ var (
 )
 
 type Transformer struct {
-	Fields []FormField `json:"fields"`
+	Fields []types.FormField `json:"fields"`
 }
 
 func NewTransformer(model interface{}) (*Transformer, error) {
@@ -81,18 +85,20 @@ func (t *Transformer) JSON() json.RawMessage {
 }
 
 // scanModel the incoming interface and ensure we can work with it.
-func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names ...string) ([]FormField, error) {
-	var fields []FormField
+func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names ...string) ([]types.FormField, error) {
+	var fields []types.FormField
 
 	// Check for form metadata
 	if rType.Field(0).Anonymous && rType.Field(0).Type == reflect.TypeOf(Info{}) {
 		info := rValue.Field(0).Interface().(Info)
 
-		formField := FormField{
+		formField := types.FormField{
 			Type:   types.FieldTypeForm,
 			Target: info.Target,
 			Method: info.Method,
+			Label:  info.SubmitText,
 		}
+
 		fields = append(fields, formField)
 	}
 
@@ -111,10 +117,11 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		}
 
 		nname := append(names, name)
-		field := FormField{
+		field := types.FormField{
 			Id:          strings.Join(nname, "."),
 			Label:       tags.Get(tagLabel),
 			Placeholder: tags.Get(tagPlaceholder),
+			Description: tags.Get(tagDescription),
 			Name:        strings.Join(nname, "."),
 			Value:       rValue.Field(i).Interface(),
 		}
@@ -139,9 +146,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 		if rType.Field(i).Type.Implements(enumType) {
 			enums := reflect.New(rType.Field(i).Type).Interface().(Enumerator).Enum()
-			var fieldValue []FieldValue
+			var fieldValue []types.FieldValue
 			for _, v := range enums {
-				fieldValue = append(fieldValue, FieldValue{
+				fieldValue = append(fieldValue, types.FieldValue{
 					Value:    fmt.Sprint(v),
 					Name:     fmt.Sprint(v),
 					Disabled: false,
@@ -159,14 +166,14 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		if rType.Field(i).Tag.Get(tagValues) != "" {
 			// If the tag contains values, it is a dropdown or radio field
 			values := strings.Split(rType.Field(i).Tag.Get(tagValues), ";")
-			var fieldValue []FieldValue
+			var fieldValue []types.FieldValue
 			for _, v := range values {
 				if strings.Contains(v, ":") {
 					parts := strings.SplitN(v, ":", 2)
 					if len(parts) != 2 {
 						return nil, fmt.Errorf("invalid value format in tag %s for field %s", tagValues, fieldName)
 					}
-					fieldValue = append(fieldValue, FieldValue{
+					fieldValue = append(fieldValue, types.FieldValue{
 						Value:    strings.TrimSpace(parts[0]),
 						Name:     strings.TrimSpace(parts[1]),
 						Disabled: false,
@@ -174,7 +181,7 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 					continue
 				}
 
-				fieldValue = append(fieldValue, FieldValue{
+				fieldValue = append(fieldValue, types.FieldValue{
 					Value:    v,
 					Name:     v,
 					Disabled: false,
@@ -197,9 +204,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 		if rType.Field(i).Type.Implements(mapperType) {
 			maps := rValue.Field(i).Interface().(Mapper).Mapper()
-			var fieldValue []FieldValue
+			var fieldValue []types.FieldValue
 			for k, v := range maps {
-				fieldValue = append(fieldValue, FieldValue{
+				fieldValue = append(fieldValue, types.FieldValue{
 					Value:    k,
 					Name:     v,
 					Disabled: false,
@@ -216,9 +223,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		//new addition to provide sorted key value pairs
 		if rType.Field(i).Type.Implements(sortedMapperType) {
 			maps := rValue.Field(i).Interface().(SortedMapper).SortedMapper()
-			var fieldValue []FieldValue
+			var fieldValue []types.FieldValue
 			for _, v := range maps {
-				fieldValue = append(fieldValue, FieldValue{
+				fieldValue = append(fieldValue, types.FieldValue{
 					Value:    v.Key(),
 					Name:     v.Value(),
 					Disabled: false,
@@ -253,6 +260,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			if tags.Get(tagCols) != "" {
 				field.Cols = tags.Get(tagCols)
 			}
+			if tags.Get(tagMaxLength) != "" {
+				field.MaxLength = tags.Get(tagMaxLength)
+			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 
@@ -267,6 +277,12 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			} else {
 				field.Step = "1"
 			}
+			if tags.Get(tagMin) != "" {
+				field.Min = tags.Get(tagMin)
+			}
+			if tags.Get(tagMax) != "" {
+				field.Max = tags.Get(tagMax)
+			}
 		case reflect.Float32, reflect.Float64:
 			if field.InputType == "" {
 				field.InputType = types.InputFieldTypeNumber
@@ -278,6 +294,12 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				field.Step = tags.Get(tagStep)
 			} else {
 				field.Step = "any"
+			}
+			if tags.Get(tagMin) != "" {
+				field.Min = tags.Get(tagMin)
+			}
+			if tags.Get(tagMax) != "" {
+				field.Max = tags.Get(tagMax)
 			}
 		case reflect.Bool:
 			fieldType := types.FieldTypeCheckbox
