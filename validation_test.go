@@ -1,7 +1,9 @@
 package form
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -296,6 +298,76 @@ func TestValidateForm_SortedMapper(t *testing.T) {
 			errList := f.internalFormValidation(&c.form, &DefaultLocalizer{})
 			if len(errList) != c.errors {
 				t.Errorf("expected %d errors, got %d: %+v", c.errors, len(errList), errList)
+			}
+		})
+	}
+}
+
+// --- Translation tests ---
+type testLocalizer struct{ Locale string }
+
+func (l testLocalizer) GetLocale() string { return l.Locale }
+
+var testTranslations = map[string]map[string]string{
+	"en": {
+		"form.validation.required": "is required",
+		"form.validation.min":      "must be >= %v",
+	},
+	"it": {
+		"form.validation.required": "è obbligatorio",
+		"form.validation.min":      "deve essere almeno %v",
+	},
+}
+
+func testTranslate(loc Localizer, key string, args ...any) string {
+	locale := "en"
+	if l, ok := loc.(testLocalizer); ok {
+		locale = l.Locale
+	}
+	msg := key
+	if m, ok := testTranslations[locale]; ok {
+		if t, ok := m[key]; ok {
+			msg = t
+		}
+	}
+	if len(args) > 0 {
+		return fmt.Sprintf(msg, args...)
+	}
+	return msg
+}
+
+func TestValidateForm_Translation(t *testing.T) {
+	type TranslationForm struct {
+		Name string `form:"input,text" label:"Name" required:"true"`
+		Age  int    `form:"input,number" label:"Age" required:"true" min:"18"`
+	}
+	f := NewTranslatedForm(nil, testTranslate)
+
+	cases := []struct {
+		name   string
+		form   TranslationForm
+		locale string
+		expect string
+	}{
+		{"required error in EN", TranslationForm{Name: "", Age: 0}, "en", "is required"},
+		{"required error in IT", TranslationForm{Name: "", Age: 0}, "it", "è obbligatorio"},
+		{"min error in EN", TranslationForm{Name: "John", Age: 10}, "en", ">= 18"},
+		{"min error in IT", TranslationForm{Name: "John", Age: 10}, "it", "almeno 18"},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			errList := f.ValidateForm(&c.form, testLocalizer{Locale: c.locale})
+			found := false
+			for _, err := range errList {
+				_, fieldErr := err.FieldError()
+				if strings.Contains(fieldErr, c.expect) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("Expected error containing '%s', got: %+v", c.expect, errList)
 			}
 		})
 	}
