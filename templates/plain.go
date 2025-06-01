@@ -4,16 +4,11 @@ import "github.com/donseba/go-form/types"
 
 var Plain = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeBase: {
-		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{if .Field.Required}}required{{end}} style="width: 100%; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #212529; background-color: #fff; border: 1px solid #ced4da; border-radius: 0.25rem; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
+		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{if .Field.Required}}required{{end}} {{ if .Field.MaxLength }}maxlenght="{{ .Field.MaxLength }}"{{end}} style="width: 100%; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #212529; background-color: #fff; border: 1px solid #ced4da; border-radius: 0.25rem; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
 	},
 	types.FieldTypeInput: {
-		types.InputFieldTypeNone: `{{ baseInput "Type" "text" "Field" .Field}}`,
-		types.InputFieldTypeText: `<div style="position: relative;">
-  {{ baseInput "Type" "text" "Field" .Field}}
-  {{ if .Field.MaxLength }}
-  <div style="position: absolute; top: 0.5rem; right: 0.5rem; font-size: 0.75rem; color: #6c757d;" id="{{.Field.Id}}_count" aria-hidden="true">0/{{.Field.MaxLength}}</div>
-  {{ end }}
-</div>`,
+		types.InputFieldTypeNone:          `{{ baseInput "Type" "text" "Field" .Field}}`,
+		types.InputFieldTypeText:          ` {{ baseInput "Type" "text" "Field" .Field}} `,
 		types.InputFieldTypePassword:      `{{ baseInput "Type" "password" "Field" .Field}}`,
 		types.InputFieldTypeEmail:         `{{ baseInput "Type" "email" "Field" .Field}}`,
 		types.InputFieldTypeTel:           `{{ baseInput "Type" "tel" "Field" .Field}}`,

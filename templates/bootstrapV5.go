@@ -7,21 +7,9 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{if .Field.Required}}required{{end}} class="form-control" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
 	},
 	types.FieldTypeInput: {
-		types.InputFieldTypeNone: `{{ baseInput "Type" "text" "Field" .Field}}`,
-		types.InputFieldTypeText: `<div class="position-relative">
-  {{ baseInput "Type" "text" "Field" .Field}}
-  {{ if .Field.MaxLength }}
-  <div class="position-absolute top-0 end-0 mt-2 me-2 small text-muted" id="{{.Field.Id}}_count" aria-hidden="true">0/{{.Field.MaxLength}}</div>
-  {{ end }}
-</div>`,
-		types.InputFieldTypePassword: `<div class="position-relative">
-  {{ baseInput "Type" "password" "Field" .Field}}
-  <div class="position-absolute top-0 end-0 mt-2 me-2">
-    <button type="button" class="btn btn-link btn-sm text-muted p-0" onclick="togglePassword('{{.Field.Id}}')" aria-label="Toggle password visibility">
-      <i class="bi bi-eye"></i>
-    </button>
-  </div>
-</div>`,
+		types.InputFieldTypeNone:          `{{ baseInput "Type" "text" "Field" .Field}}`,
+		types.InputFieldTypeText:          `{{ baseInput "Type" "text" "Field" .Field}}`,
+		types.InputFieldTypePassword:      `{{ baseInput "Type" "password" "Field" .Field}}`,
 		types.InputFieldTypeEmail:         `{{ baseInput "Type" "email" "Field" .Field}}`,
 		types.InputFieldTypeTel:           `{{ baseInput "Type" "tel" "Field" .Field}}`,
 		types.InputFieldTypeNumber:        `<input type="number" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" {{if .Field.Min}}min="{{.Field.Min}}"{{end}} {{if .Field.Max}}max="{{.Field.Max}}"{{end}} {{if .Field.Step}}step="{{.Field.Step}}"{{end}} {{if .Field.Required}}required{{end}} class="form-control" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,

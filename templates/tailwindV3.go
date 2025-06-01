@@ -7,13 +7,8 @@ var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
 		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{if .Field.Required}}required{{end}} class="border border-gray-200 block w-full rounded-md px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
 	},
 	types.FieldTypeInput: {
-		types.InputFieldTypeNone: `{{ baseInput "Type" "text" "Field" .Field}}`,
-		types.InputFieldTypeText: `<div class="relative">
-  {{ baseInput "Type" "text" "Field" .Field}}
-  {{ if .Field.MaxLength }}
-  <div class="absolute top-2 right-2 text-xs text-gray-500" id="{{.Field.Id}}_count" aria-hidden="true">0/{{.Field.MaxLength}}</div>
-  {{ end }}
-</div>`,
+		types.InputFieldTypeNone:          `{{ baseInput "Type" "text" "Field" .Field}}`,
+		types.InputFieldTypeText:          `{{ baseInput "Type" "text" "Field" .Field}}`,
 		types.InputFieldTypePassword:      `{{ baseInput "Type" "password" "Field" .Field}}`,
 		types.InputFieldTypeEmail:         `{{ baseInput "Type" "email" "Field" .Field}}`,
 		types.InputFieldTypeTel:           `{{ baseInput "Type" "tel" "Field" .Field}}`,
