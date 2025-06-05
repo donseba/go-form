@@ -69,9 +69,6 @@ var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeTextArea: {
 		types.InputFieldTypeNone: `<div class="relative">
   <textarea id="{{.Field.Id}}" name="{{.Field.Name}}" rows="{{.Field.Rows}}" cols="{{.Field.Cols}}" placeholder="{{.Field.Placeholder}}" {{ if eq .Field.Required true }}required{{end}} class="border border-gray-200 block w-full rounded-md px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>{{.Field.Value}}</textarea>
-  {{ if .Field.MaxLength }}
-  <div class="absolute bottom-2 right-2 text-xs text-gray-500" id="{{.Field.Id}}_count" aria-hidden="true">0/{{.Field.MaxLength}}</div>
-  {{ end }}
 </div>`,
 	},
 	types.FieldTypeGroup: {

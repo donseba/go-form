@@ -69,9 +69,6 @@ var Plain = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeTextArea: {
 		types.InputFieldTypeNone: `<div style="position: relative;">
   <textarea id="{{.Field.Id}}" name="{{.Field.Name}}" rows="{{.Field.Rows}}" cols="{{.Field.Cols}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{ if eq .Field.Required true }}required{{end}} style="width: 100%; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #212529; background-color: #fff; border: 1px solid #ced4da; border-radius: 0.25rem; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>{{.Field.Value}}</textarea>
-  {{ if .Field.MaxLength }}
-  <div style="position: absolute; bottom: 0.5rem; right: 0.5rem; font-size: 0.75rem; color: #6c757d;" id="{{.Field.Id}}_count" aria-hidden="true">0/{{.Field.MaxLength}}</div>
-  {{ end }}
 </div>`,
 	},
 	types.FieldTypeGroup: {

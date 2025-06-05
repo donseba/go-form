@@ -91,6 +91,7 @@ func (f *Form) init(templateMap map[types.FieldType]map[types.InputFieldType]str
 				"fields": func() template.HTML { return "" }, // Placeholder for group fields
 				"label":  func() template.HTML { return "" }, // Placeholder for label rendering
 				"form_print": func(loc Localizer, key string, args ...any) string {
+					fmt.Println("form_print called with key:(", key, ") args:", args)
 					if f.translationEnabled && f.translationFunc != nil {
 						return f.translationFunc(loc, key, args...)
 					}

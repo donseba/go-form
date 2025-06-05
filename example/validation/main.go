@@ -51,20 +51,20 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		data := CustomForm{
 			Info: form.Info{
-				Target: r.URL.Path,
-				Method: http.MethodPost,
+				Target:     r.URL.Path,
+				Method:     http.MethodPost,
+				SubmitText: "Submit",
 			},
 		}
 
 		var errs form.FieldErrors
 		if r.Method == http.MethodPost {
-			err := r.ParseForm()
+			err := form.MapForm(r, &data)
 			if err != nil {
-				http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
+				http.Error(w, "Error mapping form: "+err.Error(), http.StatusBadRequest)
 				return
 			}
-			data.Name = r.FormValue("Name")
-			data.Color = r.FormValue("Color")
+
 			errs = f.ValidateForm(&data, nil)
 		}
 

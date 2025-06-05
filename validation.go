@@ -2,7 +2,9 @@ package form
 
 import (
 	"fmt"
+	"net/url"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -19,6 +21,16 @@ var (
 	TranslationKeyInvalidEnum         = "form.validation.invalidEnum"
 	TranslationKeyInvalidMapper       = "form.validation.invalidMapper"
 	TranslationKeyInvalidSortedMapper = "form.validation.invalidSortedMapper"
+	TranslationKeyPattern             = "form.validation.pattern"
+	TranslationKeyURL                 = "form.validation.url"
+	TranslationKeyBool                = "form.validation.bool"
+	TranslationKeyZero                = "form.validation.zero"
+	TranslationKeyMinItems            = "form.validation.minItems"
+	TranslationKeyMaxItems            = "form.validation.maxItems"
+	TranslationKeyPrefix              = "form.validation.prefix"
+	TranslationKeySuffix              = "form.validation.suffix"
+	TranslationKeyContains            = "form.validation.contains"
+	TranslationKeyStep                = "form.validation.step"
 )
 
 type FieldValidationError struct {
@@ -48,11 +60,20 @@ func (f *Form) internalFormValidation(form any, loc Localizer) FieldErrors {
 		value := v.Field(i)
 		name := field.Name
 
+		// Custom error message
+		errorMsg := field.Tag.Get("errorMsg")
+		getErr := func(defaultKey string, arg any) string {
+			if errorMsg != "" {
+				return errorMsg
+			}
+			return f.validationErrorTranslated(loc, defaultKey, arg)
+		}
+
 		// Required
 		req := field.Tag.Get("required")
 		if req == "true" {
 			if isEmptyValue(value) {
-				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyRequired, nil)})
+				errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyRequired, nil)})
 			}
 		}
 
@@ -67,13 +88,22 @@ func (f *Form) internalFormValidation(form any, loc Localizer) FieldErrors {
 			if minTag := field.Tag.Get("min"); minTag != "" {
 				minVal, _ := strconv.ParseFloat(minTag, 64)
 				if val < minVal {
-					errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyMin, minVal)})
+					errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyMin, minVal)})
 				}
 			}
 			if maxTag := field.Tag.Get("max"); maxTag != "" {
 				maxVal, _ := strconv.ParseFloat(maxTag, 64)
 				if val > maxVal {
-					errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyMax, maxVal)})
+					errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyMax, maxVal)})
+				}
+			}
+			if stepTag := field.Tag.Get("step"); stepTag != "" {
+				step, err := strconv.ParseFloat(stepTag, 64)
+				if err == nil && step > 0 {
+					mod := val / step
+					if mod != float64(int64(mod)) {
+						errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyStep, step)})
+					}
 				}
 			}
 		}
@@ -82,7 +112,7 @@ func (f *Form) internalFormValidation(form any, loc Localizer) FieldErrors {
 		if (value.Kind() == reflect.String) && field.Tag.Get("maxLength") != "" {
 			maxLen, err := strconv.Atoi(field.Tag.Get("maxLength"))
 			if err == nil && utf8.RuneCountInString(value.String()) > maxLen {
-				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyMaxLength, maxLen)})
+				errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyMaxLength, maxLen)})
 			}
 		}
 
@@ -90,7 +120,7 @@ func (f *Form) internalFormValidation(form any, loc Localizer) FieldErrors {
 		if (value.Kind() == reflect.String) && field.Tag.Get("minLength") != "" {
 			minLen, err := strconv.Atoi(field.Tag.Get("minLength"))
 			if err == nil && utf8.RuneCountInString(value.String()) < minLen {
-				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyMinLength, minLen)})
+				errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyMinLength, minLen)})
 			}
 		}
 
@@ -107,7 +137,7 @@ func (f *Form) internalFormValidation(form any, loc Localizer) FieldErrors {
 			}
 			if value.String() != "" {
 				if _, ok := allowed[value.String()]; !ok {
-					errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyInvalidValue, value.String())})
+					errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyInvalidValue, value.String())})
 				}
 			}
 		}
@@ -115,7 +145,7 @@ func (f *Form) internalFormValidation(form any, loc Localizer) FieldErrors {
 		// Email format (simple check)
 		if field.Tag.Get("form") == "input,email" && value.Kind() == reflect.String {
 			if val := value.String(); val != "" && !strings.Contains(val, "@") {
-				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyInvalidEmail, nil)})
+				errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyInvalidEmail, nil)})
 			}
 		}
 
@@ -131,7 +161,7 @@ func (f *Form) internalFormValidation(form any, loc Localizer) FieldErrors {
 				}
 			}
 			if !found && valStr != "" {
-				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyInvalidEnum, valStr)})
+				errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyInvalidEnum, valStr)})
 			}
 		}
 
@@ -140,7 +170,7 @@ func (f *Form) internalFormValidation(form any, loc Localizer) FieldErrors {
 			maps := value.Interface().(Mapper).Mapper()
 			valStr := fmt.Sprint(value.Interface())
 			if _, ok := maps[valStr]; !ok && valStr != "" {
-				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyInvalidMapper, valStr)})
+				errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyInvalidMapper, valStr)})
 			}
 		}
 
@@ -156,7 +186,76 @@ func (f *Form) internalFormValidation(form any, loc Localizer) FieldErrors {
 				}
 			}
 			if !found && valStr != "" {
-				errList = append(errList, FieldValidationError{Field: name, Err: f.validationErrorTranslated(loc, TranslationKeyInvalidSortedMapper, valStr)})
+				errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyInvalidSortedMapper, valStr)})
+			}
+		}
+
+		// Pattern/Regex validation
+		if pattern := field.Tag.Get("pattern"); pattern != "" && value.Kind() == reflect.String {
+			matched, err := regexp.MatchString(pattern, value.String())
+			if err == nil && !matched {
+				errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyPattern, pattern)})
+			}
+		}
+
+		// URL validation
+		if field.Tag.Get("url") == "true" && value.Kind() == reflect.String {
+			str := value.String()
+			if str != "" {
+				_, err := url.ParseRequestURI(str)
+				if err != nil {
+					errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyURL, nil)})
+				}
+			}
+		}
+
+		// Boolean value check (must be true)
+		if field.Tag.Get("bool") == "true" && value.Kind() == reflect.Bool {
+			if !value.Bool() {
+				errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyBool, nil)})
+			}
+		}
+
+		// Zero value check
+		if field.Tag.Get("zero") == "true" {
+			if !isEmptyValue(value) {
+				errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyZero, nil)})
+			}
+		}
+
+		// Slice/Array length validation
+		if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
+			if minItems := field.Tag.Get("minItems"); minItems != "" {
+				min, err := strconv.Atoi(minItems)
+				if err == nil && value.Len() < min {
+					errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyMinItems, min)})
+				}
+			}
+			if maxItems := field.Tag.Get("maxItems"); maxItems != "" {
+				max, err := strconv.Atoi(maxItems)
+				if err == nil && value.Len() > max {
+					errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyMaxItems, max)})
+				}
+			}
+		}
+
+		// String prefix/suffix/contains
+		if value.Kind() == reflect.String {
+			str := value.String()
+			if prefix := field.Tag.Get("prefix"); prefix != "" {
+				if !strings.HasPrefix(str, prefix) {
+					errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyPrefix, prefix)})
+				}
+			}
+			if suffix := field.Tag.Get("suffix"); suffix != "" {
+				if !strings.HasSuffix(str, suffix) {
+					errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeySuffix, suffix)})
+				}
+			}
+			if contains := field.Tag.Get("contains"); contains != "" {
+				if !strings.Contains(str, contains) {
+					errList = append(errList, FieldValidationError{Field: name, Err: getErr(TranslationKeyContains, contains)})
+				}
 			}
 		}
 	}
