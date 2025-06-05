@@ -71,9 +71,6 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeTextArea: {
 		types.InputFieldTypeNone: `<div class="position-relative">
   <textarea class="form-control form-control-sm" id="{{.Field.Id}}" name="{{.Field.Name}}" rows="{{.Field.Rows}}" cols="{{.Field.Cols}}" placeholder="{{.Field.Placeholder}}" {{ if eq .Field.Required true }}required{{end}} aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>{{.Field.Value}}</textarea>
-  {{ if .Field.MaxLength }}
-  <div class="position-absolute bottom-0 end-0 mb-2 me-2 small text-muted" id="{{.Field.Id}}_count" aria-hidden="true">0/{{.Field.MaxLength}}</div>
-  {{ end }}
 </div>`,
 	},
 	types.FieldTypeGroup: {

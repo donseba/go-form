@@ -181,7 +181,7 @@ func TestValidateForm_CustomValidation(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			errList := f.ValidateForm(&c.form, &DefaultLocalizer{})
+			errList := f.ValidateForm(&c.form)
 			if len(errList) != c.errors {
 				t.Errorf("expected %d errors, got %d: %+v", c.errors, len(errList), errList)
 			}
@@ -357,7 +357,7 @@ func TestValidateForm_Translation(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			errList := f.ValidateForm(&c.form, testLocalizer{Locale: c.locale})
+			errList := f.ValidateFormLocalized(&c.form, testLocalizer{Locale: c.locale})
 			found := false
 			for _, err := range errList {
 				_, fieldErr := err.FieldError()
@@ -368,6 +368,79 @@ func TestValidateForm_Translation(t *testing.T) {
 			}
 			if !found {
 				t.Errorf("Expected error containing '%s', got: %+v", c.expect, errList)
+			}
+		})
+	}
+}
+
+func TestExtendedValidations(t *testing.T) {
+	type ExtendedForm struct {
+		PatternField  string  `pattern:"^foo[0-9]+$"`
+		URLField      string  `url:"true"`
+		BoolField     bool    `bool:"true"`
+		ZeroInt       int     `zero:"true"`
+		ZeroString    string  `zero:"true"`
+		SliceField    []int   `minItems:"2" maxItems:"3"`
+		PrefixField   string  `prefix:"abc"`
+		SuffixField   string  `suffix:"xyz"`
+		ContainsField string  `contains:"mid"`
+		StepInt       int     `step:"5"`
+		StepFloat     float64 `step:"0.5"`
+		CustomMsg     string  `pattern:"^bar$" errorMsg:"custom error!"`
+	}
+
+	valid := ExtendedForm{
+		PatternField:  "foo123",
+		URLField:      "https://example.com",
+		BoolField:     true,
+		ZeroInt:       0,
+		ZeroString:    "",
+		SliceField:    []int{1, 2},
+		PrefixField:   "abcde",
+		SuffixField:   "wxyz",
+		ContainsField: "amidb",
+		StepInt:       10,
+		StepFloat:     2.0,
+		CustomMsg:     "bar",
+	}
+
+	cases := []struct {
+		name   string
+		form   ExtendedForm
+		errors int
+	}{
+		{"all valid", valid, 0},
+		{"pattern fail", func() ExtendedForm { f := valid; f.PatternField = "bar"; return f }(), 1},
+		{"url fail", func() ExtendedForm { f := valid; f.URLField = "notaurl"; return f }(), 1},
+		{"bool fail", func() ExtendedForm { f := valid; f.BoolField = false; return f }(), 1},
+		{"zero int fail", func() ExtendedForm { f := valid; f.ZeroInt = 1; return f }(), 1},
+		{"zero string fail", func() ExtendedForm { f := valid; f.ZeroString = "notzero"; return f }(), 1},
+		{"minItems fail", func() ExtendedForm { f := valid; f.SliceField = []int{1}; return f }(), 1},
+		{"maxItems fail", func() ExtendedForm { f := valid; f.SliceField = []int{1, 2, 3, 4}; return f }(), 1},
+		{"prefix fail", func() ExtendedForm { f := valid; f.PrefixField = "def"; return f }(), 1},
+		{"suffix fail", func() ExtendedForm { f := valid; f.SuffixField = "abc"; return f }(), 1},
+		{"contains fail", func() ExtendedForm { f := valid; f.ContainsField = "nope"; return f }(), 1},
+		{"step int fail", func() ExtendedForm { f := valid; f.StepInt = 7; return f }(), 1},
+		{"step float fail", func() ExtendedForm { f := valid; f.StepFloat = 2.1; return f }(), 1},
+		{"custom error msg", func() ExtendedForm { f := valid; f.CustomMsg = "baz"; return f }(), 1},
+	}
+
+	f := NewForm(nil)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			errList := f.internalFormValidation(&c.form, &DefaultLocalizer{})
+			if len(errList) != c.errors {
+				t.Errorf("expected %d errors, got %d: %+v", c.errors, len(errList), errList)
+			}
+			if c.name == "custom error msg" {
+				if len(errList) == 0 {
+					t.Errorf("expected at least one error for custom error msg case")
+				} else {
+					_, errMsg := errList[0].FieldError()
+					if !strings.Contains(errMsg, "custom error!") {
+						t.Errorf("expected custom error message, got: %s", errMsg)
+					}
+				}
 			}
 		})
 	}

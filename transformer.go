@@ -26,6 +26,8 @@ const (
 	tagDescription = "description"
 )
 
+var DefaultSubmitText = "Submit"
+
 type (
 	Enumerator interface{ Enum() []any }
 	Mapper     interface {
@@ -92,11 +94,16 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 	if rType.Field(0).Anonymous && rType.Field(0).Type == reflect.TypeOf(Info{}) {
 		info := rValue.Field(0).Interface().(Info)
 
+		label := info.SubmitText
+		if label == "" {
+			label = DefaultSubmitText
+		}
+
 		formField := types.FormField{
 			Type:   types.FieldTypeForm,
 			Target: info.Target,
 			Method: info.Method,
-			Label:  info.SubmitText,
+			Label:  label,
 		}
 
 		fields = append(fields, formField)

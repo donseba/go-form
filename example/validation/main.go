@@ -41,7 +41,7 @@ func isHexColor(val any, field reflect.StructField) (out form.FieldErrors) {
 type CustomForm struct {
 	form.Info
 	Name  string `form:"input,text" label:"Name" required:"true" minLength:"2" maxLength:"20"`
-	Color string `form:"input,text" label:"Favorite Color (hex)" validate:"isHexColor"`
+	Color string `form:"input,color" label:"Favorite Color (hex)" validate:"isHexColor"`
 }
 
 func main() {
@@ -51,20 +51,20 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		data := CustomForm{
 			Info: form.Info{
-				Target: r.URL.Path,
-				Method: http.MethodPost,
+				Target:     r.URL.Path,
+				Method:     http.MethodPost,
+				SubmitText: "Submit",
 			},
 		}
 
 		var errs form.FieldErrors
 		if r.Method == http.MethodPost {
-			err := r.ParseForm()
+			err := form.MapForm(r, &data)
 			if err != nil {
-				http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
+				http.Error(w, "Error mapping form: "+err.Error(), http.StatusBadRequest)
 				return
 			}
-			data.Name = r.FormValue("Name")
-			data.Color = r.FormValue("Color")
+
 			errs = f.ValidateForm(&data, nil)
 		}
 
@@ -83,7 +83,6 @@ func main() {
 				<a href="http://localhost:8082/">Translation Example</a>
 			</div>
 			{{ form_render .Form .Errors }}
-
 			</body>
 			</html>
 		`))

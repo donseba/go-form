@@ -85,7 +85,7 @@ func (f *Form) init(templateMap map[types.FieldType]map[types.InputFieldType]str
 
 			// Create a new template with the base template defined
 			t := template.New(inputType.String())
-			t, err := t.Funcs(map[string]any{
+			t, tErr := t.Funcs(map[string]any{
 				"errors": func() []string { return nil },     // Placeholder for error handling
 				"field":  func() template.HTML { return "" }, // Placeholder for field rendering
 				"fields": func() template.HTML { return "" }, // Placeholder for group fields
@@ -120,15 +120,15 @@ func (f *Form) init(templateMap map[types.FieldType]map[types.InputFieldType]str
 					}
 
 					var sb strings.Builder
-					err := baseInputTpl.Execute(&sb, data)
-					if err != nil {
-						panic(err) // Handle error appropriately in production code
+					eErr := baseInputTpl.Execute(&sb, data)
+					if eErr != nil {
+						return template.HTML(fmt.Sprintf("error executing base input template: %+v", eErr))
 					}
 					return template.HTML(sb.String())
 				},
 			}).Parse(tpl)
-			if err != nil {
-				panic(err) // Handle error appropriately in production code
+			if tErr != nil {
+				panic(fmt.Errorf("error parsing template for field type %s and input type %s: %w", fieldType, inputType, tErr))
 			}
 			f.templateMap[fieldType][inputType] = *t
 		}
