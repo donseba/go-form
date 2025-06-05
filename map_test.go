@@ -7,19 +7,19 @@ import (
 )
 
 type testStruct struct {
-	Name   string  `form:"name"`
-	Age    int     `form:"age"`
-	Active bool    `form:"active"`
-	Score  float64 `form:"score"`
-	Note   string  // no tag, should use field name
+	Name   string
+	Age    int
+	Active bool
+	Score  float64
+	Note   string
 }
 
 func TestMapForm(t *testing.T) {
 	form := url.Values{}
-	form.Set("name", "Alice")
-	form.Set("age", "30")
-	form.Set("active", "true")
-	form.Set("score", "99.5")
+	form.Set("Name", "Alice")
+	form.Set("Age", "30")
+	form.Set("Active", "true")
+	form.Set("Score", "99.5")
 	form.Set("Note", "Hello")
 
 	r := &http.Request{Form: form}

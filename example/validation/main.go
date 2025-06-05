@@ -41,7 +41,7 @@ func isHexColor(val any, field reflect.StructField) (out form.FieldErrors) {
 type CustomForm struct {
 	form.Info
 	Name  string `form:"input,text" label:"Name" required:"true" minLength:"2" maxLength:"20"`
-	Color string `form:"input,text" label:"Favorite Color (hex)" validate:"isHexColor"`
+	Color string `form:"input,color" label:"Favorite Color (hex)" validate:"isHexColor"`
 }
 
 func main() {
@@ -83,7 +83,6 @@ func main() {
 				<a href="http://localhost:8082/">Translation Example</a>
 			</div>
 			{{ form_render .Form .Errors }}
-
 			</body>
 			</html>
 		`))
