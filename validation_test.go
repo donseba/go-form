@@ -181,7 +181,7 @@ func TestValidateForm_CustomValidation(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			errList := f.ValidateForm(&c.form, &DefaultLocalizer{})
+			errList := f.ValidateForm(&c.form)
 			if len(errList) != c.errors {
 				t.Errorf("expected %d errors, got %d: %+v", c.errors, len(errList), errList)
 			}
@@ -357,7 +357,7 @@ func TestValidateForm_Translation(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			errList := f.ValidateForm(&c.form, testLocalizer{Locale: c.locale})
+			errList := f.ValidateFormLocalized(&c.form, testLocalizer{Locale: c.locale})
 			found := false
 			for _, err := range errList {
 				_, fieldErr := err.FieldError()

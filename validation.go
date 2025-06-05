@@ -342,7 +342,11 @@ func (f *Form) validationErrorTranslated(loc Localizer, key string, args ...any)
 	return fmt.Sprintf(key, args...)
 }
 
-func (f *Form) ValidateForm(form any, loc Localizer) FieldErrors {
+func (f *Form) ValidateForm(form any) FieldErrors {
+	return f.ValidateFormLocalized(form, &DefaultLocalizer{})
+}
+
+func (f *Form) ValidateFormLocalized(form any, loc Localizer) FieldErrors {
 	errList := f.internalFormValidation(form, loc) // built-in validations
 
 	v := reflect.ValueOf(form)
