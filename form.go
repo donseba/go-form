@@ -28,9 +28,10 @@ type (
 	}
 
 	Info struct {
-		Target     string `json:"target,omitempty"`
-		Method     string `json:"method,omitempty"`
-		SubmitText string `json:"submit,omitempty"`
+		Target     string            `json:"target,omitempty"`
+		Method     string            `json:"method,omitempty"`
+		SubmitText string            `json:"submit,omitempty"`
+		Attributes map[string]string `json:"attributes,omitempty"`
 	}
 
 	Form struct {
@@ -100,6 +101,15 @@ func (f *Form) init(templateMap map[types.FieldType]map[types.InputFieldType]str
 					}
 
 					return key
+				},
+				"form_attributes": func(attributes map[string]string) template.HTMLAttr {
+					var sb strings.Builder
+					for k, v := range attributes {
+						if v != "" {
+							sb.WriteString(fmt.Sprintf(` %s="%s"`, k, template.HTMLEscapeString(v)))
+						}
+					}
+					return template.HTMLAttr(sb.String())
 				},
 				"baseInput": func(kv ...any) template.HTML {
 					if baseInputTpl == nil {

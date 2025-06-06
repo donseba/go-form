@@ -19,27 +19,28 @@ type FieldValue struct {
 
 // FormField represents a form field
 type FormField struct {
-	Type        FieldType      `json:"type"`
-	InputType   InputFieldType `json:"inputType,omitempty"`
-	Name        string         `json:"name"`
-	Id          string         `json:"id,omitempty"`
-	Label       string         `json:"label,omitempty"`
-	Value       interface{}    `json:"value,omitempty"`
-	Placeholder string         `json:"placeholder,omitempty"`
-	Description string         `json:"description,omitempty"`
-	Required    bool           `json:"required,omitempty"`
-	Hidden      bool           `json:"hidden,omitempty"`
-	Min         string         `json:"min,omitempty"`
-	Max         string         `json:"max,omitempty"`
-	MaxLength   string         `json:"maxLength,omitempty"`
-	Step        string         `json:"step,omitempty"`
-	Rows        string         `json:"rows,omitempty"`
-	Cols        string         `json:"cols,omitempty"`
-	Legend      string         `json:"legend,omitempty"`
-	Values      []FieldValue   `json:"values,omitempty"`
-	Fields      []FormField    `json:"fields,omitempty"`
-	Target      string         `json:"target,omitempty"`
-	Method      string         `json:"method,omitempty"`
+	Type        FieldType         `json:"type"`
+	InputType   InputFieldType    `json:"inputType,omitempty"`
+	Name        string            `json:"name"`
+	Id          string            `json:"id,omitempty"`
+	Label       string            `json:"label,omitempty"`
+	Value       interface{}       `json:"value,omitempty"`
+	Placeholder string            `json:"placeholder,omitempty"`
+	Description string            `json:"description,omitempty"`
+	Required    bool              `json:"required,omitempty"`
+	Hidden      bool              `json:"hidden,omitempty"`
+	Min         string            `json:"min,omitempty"`
+	Max         string            `json:"max,omitempty"`
+	MaxLength   string            `json:"maxLength,omitempty"`
+	Step        string            `json:"step,omitempty"`
+	Rows        string            `json:"rows,omitempty"`
+	Cols        string            `json:"cols,omitempty"`
+	Legend      string            `json:"legend,omitempty"`
+	Values      []FieldValue      `json:"values,omitempty"`
+	Fields      []FormField       `json:"fields,omitempty"`
+	Target      string            `json:"target,omitempty"`
+	Method      string            `json:"method,omitempty"`
+	Attributes  map[string]string `json:"attributes,omitempty"`
 }
 
 // TemplateMap represents a map of field types to their input type templates

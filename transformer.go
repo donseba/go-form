@@ -106,6 +106,13 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			Label:  label,
 		}
 
+		for k, v := range info.Attributes {
+			if formField.Attributes == nil {
+				formField.Attributes = make(map[string]string)
+			}
+			formField.Attributes[k] = v
+		}
+
 		fields = append(fields, formField)
 	}
 

@@ -102,7 +102,7 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 </div>`,
 	},
 	types.FieldTypeForm: {
-		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" class="mx-auto border rounded shadow-sm p-3" style="max-width: 32rem;" novalidate>
+		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" class="mx-auto border rounded shadow-sm p-3" style="max-width: 32rem;"  {{ if .Field.Attributes }}{{ form_attributes .Field.Attributes }}{{end}}>
   {{ fields }}
   <div class="d-grid gap-2 mt-3">
     <button type="submit" class="btn btn-primary btn-sm">{{ form_print .Loc .Field.Label }}</button>

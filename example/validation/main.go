@@ -40,8 +40,9 @@ func isHexColor(val any, field reflect.StructField) (out form.FieldErrors) {
 
 type CustomForm struct {
 	form.Info
-	Name  string `form:"input,text" label:"Name" required:"true" minLength:"2" maxLength:"20"`
-	Color string `form:"input,color" label:"Favorite Color (hex)" validate:"isHexColor"`
+	Name        string `form:"input,text" label:"Name" required:"true" minLength:"2" maxLength:"20"`
+	Color       string `form:"input,color" label:"Favorite Color (hex)" validate:"isHexColor"`
+	ColorManual string `form:"input,text" label:"Manual color input (hex)" validate:"isHexColor"`
 }
 
 func main() {
@@ -54,6 +55,9 @@ func main() {
 				Target:     r.URL.Path,
 				Method:     http.MethodPost,
 				SubmitText: "Submit",
+				Attributes: map[string]string{
+					"custom-attr": "value",
+				},
 			},
 		}
 
@@ -65,7 +69,7 @@ func main() {
 				return
 			}
 
-			errs = f.ValidateForm(&data, nil)
+			errs = f.ValidateForm(&data)
 		}
 
 		tmpl := template.Must(template.New("page").Funcs(f.FuncMap()).Parse(`
