@@ -42,7 +42,7 @@ type CustomForm struct {
 	form.Info
 	Name        string `form:"input,text" label:"Name" required:"true" minLength:"2" maxLength:"20"`
 	Color       string `form:"input,color" label:"Favorite Color (hex)" validate:"isHexColor"`
-	ColorManual string `form:"input,text" label:"Manual color input (hex)" validate:"isHexColor"`
+	ColorManual string `form:"input,text" label:"Manual color input (hex)" validate:"isHexColor" group:"before,after"`
 }
 
 func main() {

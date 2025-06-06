@@ -25,8 +25,8 @@ type (
 		// Basic input fields
 		Username string `form:"input,text" label:"Username" placeholder:"Enter your username" required:"true"`
 		Password string `form:"input,password" label:"Password" placeholder:"Enter your password" required:"true"`
-		Email    string `form:"input,email" label:"Email" placeholder:"Enter your email" required:"true"`
-		Phone    string `form:"input,tel" label:"Phone label" placeholder:"Enter your phone number"`
+		Email    string `form:"input,email" label:"Email" placeholder:"Enter your email" required:"true" group:"@"`
+		Phone    string `form:"input,tel" label:"Phone label" placeholder:"Enter your phone number" group:"&phone;"`
 		Age      int    `form:"input,number" label:"Age" placeholder:"Enter your age" step:"1"`
 		Birthday string `form:"input,date" label:"Birthday" placeholder:"Enter your birthday"`
 

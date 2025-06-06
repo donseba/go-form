@@ -107,4 +107,11 @@ var Plain = map[types.FieldType]map[types.InputFieldType]string{
   </div>
 </form>`,
 	},
+	types.FieldTypeInputGroup: {
+		types.InputFieldTypeNone: `<div style="display: flex; align-items: stretch; width: 100%;">
+  {{if .GroupBefore}}<span style="display: inline-flex; align-items: center; padding: 0 0.75rem; background: #f8f9fa; border: 1px solid #ced4da; border-right: 0; border-radius: 0.25rem 0 0 0.25rem; color: #6c757d; font-size: 0.875rem;">{{.GroupBefore}}</span>{{end}}
+  {{.Input}}
+  {{if .GroupAfter}}<span style="display: inline-flex; align-items: center; padding: 0 0.75rem; background: #f8f9fa; border: 1px solid #ced4da; border-left: 0; border-radius: 0 0.25rem 0.25rem 0; color: #6c757d; font-size: 0.875rem;">{{.GroupAfter}}</span>{{end}}
+</div>`,
+	},
 }

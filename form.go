@@ -334,21 +334,33 @@ func (f *Form) formFieldHTML(loc Localizer, field types.FormField, errorMap map[
 	}
 
 	var fieldSb strings.Builder
-	tpl = tpl.Funcs(template.FuncMap{
-		"label": func() template.HTML {
-			return template.HTML(labelSb.String())
-		},
-		"errors": func() []string {
-			if errs, ok := errorMap[field.Name]; ok {
-				return errs
-			}
-			return nil
-		},
-	})
-
 	err = tpl.Execute(&fieldSb, fMap)
 	if err != nil {
 		return "", err
+	}
+
+	// if the field has grouping attributes, we need to wrap it in a group template
+	if field.GroupBefore != "" || field.GroupAfter != "" {
+		if groupTmp, ok := f.templateMap[types.FieldTypeInputGroup][types.InputFieldTypeNone]; ok {
+			gMap := map[string]any{
+				"GroupBefore": template.HTML(field.GroupBefore),
+				"GroupAfter":  template.HTML(field.GroupAfter),
+				"Input":       template.HTML(fieldSb.String()),
+			}
+
+			groupTpl, err := groupTmp.Clone()
+			if err != nil {
+				return "", err
+			}
+
+			var groupSb strings.Builder
+			err = groupTpl.Execute(&groupSb, gMap)
+			if err != nil {
+				return "", err
+			}
+
+			fieldSb = groupSb
+		}
 	}
 
 	// Skip wrapper for hidden fields
