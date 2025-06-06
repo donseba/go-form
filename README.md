@@ -168,6 +168,31 @@ See the example in `example/translation/main.go` for a complete usage demonstrat
 
 ---
 
+### Custom Form Attributes
+You can set custom HTML attributes on forms (e.g., `hx-post`, `data-*`, etc.) using the `Attributes` field in your form struct:
+
+```go
+form := &FormField{
+    // ...other fields...
+    Attributes: map[string]string{
+        "hx-post": "/some-url",
+        "data-custom": "value",
+    },
+}
+```
+
+### Input Groups (Prepend/Append)
+You can prepend or append content to input fields using the `group` tag. This is supported in all template sets (Plain, Bootstrap 5, Tailwind CSS):
+
+```go
+type ExampleForm struct {
+    Username string `form:"input,text" label:"Username" group:"@,.com"`
+}
+```
+This will render an input with `@` before and `.com` after the field, styled according to the selected template.
+
+---
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

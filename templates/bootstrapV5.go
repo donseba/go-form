@@ -6,6 +6,13 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeBase: {
 		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{if .Field.Required}}required{{end}} class="form-control" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
 	},
+	types.FieldTypeInputGroup: {
+		types.InputFieldTypeNone: `<div class="input-group">
+  {{if .GroupBefore}}<div class="input-group-text">{{.GroupBefore}}</div>{{end}}
+  {{.Input}}
+  {{if .GroupAfter}}<div class="input-group-text">{{.GroupAfter}}</div>{{end}}
+</div>`,
+	},
 	types.FieldTypeInput: {
 		types.InputFieldTypeNone:          `{{ baseInput "Type" "text" "Field" .Field}}`,
 		types.InputFieldTypeText:          `{{ baseInput "Type" "text" "Field" .Field}}`,
@@ -102,7 +109,7 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 </div>`,
 	},
 	types.FieldTypeForm: {
-		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" class="mx-auto border rounded shadow-sm p-3" style="max-width: 32rem;" novalidate>
+		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" class="mx-auto border rounded shadow-sm p-3" style="max-width: 32rem;"  {{ if .Field.Attributes }}{{ form_attributes .Field.Attributes }}{{end}}>
   {{ fields }}
   <div class="d-grid gap-2 mt-3">
     <button type="submit" class="btn btn-primary btn-sm">{{ form_print .Loc .Field.Label }}</button>

@@ -6,6 +6,13 @@ var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeBase: {
 		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{if .Field.Required}}required{{end}} class="border border-gray-200 block w-full rounded-md px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
 	},
+	types.FieldTypeInputGroup: {
+		types.InputFieldTypeNone: `<div class="flex rounded-md shadow-sm">
+  {{if .GroupBefore}}<span class="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 text-sm">{{.GroupBefore}}</span>{{end}}
+  {{.Input}}
+  {{if .GroupAfter}}<span class="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-gray-500 text-sm">{{.GroupAfter}}</span>{{end}}
+</div>`,
+	},
 	types.FieldTypeInput: {
 		types.InputFieldTypeNone:          `{{ baseInput "Type" "text" "Field" .Field}}`,
 		types.InputFieldTypeText:          `{{ baseInput "Type" "text" "Field" .Field}}`,
@@ -100,7 +107,7 @@ var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
 </div>`,
 	},
 	types.FieldTypeForm: {
-		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" class="mx-auto max-w-md rounded-lg border border-gray-200 bg-white p-4 shadow-sm" novalidate>
+		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" class="mx-auto max-w-md rounded-lg border border-gray-200 bg-white p-4 shadow-sm" {{ if .Field.Attributes }}{{ form_attributes .Field.Attributes }}{{end}}>
   {{ fields }}
   <div class="mt-4 flex justify-end">
     <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">{{ form_print .Loc .Field.Label }}</button>

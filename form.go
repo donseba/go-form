@@ -28,9 +28,10 @@ type (
 	}
 
 	Info struct {
-		Target     string `json:"target,omitempty"`
-		Method     string `json:"method,omitempty"`
-		SubmitText string `json:"submit,omitempty"`
+		Target     string            `json:"target,omitempty"`
+		Method     string            `json:"method,omitempty"`
+		SubmitText string            `json:"submit,omitempty"`
+		Attributes map[string]string `json:"attributes,omitempty"`
 	}
 
 	Form struct {
@@ -100,6 +101,15 @@ func (f *Form) init(templateMap map[types.FieldType]map[types.InputFieldType]str
 					}
 
 					return key
+				},
+				"form_attributes": func(attributes map[string]string) template.HTMLAttr {
+					var sb strings.Builder
+					for k, v := range attributes {
+						if v != "" {
+							sb.WriteString(fmt.Sprintf(` %s="%s"`, k, template.HTMLEscapeString(v)))
+						}
+					}
+					return template.HTMLAttr(sb.String())
 				},
 				"baseInput": func(kv ...any) template.HTML {
 					if baseInputTpl == nil {
@@ -324,21 +334,33 @@ func (f *Form) formFieldHTML(loc Localizer, field types.FormField, errorMap map[
 	}
 
 	var fieldSb strings.Builder
-	tpl = tpl.Funcs(template.FuncMap{
-		"label": func() template.HTML {
-			return template.HTML(labelSb.String())
-		},
-		"errors": func() []string {
-			if errs, ok := errorMap[field.Name]; ok {
-				return errs
-			}
-			return nil
-		},
-	})
-
 	err = tpl.Execute(&fieldSb, fMap)
 	if err != nil {
 		return "", err
+	}
+
+	// if the field has grouping attributes, we need to wrap it in a group template
+	if field.GroupBefore != "" || field.GroupAfter != "" {
+		if groupTmp, ok := f.templateMap[types.FieldTypeInputGroup][types.InputFieldTypeNone]; ok {
+			gMap := map[string]any{
+				"GroupBefore": template.HTML(field.GroupBefore),
+				"GroupAfter":  template.HTML(field.GroupAfter),
+				"Input":       template.HTML(fieldSb.String()),
+			}
+
+			groupTpl, err := groupTmp.Clone()
+			if err != nil {
+				return "", err
+			}
+
+			var groupSb strings.Builder
+			err = groupTpl.Execute(&groupSb, gMap)
+			if err != nil {
+				return "", err
+			}
+
+			fieldSb = groupSb
+		}
 	}
 
 	// Skip wrapper for hidden fields

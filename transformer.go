@@ -17,6 +17,7 @@ const (
 	tagLegend      = "legend"
 	tagValues      = "values"
 	tagForm        = "form"
+	tagGroup       = "group"
 	tagStep        = "step"
 	tagRows        = "rows"
 	tagCols        = "cols"
@@ -106,6 +107,13 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			Label:  label,
 		}
 
+		for k, v := range info.Attributes {
+			if formField.Attributes == nil {
+				formField.Attributes = make(map[string]string)
+			}
+			formField.Attributes[k] = v
+		}
+
 		fields = append(fields, formField)
 	}
 
@@ -131,6 +139,19 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			Description: tags.Get(tagDescription),
 			Name:        strings.Join(nname, "."),
 			Value:       rValue.Field(i).Interface(),
+		}
+
+		groupTag := tags.Get(tagGroup)
+		if groupTag != "" {
+			if strings.Contains(groupTag, ",") {
+				parts := strings.SplitN(groupTag, ",", 2)
+				field.GroupBefore = strings.TrimSpace(parts[0])
+				if len(parts) > 1 {
+					field.GroupAfter = strings.TrimSpace(parts[1])
+				}
+			} else {
+				field.GroupBefore = groupTag
+			}
 		}
 
 		formTag := tags.Get(tagForm)

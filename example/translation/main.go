@@ -100,7 +100,7 @@ func main() {
 			data.Name = r.FormValue("Name")
 			data.Age, _ = strconv.Atoi(r.FormValue("Age"))
 
-			errList = f.ValidateForm(&data, loc)
+			errList = f.ValidateFormLocalized(&data, loc)
 		}
 
 		tmpl := template.Must(template.New("page").Funcs(f.FuncMap()).Parse(`
