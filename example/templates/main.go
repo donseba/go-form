@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/donseba/go-form"
 	"github.com/donseba/go-form/templates"
@@ -23,12 +24,12 @@ type (
 		form.Info
 		ID int `form:"input,hidden"`
 		// Basic input fields
-		Username string `form:"input,text" label:"Username" placeholder:"Enter your username" required:"true"`
-		Password string `form:"input,password" label:"Password" placeholder:"Enter your password" required:"true"`
-		Email    string `form:"input,email" label:"Email" placeholder:"Enter your email" required:"true" group:"@"`
-		Phone    string `form:"input,tel" label:"Phone label" placeholder:"Enter your phone number" group:"&phone;"`
-		Age      int    `form:"input,number" label:"Age" placeholder:"Enter your age" step:"1"`
-		Birthday string `form:"input,date" label:"Birthday" placeholder:"Enter your birthday"`
+		Username string    `form:"input,text" label:"Username" placeholder:"Enter your username" required:"true"`
+		Password string    `form:"input,password" label:"Password" placeholder:"Enter your password" required:"true"`
+		Email    string    `form:"input,email" label:"Email" placeholder:"Enter your email" required:"true" group:"@"`
+		Phone    string    `form:"input,tel" label:"Phone label" placeholder:"Enter your phone number" group:"&phone;"`
+		Age      int       `form:"input,number" label:"Age" placeholder:"Enter your age" step:"1"`
+		Birthday time.Time `form:"input,date" label:"Birthday" placeholder:"Enter your birthday"`
 
 		// Checkbox and radio fields
 		Active      bool   `form:"checkbox" label:"Active"`
@@ -41,10 +42,10 @@ type (
 		RangeValue int `form:"input,range" label:"Range Value" min:"25" max:"75" step:"1"`
 
 		//date and time fields
-		DateTimeLocal string `form:"input,datetime-local" label:"Date and Time" placeholder:"Select date and time"`
-		Time          string `form:"input,time" label:"Time" placeholder:"Select time"`
-		Week          string `form:"input,week" label:"Week" placeholder:"Select week"`
-		Month         string `form:"input,month" label:"Month" placeholder:"Select month"`
+		DateTimeLocal time.Time `form:"input,datetime-local" label:"Date and Time" placeholder:"Select date and time"`
+		Time          time.Time `form:"input,time" label:"Time" placeholder:"Select time" step:"any"`
+		Week          time.Time `form:"input,week" label:"Week" placeholder:"Select week"`
+		Month         time.Time `form:"input,month" label:"Month" placeholder:"Select month" pattern:"^[0-9]{4}-W[0-9]{2}$"`
 
 		// enum field
 		Gender Gender `label:"Gender"`
@@ -86,17 +87,21 @@ func main() {
 			Target: "/submit",
 			Method: "POST",
 		},
-		ID:       1,
-		Username: "john.doe",
-		Email:    "john.doe@example.com",
-		Phone:    "123-456-7890",
-		Age:      30,
-		Birthday: "1990-01-01",
-		Active:   true,
-		Gender:   "male",
-		Country:  "us",
-		Message:  "Hello, this is a test message!",
-		Hidden:   "secret-value",
+		ID:            1,
+		Username:      "john.doe",
+		Email:         "john.doe@example.com",
+		Phone:         "123-456-7890",
+		Age:           30,
+		Birthday:      time.Date(1993, 1, 1, 0, 0, 0, 0, time.UTC),
+		DateTimeLocal: time.Date(2023, 10, 1, 12, 42, 0, 0, time.UTC),
+		Time:          time.Date(2023, 10, 1, 14, 30, 0, 0, time.UTC),
+		Week:          time.Date(2023, 1, 5, 0, 0, 0, 0, time.UTC),
+		Month:         time.Date(2023, 10, 1, 0, 0, 0, 0, time.UTC),
+		Active:        true,
+		Gender:        "male",
+		Country:       "us",
+		Message:       "Hello, this is a test message!",
+		Hidden:        "secret-value",
 		RadioGroup: RadioGroupBlock{
 			Option1: true,
 			Option2: false,
