@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/donseba/go-form/types"
 )
@@ -264,6 +265,47 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			field.Values = fieldValue
 
 			fields = append(fields, field)
+			continue
+		}
+
+		// check if time.Time or time.Time pointer
+		if rType.Field(i).Type == reflect.TypeOf(time.Time{}) || rType.Field(i).Type == reflect.TypeOf(&time.Time{}) {
+			var elem time.Time
+			if rType.Field(i).Type == reflect.TypeOf(&time.Time{}) {
+				if rValue.Field(i).IsNil() {
+					elem = time.Time{}
+				} else {
+					elem = rValue.Field(i).Elem().Interface().(time.Time)
+				}
+			} else {
+				elem = rValue.Field(i).Interface().(time.Time)
+			}
+
+			switch field.InputType {
+			case types.InputFieldTypeDate:
+				field.Value = elem.Format(time.DateOnly)
+			case types.InputFieldTypeTime:
+				field.Value = elem.Format(time.TimeOnly)
+			case types.InputFieldTypeDateTimeLocal:
+				field.Value = elem.Format(time.DateTime)
+			case types.InputFieldTypeMonth:
+				field.Value = elem.Format("01")
+			case types.InputFieldTypeWeek:
+				// For week, we use the ISO week date format
+				year, week := elem.ISOWeek()
+				field.Value = fmt.Sprintf("%d-W%02d", year, week)
+			default:
+				field.Value = elem.Format(time.DateOnly)
+			}
+
+			if tags.Get(tagStep) != "" {
+				field.Step = tags.Get(tagStep)
+			} else {
+				field.Step = "60"
+			}
+
+			fields = append(fields, field)
+
 			continue
 		}
 

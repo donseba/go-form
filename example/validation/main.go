@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"time"
 
 	"github.com/donseba/go-form"
 	"github.com/donseba/go-form/templates"
@@ -43,6 +44,12 @@ type CustomForm struct {
 	Name        string `form:"input,text" label:"Name" required:"true" minLength:"2" maxLength:"20"`
 	Color       string `form:"input,color" label:"Favorite Color (hex)" validate:"isHexColor"`
 	ColorManual string `form:"input,text" label:"Manual color input (hex)" validate:"isHexColor" group:"before,after"`
+
+	Week          time.Time `form:"input,week" label:"Week" placeholder:"Select week" required:"true" pattern:"^[0-9]{4}-W[0-9]{2}$"`
+	Month         time.Time `form:"input,month" label:"Month" placeholder:"Select month" required:"true" pattern:"^[0-9]{2}$"`
+	Date          time.Time `form:"input,date" label:"Date" placeholder:"Select date" required:"true"`
+	Time          time.Time `form:"input,time" label:"Time" placeholder:"Select time" required:"true" step:"any"`
+	DateTimeLocal time.Time `form:"input,datetime-local" label:"Date and Time" placeholder:"Select date and time" required:"true"`
 }
 
 func main() {
