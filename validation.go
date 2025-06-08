@@ -357,6 +357,30 @@ func (f *Form) ValidateFormLocalized(form any, loc Localizer) FieldErrors {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		value := v.Field(i)
+		// Handle nested structs (excluding time.Time)
+		if value.Kind() == reflect.Struct && field.Type.PkgPath() != "time" {
+			nestedErrs := f.ValidateFormLocalized(value.Addr().Interface(), loc)
+			for _, err := range nestedErrs {
+				f, e := err.FieldError()
+				errList = append(errList, FieldValidationError{
+					Field: field.Name + "." + f,
+					Err:   e,
+				})
+			}
+			continue
+		}
+		if value.Kind() == reflect.Ptr && !value.IsNil() && value.Elem().Kind() == reflect.Struct && field.Type.Elem().PkgPath() != "time" {
+			nestedErrs := f.ValidateFormLocalized(value.Interface(), loc)
+			for _, err := range nestedErrs {
+				f, e := err.FieldError()
+
+				errList = append(errList, FieldValidationError{
+					Field: field.Name + "." + f,
+					Err:   e,
+				})
+			}
+			continue
+		}
 		validateTag := field.Tag.Get("validate")
 		if validateTag == "" {
 			continue
