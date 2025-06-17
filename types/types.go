@@ -43,6 +43,7 @@ type FormField struct {
 	Attributes  map[string]string `json:"attributes,omitempty"`
 	GroupBefore string            `json:"groupBefore,omitempty"`
 	GroupAfter  string            `json:"groupAfter,omitempty"`
+	Class       string            `json:"class,omitempty"`
 }
 
 // TemplateMap represents a map of field types to their input type templates

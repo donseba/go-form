@@ -24,6 +24,7 @@ const (
 	tagCols        = "cols"
 	tagMin         = "min"
 	tagMax         = "max"
+	tagClass       = "class"
 	tagMaxLength   = "maxLength"
 	tagDescription = "description"
 )
@@ -139,6 +140,7 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			Placeholder: tags.Get(tagPlaceholder),
 			Description: tags.Get(tagDescription),
 			Name:        strings.Join(nname, "."),
+			Class:       tags.Get(tagClass),
 			Value:       rValue.Field(i).Interface(),
 		}
 
