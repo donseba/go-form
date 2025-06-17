@@ -4,7 +4,7 @@ import "github.com/donseba/go-form/types"
 
 var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeBase: {
-		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{if .Field.Required}}required{{end}} {{if .Field.Min}}min="{{.Field.Min}}"{{end}} {{if .Field.Max}}max="{{.Field.Max}}"{{end}} {{if .Field.Step}}step="{{.Field.Step}}"{{end}} class="form-control {{ .Field.Class}}" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
+		types.InputFieldTypeNone: `<input type="{{.Type}}" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" placeholder="{{ form_print .Loc .Field.Placeholder}}" {{if .Field.Required}}required{{end}} {{if .Field.Min}}min="{{.Field.Min}}"{{end}} {{if .Field.Max}}max="{{.Field.Max}}"{{end}} {{if .Field.Step}}step="{{.Field.Step}}"{{end}} class="form-control {{ .Field.Class}}" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}} {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>`,
 	},
 	types.FieldTypeInputGroup: {
 		types.InputFieldTypeNone: `<div class="input-group">
@@ -19,7 +19,7 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 		types.InputFieldTypePassword:      `{{ baseInput "Type" "password" "Field" .Field}}`,
 		types.InputFieldTypeEmail:         `{{ baseInput "Type" "email" "Field" .Field}}`,
 		types.InputFieldTypeTel:           `{{ baseInput "Type" "tel" "Field" .Field}}`,
-		types.InputFieldTypeNumber:        `<input type="number" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" {{if .Field.Min}}min="{{.Field.Min}}"{{end}} {{if .Field.Max}}max="{{.Field.Max}}"{{end}} {{if .Field.Step}}step="{{.Field.Step}}"{{end}} {{if .Field.Required}}required{{end}} class="form-control {{ .Field.Class}}" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
+		types.InputFieldTypeNumber:        `<input type="number" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" {{if .Field.Min}}min="{{.Field.Min}}"{{end}} {{if .Field.Max}}max="{{.Field.Max}}"{{end}} {{if .Field.Step}}step="{{.Field.Step}}"{{end}} {{if .Field.Required}}required{{end}} class="form-control {{ .Field.Class}}" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}} {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>`,
 		types.InputFieldTypeDate:          `{{ baseInput "Type" "date" "Field" .Field}}`,
 		types.InputFieldTypeDateTimeLocal: `{{ baseInput "Type" "datetime-local" "Field" .Field}}`,
 		types.InputFieldTypeTime:          `{{ baseInput "Type" "time" "Field" .Field}}`,
@@ -28,16 +28,16 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 		types.InputFieldTypeSearch:        `{{ baseInput "Type" "search" "Field" .Field}}`,
 		types.InputFieldTypeUrl:           `{{ baseInput "Type" "url" "Field" .Field}}`,
 		types.InputFieldTypeColor: `<div class="d-flex align-items-center gap-2">
-  <input type="color" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" class="form-control form-control-color {{ .Field.Class}}" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>
+  <input type="color" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" class="form-control form-control-color {{ .Field.Class}}" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}} {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
   <span class="small text-muted" aria-hidden="true">{{.Field.Value}}</span>
 </div>`,
 		types.InputFieldTypeRange: `<div class="d-flex align-items-center gap-2">
-  <input type="range" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" {{if .Field.Min}}min="{{.Field.Min}}"{{end}} {{if .Field.Max}}max="{{.Field.Max}}"{{end}} {{if .Field.Step}}step="{{.Field.Step}}"{{end}} class="form-control {{ .Field.Class}}" oninput="document.getElementById('{{.Field.Id}}_value').textContent = this.value" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>
+  <input type="range" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}" {{if .Field.Min}}min="{{.Field.Min}}"{{end}} {{if .Field.Max}}max="{{.Field.Max}}"{{end}} {{if .Field.Step}}step="{{.Field.Step}}"{{end}} class="form-control {{ .Field.Class}}" oninput="document.getElementById('{{.Field.Id}}_value').textContent = this.value" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}} {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
   <span id="{{.Field.Id}}_value" class="small text-muted" style="min-width: 3rem; text-align: right;" aria-hidden="true">{{.Field.Value}}</span>
 </div>`,
-		types.InputFieldTypeImage:  `<input type="image" id="{{.Field.Id}}" name="{{.Field.Name}}" src="{{.Field.Value}}" alt="{{.Field.Label}}" class="form-control {{ .Field.Class}}" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}>`,
-		types.InputFieldTypeSubmit: `<button type="submit" class="btn btn-primary btn-sm  {{ .Field.Class}}" {{ if eq .Field.Disabled true }}disabled{{end}} aria-labelledby="{{.Field.Id}}_label">{{ form_print .Loc .Field.Label }}</button>`,
-		types.InputFieldTypeHidden: `<input type="hidden" name="{{.Field.Name}}" value="{{.Field.Value}}">`,
+		types.InputFieldTypeImage:  `<input type="image" id="{{.Field.Id}}" name="{{.Field.Name}}" src="{{.Field.Value}}" alt="{{.Field.Label}}" class="form-control {{ .Field.Class}}" aria-labelledby="{{.Field.Id}}_label" {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}} {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>`,
+		types.InputFieldTypeSubmit: `<button type="submit" class="btn btn-primary btn-sm  {{ .Field.Class}}" {{ if eq .Field.Disabled true }}disabled{{end}} aria-labelledby="{{.Field.Id}}_label" {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>{{ form_print .Loc .Field.Label }}</button>`,
+		types.InputFieldTypeHidden: `<input type="hidden" name="{{.Field.Name}}" value="{{.Field.Value}}" {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>`,
 	},
 	types.FieldTypeCheckbox: {
 		types.InputFieldTypeNone: `<div class="form-check">

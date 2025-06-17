@@ -27,6 +27,7 @@ const (
 	tagClass       = "class"
 	tagMaxLength   = "maxLength"
 	tagDescription = "description"
+	tagData        = "data"
 )
 
 var DefaultSubmitText = "Submit"
@@ -142,6 +143,63 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			Name:        strings.Join(nname, "."),
 			Class:       tags.Get(tagClass),
 			Value:       rValue.Field(i).Interface(),
+		}
+
+		// Process data attributes if present
+		if dataTag := tags.Get(tagData); dataTag != "" {
+			field.Data = make(map[string]string)
+
+			// Improved parser for data attributes that handles complex values
+			var i, start int
+			var inQuote bool
+			var inBrace int
+
+			for i < len(dataTag) {
+				switch dataTag[i] {
+				case '"':
+					// Toggle quote state if not escaped
+					if i == 0 || dataTag[i-1] != '\\' {
+						inQuote = !inQuote
+					}
+				case '{':
+					if !inQuote {
+						inBrace++
+					}
+				case '}':
+					if !inQuote {
+						inBrace--
+					}
+				case ',':
+					// Only split on commas that are not inside quotes or braces
+					if !inQuote && inBrace == 0 {
+						// Process the attribute
+						attr := dataTag[start:i]
+						if strings.Contains(attr, "=") {
+							parts := strings.SplitN(attr, "=", 2)
+							if len(parts) == 2 {
+								key := strings.TrimSpace(parts[0])
+								value := strings.TrimSpace(parts[1])
+								field.Data[key] = value
+							}
+						}
+						start = i + 1 // Move past the comma
+					}
+				}
+				i++
+			}
+
+			// Process the last attribute
+			if start < len(dataTag) {
+				attr := dataTag[start:]
+				if strings.Contains(attr, "=") {
+					parts := strings.SplitN(attr, "=", 2)
+					if len(parts) == 2 {
+						key := strings.TrimSpace(parts[0])
+						value := strings.TrimSpace(parts[1])
+						field.Data[key] = value
+					}
+				}
+			}
 		}
 
 		groupTag := tags.Get(tagGroup)

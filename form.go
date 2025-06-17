@@ -70,6 +70,15 @@ func (f *Form) init(templateMap map[types.FieldType]map[types.InputFieldType]str
 	// First, create the base input template
 	baseInputTpl, err := template.New("baseInput").Funcs(map[string]any{
 		"form_print": func(loc Localizer, key string, args ...any) string { return "" },
+		"form_data_attributes": func(dataAttributes map[string]string) template.HTMLAttr {
+			var sb strings.Builder
+			for k, v := range dataAttributes {
+				if v != "" {
+					sb.WriteString(fmt.Sprintf(` data-%s="%s"`, k, template.HTMLEscapeString(v)))
+				}
+			}
+			return template.HTMLAttr(sb.String())
+		},
 	}).Parse(templateMap[types.FieldTypeBase][types.InputFieldTypeNone])
 	if err != nil {
 		panic(fmt.Errorf("error parsing base input template: %w", err))
@@ -107,6 +116,15 @@ func (f *Form) init(templateMap map[types.FieldType]map[types.InputFieldType]str
 					for k, v := range attributes {
 						if v != "" {
 							sb.WriteString(fmt.Sprintf(` %s="%s"`, k, template.HTMLEscapeString(v)))
+						}
+					}
+					return template.HTMLAttr(sb.String())
+				},
+				"form_data_attributes": func(dataAttributes map[string]string) template.HTMLAttr {
+					var sb strings.Builder
+					for k, v := range dataAttributes {
+						if v != "" {
+							sb.WriteString(fmt.Sprintf(` data-%s="%s"`, k, template.HTMLEscapeString(v)))
 						}
 					}
 					return template.HTMLAttr(sb.String())
