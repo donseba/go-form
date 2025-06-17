@@ -310,12 +310,12 @@ func (l testLocalizer) GetLocale() string { return l.Locale }
 
 var testTranslations = map[string]map[string]string{
 	"en": {
-		"form.validation.required": "is required",
-		"form.validation.min":      "must be >= %v",
+		"form||Validation required":                         "Validation required",
+		"form||Value should be greater than or equal to %v": "Value should be greater than or equal to %v",
 	},
 	"it": {
-		"form.validation.required": "è obbligatorio",
-		"form.validation.min":      "deve essere almeno %v",
+		"form||Validation required":                         "è obbligatorio",
+		"form||Value should be greater than or equal to %v": "deve essere almeno %v",
 	},
 }
 
@@ -349,9 +349,9 @@ func TestValidateForm_Translation(t *testing.T) {
 		locale string
 		expect string
 	}{
-		{"required error in EN", TranslationForm{Name: "", Age: 0}, "en", "is required"},
+		{"required error in EN", TranslationForm{Name: "", Age: 0}, "en", "Validation required"},
 		{"required error in IT", TranslationForm{Name: "", Age: 0}, "it", "è obbligatorio"},
-		{"min error in EN", TranslationForm{Name: "John", Age: 10}, "en", ">= 18"},
+		{"min error in EN", TranslationForm{Name: "John", Age: 10}, "en", "Value should be greater than or equal to 18"},
 		{"min error in IT", TranslationForm{Name: "John", Age: 10}, "it", "almeno 18"},
 	}
 

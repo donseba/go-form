@@ -91,7 +91,8 @@ func main() {
 			<h2>Custom Validation Example</h2>
 			<div style="margin-bottom:1em">
 				<a href="http://localhost:8080/">Templates Example</a> |
-				<a href="http://localhost:8082/">Translation Example</a>
+				<a href="http://localhost:8082/">Translation Example</a> |
+				<a href="http://localhost:8083/">CSRF Example</a>
 			</div>
 			{{ form_render .Form .Errors }}
 			</body>

@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/donseba/go-form/csrf"
 	"github.com/donseba/go-form/types"
 )
 
@@ -32,6 +33,8 @@ type (
 		Method     string            `json:"method,omitempty"`
 		SubmitText string            `json:"submit,omitempty"`
 		Attributes map[string]string `json:"attributes,omitempty"`
+		CsrfValue  string            `json:"csrf_value,omitempty"` // CSRF token value
+		CsrfField  string            `json:"csrf_field,omitempty"` // Name of the CSRF field (defaults to "_csrf")
 	}
 
 	Form struct {
@@ -39,6 +42,7 @@ type (
 		validators         map[string]ValidationFunc
 		translationEnabled bool
 		translationFunc    TranslationFunc
+		csrfStore          csrf.Store // CSRF token storage
 	}
 )
 
@@ -46,10 +50,27 @@ func (d *DefaultLocalizer) GetLocale() string {
 	return "en" // Default locale
 }
 
+// SetCSRFStore sets the CSRF store for the Form
+func (f *Form) SetCSRFStore(store csrf.Store) {
+	f.csrfStore = store
+}
+
+// HasCSRFStore checks if the form has a CSRF store
+func (f *Form) HasCSRFStore() bool {
+	return f.csrfStore != nil
+}
+
+// GetCSRFStore returns the CSRF store
+func (f *Form) GetCSRFStore() csrf.Store {
+	return f.csrfStore
+}
+
+// NewTranslatedForm creates a new form with translation support
 func NewTranslatedForm(templateMap map[types.FieldType]map[types.InputFieldType]string, translationFunc TranslationFunc) *Form {
 	f := &Form{
 		templateMap: make(map[types.FieldType]map[types.InputFieldType]template.Template),
 		validators:  make(map[string]ValidationFunc),
+		csrfStore:   csrf.NewDefaultMemoryCSRFStore(),
 	}
 
 	f.enableTranslation(translationFunc)
@@ -57,19 +78,37 @@ func NewTranslatedForm(templateMap map[types.FieldType]map[types.InputFieldType]
 	return f.init(templateMap)
 }
 
+// NewForm creates a new form without translation support
 func NewForm(templateMap map[types.FieldType]map[types.InputFieldType]string) *Form {
 	f := &Form{
 		templateMap: make(map[types.FieldType]map[types.InputFieldType]template.Template),
 		validators:  make(map[string]ValidationFunc),
+		csrfStore:   csrf.NewDefaultMemoryCSRFStore(),
 	}
 
 	return f.init(templateMap)
+}
+
+// NewFormWithCSRF creates a new form with CSRF protection
+func NewFormWithCSRF(templateMap map[types.FieldType]map[types.InputFieldType]string, store csrf.Store) *Form {
+	f := NewForm(templateMap)
+	f.csrfStore = store
+	return f
 }
 
 func (f *Form) init(templateMap map[types.FieldType]map[types.InputFieldType]string) *Form {
 	// First, create the base input template
 	baseInputTpl, err := template.New("baseInput").Funcs(map[string]any{
 		"form_print": func(loc Localizer, key string, args ...any) string { return "" },
+		"form_data_attributes": func(dataAttributes map[string]string) template.HTMLAttr {
+			var sb strings.Builder
+			for k, v := range dataAttributes {
+				if v != "" {
+					sb.WriteString(fmt.Sprintf(` data-%s="%s"`, k, template.HTMLEscapeString(v)))
+				}
+			}
+			return template.HTMLAttr(sb.String())
+		},
 	}).Parse(templateMap[types.FieldTypeBase][types.InputFieldTypeNone])
 	if err != nil {
 		panic(fmt.Errorf("error parsing base input template: %w", err))
@@ -107,6 +146,15 @@ func (f *Form) init(templateMap map[types.FieldType]map[types.InputFieldType]str
 					for k, v := range attributes {
 						if v != "" {
 							sb.WriteString(fmt.Sprintf(` %s="%s"`, k, template.HTMLEscapeString(v)))
+						}
+					}
+					return template.HTMLAttr(sb.String())
+				},
+				"form_data_attributes": func(dataAttributes map[string]string) template.HTMLAttr {
+					var sb strings.Builder
+					for k, v := range dataAttributes {
+						if v != "" {
+							sb.WriteString(fmt.Sprintf(` data-%s="%s"`, k, template.HTMLEscapeString(v)))
 						}
 					}
 					return template.HTMLAttr(sb.String())
@@ -200,6 +248,10 @@ func (f *Form) formRenderFunc(loc Localizer, v any, errs FieldErrors, kv ...any)
 		if field.Type == types.FieldTypeForm {
 			formField = &tr.Fields[i]
 
+			if formField.Attributes == nil {
+				formField.Attributes = make(map[string]string)
+			}
+
 			continue // Skip the form field itself, as it's handled separately
 		}
 
@@ -278,7 +330,40 @@ func (f *Form) formRenderFunc(loc Localizer, v any, errs FieldErrors, kv ...any)
 		var sb strings.Builder
 		formTmpl = formTmpl.Funcs(template.FuncMap{
 			"fields": func() template.HTML {
-				return html
+				// Add CSRF token field if present
+				var csrfHTML template.HTML
+
+				// Get form info from metadata
+				formMetadata, ok := v.(interface{ GetFormInfo() Info })
+				if ok {
+					info := formMetadata.GetFormInfo()
+					if info.CsrfValue != "" {
+						csrfFieldName := info.CsrfField
+						if csrfFieldName == "" {
+							csrfFieldName = "_csrf"
+						}
+						csrfHTML = template.HTML(fmt.Sprintf(`<input type="hidden" name="%s" value="%s">`,
+							template.HTMLEscapeString(csrfFieldName),
+							template.HTMLEscapeString(info.CsrfValue)))
+					}
+				} else if rval := reflect.ValueOf(v); rval.Kind() == reflect.Struct && rval.NumField() > 0 {
+					// Try to get Info from first embedded field
+					firstField := rval.Field(0)
+					if firstField.Type() == reflect.TypeOf(Info{}) {
+						info := firstField.Interface().(Info)
+						if info.CsrfValue != "" {
+							csrfFieldName := info.CsrfField
+							if csrfFieldName == "" {
+								csrfFieldName = DefaultCSRFField
+							}
+							csrfHTML = template.HTML(fmt.Sprintf(`<input type="hidden" name="%s" value="%s">`,
+								template.HTMLEscapeString(csrfFieldName),
+								template.HTMLEscapeString(info.CsrfValue)))
+						}
+					}
+				}
+
+				return csrfHTML + html
 			},
 		})
 

@@ -12,6 +12,7 @@ A Go library for rendering HTML forms from Go structs using struct tags and Go t
 - Grouping and nested struct support for form sections
 - Built-in template sets: Plain, Bootstrap 5, Tailwind CSS
 - Integrates with `html/template` via a FuncMap
+- CSRF Protection 
 
 ---
 
@@ -85,6 +86,8 @@ Other supported tags:
 - `legend` — For grouping/nested structs (section title)
 - `description` — Field description/help text
 - `maxLength` — Maximum length for textarea or string input
+- `class` — Custom CSS class for the field
+- `data` — Custom data attributes (e.g., `data="custom:value,foo:bar,baz:qux"`)
 
 ---
 
@@ -193,7 +196,116 @@ This will render an input with `@` before and `.com` after the field, styled acc
 
 ---
 
+### CSRF Protection
+
+go-form includes built-in CSRF (Cross-Site Request Forgery) protection for your forms. This prevents attackers from tricking users into submitting unauthorized requests.
+
+#### Basic Usage
+
+1. Create a form renderer which adds a default CSRF protection by default:
+   ```go
+   formRenderer := form.NewForm(templates.BootstrapV5)
+   ```
+
+2. Apply the CSRF middleware to your handlers:
+   ```go
+   // With standard http.ServeMux:
+   protectedHandler := formRenderer.CSRFMiddleware()(yourHandler) // <-- wrap your handler
+   mux.Handle("/", protectedHandler)
+   
+   // With Chi router:
+   import "github.com/go-chi/chi/v5"
+   
+   router := chi.NewRouter()
+   router.Use(formRenderer.CSRFMiddleware()) // <-- load the middleware
+   ```
+
+3. Inject the CSRF token into your form object Info before rendering:
+```go
+   
+  loginForm := LoginForm{
+    Info: form.Info{
+      Target:     "/login",
+      Method:     "post",
+      SubmitText: "Log In",
+    },
+  }
+  
+  form.InjectCSRFToken(r, &loginForm.Info)
+
+```
+
+The middleware automatically:
+- Generates a secure random token for each form
+- Validates the token on submission
+- Refreshes tokens after each submission
+- Rejects requests with missing or invalid tokens
+
+#### Custom Error Handling
+
+By default, CSRF validation failures return HTTP error responses. For a better user experience, you can provide custom error handling:
+
+```go
+options := form.CSRFOptions{
+  ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+    switch {
+      case errors.Is(err, csrf.ErrTokenMismatch):
+      http.Error(w, "Invalid CSRF token", http.StatusForbidden)
+      case errors.Is(err, csrf.ErrTokenExpired):
+      http.Error(w, "CSRF token expired", http.StatusForbidden)
+      case errors.Is(err, csrf.ErrKeyOrTokenEmpty):
+      http.Error(w, "CSRF token or session ID is empty", http.StatusBadRequest)
+      case errors.Is(err, csrf.ErrTokenNotFound):
+      http.Error(w, "CSRF token not found", http.StatusBadRequest)
+      default:
+      http.Error(w, "CSRF validation error: "+err.Error(), http.StatusBadRequest)
+    }
+  },
+}
+
+// Use the custom options
+protectedHandler := formRenderer.CSRFMiddlewareWithOptions(options)(yourHandler)
+```
+
+#### Alternative CSRF Stores
+
+The default in-memory CSRF store is suitable for single-server applications. For production or distributed environments, you can implement a custom `CSRFStore` that uses Redis, a database, or another shared storage mechanism:
+
+```go
+// Example Redis CSRF Store implementation
+type RedisCSRFStore struct {
+    client *redis.Client
+    prefix string
+    ttl    time.Duration
+}
+
+func (s *RedisCSRFStore) Store(key, token string) error {
+    return s.client.Set(ctx, s.prefix+key, token, s.ttl).Err()
+}
+
+func (s *RedisCSRFStore) Get(key string) (string, error) {
+    val, err := s.client.Get(ctx, s.prefix+key).Result()
+    if err == redis.Nil {
+        return "", csrf.ErrTokenNotFound
+    }
+    return val, err
+}
+
+// ... implement other required methods ...
+
+// Then use it with your form:
+store := &RedisCSRFStore{
+    client: redisClient,
+    prefix: "csrf:",
+    ttl:    30 * time.Minute,
+}
+formRenderer.SetCSRFStore(store)
+```
+
+See the example in `example/csrf/main.go` for a complete usage demonstration.
+
+---
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
