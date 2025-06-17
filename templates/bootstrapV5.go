@@ -46,10 +46,10 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 </div>`,
 	},
 	types.FieldTypeRadios: {
-		types.InputFieldTypeNone: `<div role="radiogroup" aria-labelledby="{{.Field.Id}}_label">
+		types.InputFieldTypeNone: `<div role="radiogroup" aria-labelledby="{{.Field.Id}}_label" class="{{ .Field.Class}}">
   {{ range $k, $option := .Field.Values }}
   <div class="form-check form-check-inline">
-    <input type="radio" class="form-check-input {{ .Field.Class}}" id="{{$.Field.Id}}_{{$k}}" name="{{$.Field.Name}}" value="{{$option.Value}}" {{ if eq $.Field.Value $option.Value }}checked{{end}} {{ if eq $.Field.Required true }}required{{end}} aria-labelledby="{{$.Field.Id}}_{{$k}}_label" {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
+    <input type="radio" class="form-check-input" id="{{$.Field.Id}}_{{$k}}" name="{{$.Field.Name}}" value="{{$option.Value}}" {{ if eq $.Field.Value $option.Value }}checked{{end}} {{ if eq $.Field.Required true }}required{{end}} aria-labelledby="{{$.Field.Id}}_{{$k}}_label" {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
     <label class="form-check-label" for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label" style="font-size: 0.875rem; color: #212529; margin-left: 0.25rem;">{{$option.Name}}</label>
   </div>
   {{ end }}

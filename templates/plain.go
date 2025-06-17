@@ -38,10 +38,10 @@ var Plain = map[types.FieldType]map[types.InputFieldType]string{
 </div>`,
 	},
 	types.FieldTypeRadios: {
-		types.InputFieldTypeNone: `<div role="radiogroup" aria-labelledby="{{.Field.Id}}_label">
+		types.InputFieldTypeNone: `<div role="radiogroup" aria-labelledby="{{.Field.Id}}_label" class="{{ .Field.Class}}">
   {{ range $k, $option := .Field.Values }}
   <div style="display: inline-block; margin-right: 1rem;">
-    <input type="radio" id="{{$.Field.Id}}_{{$k}}" name="{{$.Field.Name}}" value="{{$option.Value}}" {{ if eq $.Field.Value $option.Value }}checked{{end}} {{ if eq $.Field.Required true }}required{{end}} class="{{ .Field.Class}}" style="width: 1rem; height: 1rem; margin-top: 0.25rem; vertical-align: top; background-color: #fff; border: 1px solid #ced4da; border-radius: 50%; cursor: pointer;" aria-labelledby="{{$.Field.Id}}_{{$k}}_label" {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
+    <input type="radio" id="{{$.Field.Id}}_{{$k}}" name="{{$.Field.Name}}" value="{{$option.Value}}" {{ if eq $.Field.Value $option.Value }}checked{{end}} {{ if eq $.Field.Required true }}required{{end}} style="width: 1rem; height: 1rem; margin-top: 0.25rem; vertical-align: top; background-color: #fff; border: 1px solid #ced4da; border-radius: 50%; cursor: pointer;" aria-labelledby="{{$.Field.Id}}_{{$k}}_label" {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
     <label for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label" style="margin-left: 0.25rem; font-size: 0.875rem; color: #212529;">{{$option.Name}}</label>
   </div>
   {{ end }}

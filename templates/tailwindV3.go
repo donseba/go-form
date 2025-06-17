@@ -45,10 +45,10 @@ var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
 </div>`,
 	},
 	types.FieldTypeRadios: {
-		types.InputFieldTypeNone: `<div role="radiogroup" aria-labelledby="{{.Field.Id}}_label">
+		types.InputFieldTypeNone: `<div role="radiogroup" aria-labelledby="{{.Field.Id}}_label" class="{{ .Field.Class }}">
   {{ range $k, $option := .Field.Values }}
   <div class="inline-block mr-4">
-    <input type="radio" id="{{$.Field.Id}}_{{$k}}" name="{{$.Field.Name}}" value="{{$option.Value}}" {{ if eq $.Field.Value $option.Value }}checked{{end}} {{ if eq $.Field.Required true }}required{{end}} class="h-4 w-4 border border-gray-200 text-indigo-600 focus:ring-indigo-600 {{ .Field.Class }}" aria-labelledby="{{$.Field.Id}}_{{$k}}_label" {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
+    <input type="radio" id="{{$.Field.Id}}_{{$k}}" name="{{$.Field.Name}}" value="{{$option.Value}}" {{ if eq $.Field.Value $option.Value }}checked{{end}} {{ if eq $.Field.Required true }}required{{end}} class="h-4 w-4 border border-gray-200 text-indigo-600 focus:ring-indigo-600" aria-labelledby="{{$.Field.Id}}_{{$k}}_label" {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
     <label for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label" class="ml-2 text-sm text-gray-900">{{$option.Name}}</label>
   </div>
   {{ end }}
