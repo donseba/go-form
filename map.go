@@ -91,6 +91,8 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 					continue
 				}
 			}
+		default:
+			fmt.Printf("unsupported field type %s for field %s\n", fv.Kind(), field.Name)
 		}
 	}
 	return nil

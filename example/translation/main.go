@@ -23,20 +23,20 @@ func (l MyLocalizer) GetLocale() string { return l.Locale }
 // Dummy translation data
 var translations = map[string]map[string]string{
 	"en": {
-		"Name":                     "Name",
-		"Age":                      "Age",
-		"Submit":                   "Submit",
-		"form.validation.required": "is required",
-		"form.validation.min":      "must be >= %v",
-		"form.validation.max":      "must be <= %v",
+		"Name":                      "Name",
+		"Age":                       "Age",
+		"Submit":                    "Submit",
+		form.TranslationKeyRequired: "is required",
+		form.TranslationKeyMin:      "must be >= %v",
+		form.TranslationKeyMax:      "must be <= %v",
 	},
 	"it": {
-		"Name":                     "Nome",
-		"Age":                      "Età",
-		"Submit":                   "Invia",
-		"form.validation.required": "è obbligatorio",
-		"form.validation.min":      "deve essere piu di %v",
-		"form.validation.max":      "deve essere meno di %v",
+		"Name":                      "Nome",
+		"Age":                       "Età",
+		"Submit":                    "Invia",
+		form.TranslationKeyRequired: "è obbligatorio",
+		form.TranslationKeyMin:      "deve essere piu di %v",
+		form.TranslationKeyMax:      "deve essere meno di %v",
 	},
 }
 
@@ -69,8 +69,9 @@ func main() {
 
 	// Add navigation links to other examples
 	htmlLinks := `<div style="margin-bottom:1em">
-		<a href=\"http://localhost:8000/\">Templates Example</a> |
-		<a href=\"http://localhost:8081/\">Validation Example</a>
+		<a href="http://localhost:8000/">Templates Example</a> |
+		<a href="http://localhost:8081/">Validation Example</a> |
+		<a href="http://localhost:8083/">CSRF Example</a>
 	</div>`
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

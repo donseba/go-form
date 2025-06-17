@@ -164,7 +164,8 @@ func main() {
         <h1 class="mb-4">Form Template Examples</h1>
         <div style="margin-bottom:1em">
 			<a href="http://localhost:8081/">Validation Example</a> |
-			<a href="http://localhost:8082/">Translation Example</a>
+			<a href="http://localhost:8082/">Translation Example</a> |
+			<a href="http://localhost:8083/">CSRF Example</a>
 		</div>
         <div class="nav-links">
             <a href="/plain">Plain Template</a>
@@ -206,7 +207,8 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	fmt.Printf("Server starting on port %s...\n", port)
+	// Change port to 8082
+	fmt.Println("Server running at http://localhost:" + port + "")
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
