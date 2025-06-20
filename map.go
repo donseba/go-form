@@ -55,6 +55,32 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 		if formKey == "" {
 			formKey = field.Name
 		}
+
+		// Handle boolean fields specially
+		if fv.Kind() == reflect.Bool {
+			// Check if value exists in form - useful for checkboxes
+			if r != nil && r.Form != nil {
+				formValue := r.FormValue(prefix + formKey)
+
+				// Check if form value exists
+				if _, exists := r.Form[prefix+formKey]; exists {
+					// For checkboxes, "on" means true
+					if formValue == "on" {
+						fv.SetBool(true)
+					} else if formValue == "off" || formValue == "" {
+						fv.SetBool(false)
+					} else if bv, err := strconv.ParseBool(formValue); err == nil {
+						fv.SetBool(bv)
+					}
+				} else {
+					// If checkbox isn't in the form at all, it's unchecked
+					fv.SetBool(false)
+				}
+			}
+			continue
+		}
+
+		// For non-boolean fields, proceed as before
 		formValue := r.FormValue(prefix + formKey)
 		if formValue == "" {
 			continue
@@ -70,10 +96,6 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 		case reflect.Float32, reflect.Float64:
 			if fv64, err := strconv.ParseFloat(formValue, 64); err == nil {
 				fv.SetFloat(fv64)
-			}
-		case reflect.Bool:
-			if bv, err := strconv.ParseBool(formValue); err == nil {
-				fv.SetBool(bv)
 			}
 		case reflect.Struct:
 			if field.Type.PkgPath() == "time" && field.Type.Name() == "Time" {
