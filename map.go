@@ -65,9 +65,9 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 				// Check if form value exists
 				if _, exists := r.Form[prefix+formKey]; exists {
 					// For checkboxes, "on" means true
-					if formValue == "on" {
+					if formValue == "on" || formValue == "true" || formValue == "1" {
 						fv.SetBool(true)
-					} else if formValue == "off" || formValue == "" {
+					} else if formValue == "off" || formValue == "false" || formValue == "0" || formValue == "" {
 						fv.SetBool(false)
 					} else if bv, err := strconv.ParseBool(formValue); err == nil {
 						fv.SetBool(bv)
@@ -96,6 +96,24 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 		case reflect.Float32, reflect.Float64:
 			if fv64, err := strconv.ParseFloat(formValue, 64); err == nil {
 				fv.SetFloat(fv64)
+			}
+		case reflect.Array:
+			// Handle UUID arrays ([16]byte typically)
+			if fv.Type().Elem().Kind() == reflect.Uint8 && fv.Len() == 16 {
+				// Try to parse UUID string (format: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
+				if len(formValue) == 36 {
+					hexString := strings.ReplaceAll(formValue, "-", "")
+					if len(hexString) == 32 {
+						for i := 0; i < fv.Len() && i < len(hexString)/2; i++ {
+							// Convert each pair of hex chars to byte
+							if b, err := strconv.ParseUint(hexString[i*2:i*2+2], 16, 8); err == nil {
+								fv.Index(i).SetUint(b)
+							}
+						}
+					}
+				}
+			} else {
+				fmt.Printf("unsupported array field type %s for field %s\n", fv.Type().Elem().Kind(), field.Name)
 			}
 		case reflect.Struct:
 			if field.Type.PkgPath() == "time" && field.Type.Name() == "Time" {
