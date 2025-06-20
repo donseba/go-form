@@ -95,3 +95,79 @@ func TestMapFormNestedStruct(t *testing.T) {
 		t.Errorf("expected Nested.Zip 12345, got %d", s.Nested.Zip)
 	}
 }
+
+// UUID representation as [16]byte
+type UUIDStruct struct {
+	UUID [16]byte
+	Name string
+}
+
+func TestMapFormUUID(t *testing.T) {
+	form := url.Values{}
+	form.Set("Name", "Document")
+	form.Set("UUID", "123e4567-e89b-12d3-a456-426614174000")
+
+	r := &http.Request{Form: form}
+
+	var s UUIDStruct
+	err := MapForm(r, &s)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Expected byte representation of UUID "123e4567-e89b-12d3-a456-426614174000"
+	expected := [16]byte{
+		0x12, 0x3e, 0x45, 0x67,
+		0xe8, 0x9b,
+		0x12, 0xd3,
+		0xa4, 0x56,
+		0x42, 0x66, 0x14, 0x17, 0x40, 0x00,
+	}
+
+	if s.UUID != expected {
+		t.Errorf("UUID not correctly parsed")
+	}
+
+	if s.Name != "Document" {
+		t.Errorf("expected Name 'Document', got '%s'", s.Name)
+	}
+}
+
+type CheckboxStruct struct {
+	Name          string
+	Subscribed    bool // will be set with "on" value
+	Notifications bool // will be set with "true" value
+	Marketing     bool // will be missing from form (should be false)
+}
+
+func TestMapFormCheckboxOn(t *testing.T) {
+	form := url.Values{}
+	form.Set("Name", "User")
+	form.Set("Subscribed", "on") // HTML standard checkbox value
+	form.Set("Notifications", "true")
+	// Marketing field is intentionally not set
+
+	r := &http.Request{Form: form}
+
+	var s CheckboxStruct
+	err := MapForm(r, &s)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if s.Name != "User" {
+		t.Errorf("expected Name 'User', got '%s'", s.Name)
+	}
+
+	if !s.Subscribed {
+		t.Errorf("expected Subscribed to be true with 'on' value, got false")
+	}
+
+	if !s.Notifications {
+		t.Errorf("expected Notifications to be true with 'true' value, got false")
+	}
+
+	if s.Marketing {
+		t.Errorf("expected Marketing to be false when not present in form, got true")
+	}
+}
