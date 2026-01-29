@@ -1,0 +1,12 @@
+<label
+       {{with .Field.Id}}for="{{.}}"{{end}}
+       style="{{themeStyle "label"}}"
+       class="{{themeClass "label"}}"
+       {{with .Field.Id}}id="{{.}}_label"{{end}}>
+  {{ form_print .Loc .Field.Label }}
+  {{ if eq .Field.Required true }}
+    <span style="{{themeStyle "required"}}" class="{{themeClass "required"}}" aria-hidden="true">*</span>
+    <span class="sr-only">(required)</span>
+  {{ end }}
+</label>
+

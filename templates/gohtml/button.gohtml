@@ -1,0 +1,11 @@
+<button type="{{.Type|default:"button"}}"
+        id="{{.Field.Id}}"
+        name="{{.Field.Name}}"
+        {{ if eq .Field.Disabled true }}disabled{{end}}
+        style="{{themeStyle "button"}}"
+        class="{{themeClass "button"}} {{.Field.Class}}"
+        aria-labelledby="{{.Field.Id}}_label"
+        {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
+  {{ form_print .Loc .Field.Label }}
+</button>
+

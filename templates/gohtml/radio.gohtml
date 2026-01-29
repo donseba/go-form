@@ -1,0 +1,15 @@
+<div style="{{themeStyle "radio-wrapper"}}" class="{{themeClass "radio-wrapper"}}">
+  <input type="radio"
+         id="{{.Field.Id}}"
+         name="{{.Field.Name}}"
+         value="{{.Field.Value}}"
+         {{ if eq .Field.Required true }}required{{end}}
+         {{ if eq .Field.Checked true }}checked{{end}}
+         style="{{themeStyle "radio"}}"
+         class="{{themeClass "radio"}}"
+         aria-labelledby="{{.Field.Id}}_label"
+         {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}
+         {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
+  <label style="{{themeStyle "radio-label"}}" class="{{themeClass "radio-label"}}" for="{{.Field.Id}}" id="{{.Field.Id}}_label">{{.Field.Label}}</label>
+</div>
+

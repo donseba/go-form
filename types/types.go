@@ -1,5 +1,12 @@
 package types
 
+type (
+	Localizer interface {
+		// GetLocale returns the locale of the localizer, ie. "en_US"
+		GetLocale() string
+	}
+)
+
 // FieldType represents the type of form field
 type FieldType string
 

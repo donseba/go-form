@@ -12,14 +12,9 @@ import (
 )
 
 type (
-	Localizer interface {
-		// GetLocale returns the locale of the localizer, ie. "en_US"
-		GetLocale() string
-	}
-
 	DefaultLocalizer struct{}
 
-	TranslationFunc func(loc Localizer, key string, args ...any) string
+	TranslationFunc func(loc types.Localizer, key string, args ...any) string
 	ValidationFunc  func(fieldValue any, fieldStruct reflect.StructField) FieldErrors
 
 	FieldErrors []FieldError
@@ -99,7 +94,7 @@ func NewFormWithCSRF(templateMap map[types.FieldType]map[types.InputFieldType]st
 func (f *Form) init(templateMap map[types.FieldType]map[types.InputFieldType]string) *Form {
 	// First, create the base input template
 	baseInputTpl, err := template.New("baseInput").Funcs(map[string]any{
-		"form_print": func(loc Localizer, key string, args ...any) string { return "" },
+		"form_print": func(loc types.Localizer, key string, args ...any) string { return "" },
 		"form_data_attributes": func(dataAttributes map[string]string) template.HTMLAttr {
 			var sb strings.Builder
 			for k, v := range dataAttributes {
@@ -130,7 +125,7 @@ func (f *Form) init(templateMap map[types.FieldType]map[types.InputFieldType]str
 				"field":  func() template.HTML { return "" }, // Placeholder for field rendering
 				"fields": func() template.HTML { return "" }, // Placeholder for group fields
 				"label":  func() template.HTML { return "" }, // Placeholder for label rendering
-				"form_print": func(loc Localizer, key string, args ...any) string {
+				"form_print": func(loc types.Localizer, key string, args ...any) string {
 					if f.translationEnabled && f.translationFunc != nil {
 						return f.translationFunc(loc, key, args...)
 					}
@@ -214,11 +209,11 @@ func (f *Form) formRender(v any, errs FieldErrors, kv ...any) (template.HTML, er
 	return f.formRenderFunc(&DefaultLocalizer{}, v, errs, kv...)
 }
 
-func (f *Form) formRenderLocalized(loc Localizer, v any, errs FieldErrors, kv ...any) (template.HTML, error) {
+func (f *Form) formRenderLocalized(loc types.Localizer, v any, errs FieldErrors, kv ...any) (template.HTML, error) {
 	return f.formRenderFunc(loc, v, errs, kv...)
 }
 
-func (f *Form) formRenderFunc(loc Localizer, v any, errs FieldErrors, kv ...any) (template.HTML, error) {
+func (f *Form) formRenderFunc(loc types.Localizer, v any, errs FieldErrors, kv ...any) (template.HTML, error) {
 	tr, err := NewTransformer(v)
 	if err != nil {
 		return "", err
@@ -369,7 +364,7 @@ func (f *Form) formRenderFunc(loc Localizer, v any, errs FieldErrors, kv ...any)
 
 		formData := struct {
 			Field types.FormField
-			Loc   Localizer
+			Loc   types.Localizer
 		}{
 			Field: *formField,
 			Loc:   loc,
@@ -386,7 +381,7 @@ func (f *Form) formRenderFunc(loc Localizer, v any, errs FieldErrors, kv ...any)
 	return html, nil
 }
 
-func (f *Form) formFieldHTML(loc Localizer, field types.FormField, errorMap map[string][]string, data map[string]any) (template.HTML, error) {
+func (f *Form) formFieldHTML(loc types.Localizer, field types.FormField, errorMap map[string][]string, data map[string]any) (template.HTML, error) {
 	tmp, ok := f.templateMap[field.Type][field.InputType]
 	if !ok {
 		return "", errors.New("template not found for field type: " + string(field.Type) + " and input type: " + string(field.InputType))
