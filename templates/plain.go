@@ -103,6 +103,9 @@ var Plain = map[types.FieldType]map[types.InputFieldType]string{
 		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" class="{{ .Field.Class}}" style="max-width: 32rem; margin: 0 auto; padding: 1rem; border: 1px solid #dee2e6; border-radius: 0.25rem; background-color: #fff; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);" {{ if .Field.Attributes }}{{ form_attributes .Field.Attributes }}{{end}}>
   {{ fields }}
   <div style="margin-top: 1rem; text-align: right;">
+    {{ if .Field.CancelTarget }}
+      <a href="{{ .Field.CancelTarget }}" style="display: inline-block; font-weight: 400; text-align: center; white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid #ced4da; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; border-radius: 0.25rem; color: #212529; background-color: #fff; text-decoration: none; margin-right: 0.5rem;">{{ if .Field.CancelText }}{{ form_print .Loc .Field.CancelText }}{{ else }}{{ form_print .Loc "Cancel" }}{{ end }}</a>
+    {{ end }}
     <button type="submit" style="display: inline-block; font-weight: 400; text-align: center; white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; border-radius: 0.25rem; color: #fff; background-color: #0d6efd; border-color: #0d6efd; cursor: pointer; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;">{{ form_print .Loc .Field.Label }}</button>
   </div>
 </form>`,

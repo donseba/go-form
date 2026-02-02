@@ -29,9 +29,17 @@ type (
 	}
 
 	Info struct {
-		Target     string            `json:"target,omitempty"`
-		Method     string            `json:"method,omitempty"`
-		SubmitText string            `json:"submit,omitempty"`
+		Target     string `json:"target,omitempty"`
+		Method     string `json:"method,omitempty"`
+		SubmitText string `json:"submit,omitempty"`
+
+		// CancelTarget enables an optional cancel action rendered by templates (as a link).
+		// When empty, no cancel control is rendered.
+		CancelTarget string `json:"cancel_target,omitempty"`
+		// CancelText is the label for the cancel action. If empty and CancelTarget is set,
+		// templates should fall back to a sensible default (e.g. "Cancel").
+		CancelText string `json:"cancel_text,omitempty"`
+
 		Attributes map[string]string `json:"attributes,omitempty"`
 		CsrfValue  string            `json:"csrf_value,omitempty"` // CSRF token value
 		CsrfField  string            `json:"csrf_field,omitempty"` // Name of the CSRF field (defaults to "_csrf")

@@ -110,6 +110,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			Target: info.Target,
 			Method: info.Method,
 			Label:  label,
+
+			CancelTarget: info.CancelTarget,
+			CancelText:   info.CancelText,
 		}
 
 		for k, v := range info.Attributes {
