@@ -28,6 +28,8 @@ const (
 	tagMaxLength   = "maxLength"
 	tagDescription = "description"
 	tagData        = "data"
+	// Allow disabling fields via struct tags.
+	tagDisabled = "disabled"
 )
 
 var DefaultSubmitText = "Submit"
@@ -108,6 +110,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			Target: info.Target,
 			Method: info.Method,
 			Label:  label,
+
+			CancelTarget: info.CancelTarget,
+			CancelText:   info.CancelText,
 		}
 
 		for k, v := range info.Attributes {
@@ -231,6 +236,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 		if tags.Get(tagRequired) == "true" {
 			field.Required = true
+		}
+		if tags.Get(tagDisabled) == "true" {
+			field.Disabled = true
 		}
 
 		if rType.Field(i).Type.Implements(enumType) {

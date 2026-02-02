@@ -83,7 +83,7 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeGroup: {
 		types.InputFieldTypeNone: `<div class="card card-sm mb-2 {{ .Field.Class}}">
   <div class="card-header py-1">
-    <h6 class="card-title mb-0" id="{{.Field.Id}}_legend">{{.Field.Legend}}</h6>
+    <h6 class="card-title mb-0" id="{{.Field.Id}}_legend">{{ form_print .Loc .Field.Legend}}</h6>
   </div>
   <div class="card-body py-2" role="group" aria-labelledby="{{.Field.Id}}_legend">
     {{ fields }}
@@ -111,7 +111,10 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeForm: {
 		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" class="mx-auto border rounded shadow-sm p-3 {{ .Field.Class}}" style="max-width: 32rem;"  {{ if .Field.Attributes }}{{ form_attributes .Field.Attributes }}{{end}}>
   {{ fields }}
-  <div class="d-grid gap-2 mt-3">
+  <div class="d-flex justify-content-end gap-2 mt-3">
+    {{ if .Field.CancelTarget }}
+      <a href="{{ .Field.CancelTarget }}" class="btn btn-outline-secondary btn-sm">{{ if .Field.CancelText }}{{ form_print .Loc .Field.CancelText }}{{ else }}{{ form_print .Loc "Cancel" }}{{ end }}</a>
+    {{ end }}
     <button type="submit" class="btn btn-primary btn-sm">{{ form_print .Loc .Field.Label }}</button>
   </div>
 </form>`,

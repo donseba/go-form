@@ -79,9 +79,9 @@ var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
 </div>`,
 	},
 	types.FieldTypeGroup: {
-		types.InputFieldTypeNone: `<div class="mb-2 rounded-lg border border-gray-200 bg-white {{ .Field.Class }}">
-  <div class="border-b border-gray-200 bg-gray-50 px-4 py-2">
-    <h6 class="m-0 text-sm font-medium text-gray-900" id="{{.Field.Id}}_legend">{{.Field.Legend}}</h6>
+		types.InputFieldTypeNone: `<div class="rounded-md bg-white shadow-sm ring-1 ring-gray-900/5 mb-2 {{ .Field.Class}}">
+  <div class="border-b border-gray-200 px-4 py-2">
+    <h6 class="m-0 text-sm font-medium text-gray-900" id="{{.Field.Id}}_legend">{{ form_print .Loc .Field.Legend}}</h6>
   </div>
   <div class="p-4" role="group" aria-labelledby="{{.Field.Id}}_legend">
     {{ fields }}
@@ -109,7 +109,10 @@ var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeForm: {
 		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" class="mx-auto max-w-md rounded-lg border border-gray-200 bg-white p-4 shadow-sm {{ .Field.Class }}" {{ if .Field.Attributes }}{{ form_attributes .Field.Attributes }}{{end}}>
   {{ fields }}
-  <div class="mt-4 flex justify-end">
+  <div class="mt-4 flex justify-end gap-2">
+    {{ if .Field.CancelTarget }}
+      <a href="{{ .Field.CancelTarget }}" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">{{ if .Field.CancelText }}{{ form_print .Loc .Field.CancelText }}{{ else }}{{ form_print .Loc "Cancel" }}{{ end }}</a>
+    {{ end }}
     <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">{{ form_print .Loc .Field.Label }}</button>
   </div>
 </form>`,
