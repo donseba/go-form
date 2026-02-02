@@ -111,8 +111,11 @@ var TailwindV4 = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeForm: {
 		types.InputFieldTypeNone: `<form action="{{.Field.Target}}" method="{{.Field.Method}}" class="mx-auto max-w-md rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 {{ .Field.Class }}" {{ if .Field.Attributes }}{{ form_attributes .Field.Attributes }}{{end}}>
   {{ fields }}
-  <div class="mt-4 flex justify-end">
-    <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900">{{ form_print .Loc .Field.Label }}</button>
+  <div class="mt-4 flex justify-end gap-2">
+    {{ if .Field.CancelTarget }}
+      <a href="{{ .Field.CancelTarget }}" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-700 dark:hover:bg-gray-700 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900">{{ if .Field.CancelText }}{{ form_print .Loc .Field.CancelText }}{{ else }}{{ form_print .Loc "Cancel" }}{{ end }}</a>
+    {{ end }}
+    <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900">{{ form_print .Loc .Field.Label }}</button>
   </div>
 </form>`,
 	},
