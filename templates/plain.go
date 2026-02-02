@@ -74,7 +74,7 @@ var Plain = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeGroup: {
 		types.InputFieldTypeNone: `<div class="{{ .Field.Class}}" style="margin-bottom: 0.5rem; border: 1px solid #dee2e6; border-radius: 0.25rem; background-color: #fff;">
   <div style="padding: 0.5rem 1rem; border-bottom: 1px solid #dee2e6; background-color: #f8f9fa;">
-    <h6 style="margin: 0; font-size: 0.875rem; font-weight: 500; color: #212529;" id="{{.Field.Id}}_legend">{{.Field.Legend}}</h6>
+    <h6 style="margin: 0; font-size: 0.875rem; font-weight: 500; color: #212529;" id="{{.Field.Id}}_legend">{{ form_print .Loc .Field.Legend}}</h6>
   </div>
   <div style="padding: 0.5rem 1rem;" role="group" aria-labelledby="{{.Field.Id}}_legend">
     {{ fields }}

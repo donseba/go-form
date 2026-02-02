@@ -83,7 +83,7 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
 	types.FieldTypeGroup: {
 		types.InputFieldTypeNone: `<div class="card card-sm mb-2 {{ .Field.Class}}">
   <div class="card-header py-1">
-    <h6 class="card-title mb-0" id="{{.Field.Id}}_legend">{{.Field.Legend}}</h6>
+    <h6 class="card-title mb-0" id="{{.Field.Id}}_legend">{{ form_print .Loc .Field.Legend}}</h6>
   </div>
   <div class="card-body py-2" role="group" aria-labelledby="{{.Field.Id}}_legend">
     {{ fields }}

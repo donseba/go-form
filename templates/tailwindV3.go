@@ -79,9 +79,9 @@ var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
 </div>`,
 	},
 	types.FieldTypeGroup: {
-		types.InputFieldTypeNone: `<div class="mb-2 rounded-lg border border-gray-200 bg-white {{ .Field.Class }}">
-  <div class="border-b border-gray-200 bg-gray-50 px-4 py-2">
-    <h6 class="m-0 text-sm font-medium text-gray-900" id="{{.Field.Id}}_legend">{{.Field.Legend}}</h6>
+		types.InputFieldTypeNone: `<div class="rounded-md bg-white shadow-sm ring-1 ring-gray-900/5 mb-2 {{ .Field.Class}}">
+  <div class="border-b border-gray-200 px-4 py-2">
+    <h6 class="m-0 text-sm font-medium text-gray-900" id="{{.Field.Id}}_legend">{{ form_print .Loc .Field.Legend}}</h6>
   </div>
   <div class="p-4" role="group" aria-labelledby="{{.Field.Id}}_legend">
     {{ fields }}

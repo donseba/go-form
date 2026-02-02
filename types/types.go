@@ -29,6 +29,7 @@ type FormField struct {
 	Description string            `json:"description,omitempty"`
 	Required    bool              `json:"required,omitempty"`
 	Hidden      bool              `json:"hidden,omitempty"`
+	Disabled    bool              `json:"disabled,omitempty"`
 	Min         string            `json:"min,omitempty"`
 	Max         string            `json:"max,omitempty"`
 	MaxLength   string            `json:"maxLength,omitempty"`

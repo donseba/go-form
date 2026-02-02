@@ -82,6 +82,7 @@ func TestClassInRenderedHTML(t *testing.T) {
 		{"Bootstrap", templates.BootstrapV5},
 		{"Plain", templates.Plain},
 		{"Tailwind", templates.TailwindV3},
+		{"TailwindV4", templates.TailwindV4},
 	}
 
 	for _, ts := range templateSets {
