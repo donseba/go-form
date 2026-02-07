@@ -81,7 +81,7 @@ func NewTransformer(model interface{}) (*Transformer, error) {
 		return nil, err
 	}
 
-	tr.Fields = fields
+	tr.Fields = collapseStructRadioGroups(fields)
 
 	return tr, nil
 }
@@ -222,12 +222,17 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 		formTag := tags.Get(tagForm)
 		if strings.Contains(formTag, ",") {
-			// If the tag contains a comma, it is a form field
-			field.Type = types.FieldType(strings.Split(formTag, ",")[0])
-			field.InputType = types.InputFieldType(strings.Split(formTag, ",")[1])
+			parts := strings.Split(formTag, ",")
+			field.Type = types.FieldType(parts[0])
+			field.InputType = types.InputFieldType(parts[1])
 		} else {
-			// Otherwise, it is a regular input field
 			field.Type = types.FieldType(formTag)
+		}
+
+		// Special case: explicit declaration of a struct-based radio group.
+		// `form:"radios,radio_group"` means: the Go field is a struct group, but it should render as a single radio group.
+		if field.Type == types.FieldTypeRadios && field.InputType == types.InputFieldTypeRadioGroup {
+			field.Type = types.FieldTypeGroup
 		}
 
 		if field.Label == "" {
@@ -475,6 +480,24 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			if err != nil {
 				return nil, err
 			}
+
+			// If the struct field itself is declared as radios, treat contained bool fields
+			// as radio options and build the Values slice for the radio-group template.
+			if tags.Get(tagForm) == string(types.FieldTypeRadios) {
+				field.Type = types.FieldTypeRadios
+				field.InputType = types.InputFieldTypeRadioStruct
+				for _, sub := range field.Fields {
+					v := fmt.Sprint(sub.Value)
+					field.Values = append(field.Values, types.FieldValue{
+						Value:    sub.Id,
+						Name:     sub.Label,
+						Disabled: sub.Disabled,
+					})
+					if v != "" {
+						field.Value = sub.Id
+					}
+				}
+			}
 		default:
 			return nil, fmt.Errorf("unsupported type: %s", fType.Kind())
 		}
@@ -484,3 +507,5 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 	return fields, nil
 }
+
+// NOTE: collapseStructRadioGroups is implemented in transformer_radio_struct.go

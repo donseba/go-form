@@ -5,6 +5,6 @@
   <div style="{{themeStyle "error"}}" class="{{themeClass "error"}}" role="alert">{{ . }}</div>
   {{ end }}
   {{ if .Field.Description }}
-  <div style="{{themeStyle "description"}}" class="{{themeClass "description"}}" id="{{.Field.Id}}_description">{{.Field.Description}}</div>
+  <div style="{{themeStyle "description"}}" class="{{themeClass "description"}}" id="{{.Field.Id}}_description">{{ form_print .Loc .Field.Description }}</div>
   {{ end }}
 </div>

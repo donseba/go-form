@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/donseba/go-form"
-	"github.com/donseba/go-form/templates"
 )
 
 // LoginForm demonstrates a form with CSRF protection
@@ -20,7 +19,7 @@ type LoginForm struct {
 
 func main() {
 	// Create a form renderer with CSRF support
-	formRenderer := form.NewForm(templates.BootstrapV5)
+	formRenderer := form.NewForm()
 
 	// Create a router (we'll use the default ServeMux for simplicity)
 	mux := http.NewServeMux()
@@ -30,9 +29,12 @@ func main() {
 		// Create the login form
 		loginForm := LoginForm{
 			Info: form.Info{
-				Target:     "/login",
+				Target:     "/",
 				Method:     "post",
 				SubmitText: "Log In",
+				Attributes: map[string]string{
+					// keep a stable action for CSRF middleware + enable file inputs if needed later
+				},
 			},
 		}
 

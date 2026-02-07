@@ -1,4 +1,4 @@
-<button type="{{.Type|default:"button"}}"
+<button type="{{ .Type | default "button" }}"
         id="{{.Field.Id}}"
         name="{{.Field.Name}}"
         {{ if eq .Field.Disabled true }}disabled{{end}}
@@ -8,4 +8,3 @@
         {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
   {{ form_print .Loc .Field.Label }}
 </button>
-

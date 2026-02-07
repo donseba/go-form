@@ -3,9 +3,6 @@ package form
 import (
 	"strings"
 	"testing"
-
-	"github.com/donseba/go-form/templates"
-	"github.com/donseba/go-form/types"
 )
 
 // TestStructWithDataTags tests that data tags are properly processed by the transformer
@@ -111,38 +108,35 @@ func TestDataInRenderedHTML(t *testing.T) {
 		Text string `name:"text" form:"input,text" label:"Text Field" data:"validate=required,max-length=100,toggle=other-field"`
 	}
 
-	simpleForm := SimpleForm{
-		Text: "Sample text",
-	}
+	simpleForm := SimpleForm{Text: "Sample text"}
 
-	// Test with different templates
-	templateSets := []struct {
-		name     string
-		template types.TemplateMap
+	themeSets := []struct {
+		name  string
+		theme string
 	}{
-		{"Bootstrap", templates.BootstrapV5},
-		{"Plain", templates.Plain},
-		{"Tailwind", templates.TailwindV3},
+		{"Bootstrap", "bootstrap"},
+		{"Plain", "plain"},
+		{"Tailwind", "tailwind"},
+		{"TailwindV4", "tailwindv4"},
 	}
 
-	for _, ts := range templateSets {
+	for _, ts := range themeSets {
+		ts := ts
 		t.Run(ts.name, func(t *testing.T) {
-			// Create a Form with the template
-			form := NewForm(ts.template)
+			f := NewForm()
+			f.SetTheme(ts.theme)
 
-			// Render the form using the existing formRenderFunc method
-			html, err := form.formRenderFunc(&DefaultLocalizer{}, simpleForm, nil)
+			html, err := f.formRenderFunc(&DefaultLocalizer{}, simpleForm, nil)
 			if err != nil {
 				t.Fatalf("Failed to render form: %v", err)
 			}
 
-			// Check if data attributes are included in the output
 			htmlStr := string(html)
 			dataAttrs := []string{"data-validate=\"required\"", "data-max-length=\"100\"", "data-toggle=\"other-field\""}
 
 			for _, attr := range dataAttrs {
 				if !strings.Contains(htmlStr, attr) {
-					t.Errorf("%s template: data attribute %q not found in rendered HTML", ts.name, attr)
+					t.Errorf("%s theme: data attribute %q not found in rendered HTML", ts.name, attr)
 					t.Logf("Rendered HTML: %s", htmlStr)
 				}
 			}
@@ -235,7 +229,8 @@ func TestComplexDataAttributeValues(t *testing.T) {
 	}
 
 	// Test rendering to ensure complex values are properly escaped in HTML
-	form1 := NewForm(templates.Plain)
+	form1 := NewForm()
+	form1.SetTheme("plain")
 	html, err := form1.formRenderFunc(&DefaultLocalizer{}, form, nil)
 	if err != nil {
 		t.Fatalf("Failed to render form: %v", err)

@@ -57,9 +57,6 @@ type FormField struct {
 	Data         map[string]string `json:"data,omitempty"` // Data attributes
 }
 
-// TemplateMap represents a map of field types to their input type templates
-type TemplateMap map[FieldType]map[InputFieldType]string
-
 // Constants for field types
 const (
 	FieldTypeBase           FieldType = "base"
@@ -83,11 +80,13 @@ const (
 	InputFieldTypeDate          InputFieldType = "date"
 	InputFieldTypeDateTimeLocal InputFieldType = "datetime-local"
 	InputFieldTypeEmail         InputFieldType = "email"
+	InputFieldTypeFile          InputFieldType = "file"
 	InputFieldTypeHidden        InputFieldType = "hidden"
 	InputFieldTypeImage         InputFieldType = "image"
 	InputFieldTypeMonth         InputFieldType = "month"
 	InputFieldTypeNumber        InputFieldType = "number"
 	InputFieldTypePassword      InputFieldType = "password"
+	InputFieldTypeRadioGroup    InputFieldType = "radio_group"
 	InputFieldTypeRadioStruct   InputFieldType = "radio_struct"
 	InputFieldTypeRange         InputFieldType = "range"
 	InputFieldTypeSearch        InputFieldType = "search"

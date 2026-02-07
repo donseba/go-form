@@ -8,11 +8,10 @@
            {{ if eq $.Field.Value $option.Value }}checked{{end}}
            {{ if eq $.Field.Required true }}required{{end}}
            style="{{themeStyle "radio"}}"
-           class="{{themeClass "radio"}}"
+           class="{{themeClass "radio"}} {{$.Field.Class}}"
            aria-labelledby="{{$.Field.Id}}_{{$k}}_label"
            {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
-    <label style="{{themeStyle "radio-label"}}" class="{{themeClass "radio-label"}}" for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label">{{$option.Name}}</label>
+    <label style="{{themeStyle "radio-label"}}" class="{{themeClass "radio-label"}}" for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label">{{ form_print $.Loc $option.Name }}</label>
   </div>
   {{ end }}
 </div>
-

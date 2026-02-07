@@ -1,10 +1,12 @@
 package templates
 
 import (
+	"fmt"
 	"html/template"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -46,6 +48,7 @@ type ThemeClasses struct {
 	FormHeader  StyleOption
 	FormBody    StyleOption
 	FormButtons StyleOption
+	Cancel      StyleOption
 
 	// Input groups
 	InputGroup     StyleOption
@@ -102,9 +105,9 @@ func (t *Theme) LoadTemplates(templateDir string) error {
 			option := t.getStyleOptionForKey(key)
 			return option.Class
 		},
-		"themeStyle": func(key string) string {
+		"themeStyle": func(key string) template.CSS {
 			option := t.getStyleOptionForKey(key)
-			return option.Style
+			return template.CSS(option.Style)
 		},
 		"themeAttr": func(key string) string {
 			if attr, ok := t.AttrMap[key]; ok {
@@ -155,19 +158,71 @@ func (t *Theme) LoadTemplates(templateDir string) error {
 
 // LoadTemplatesFS loads all .gohtml templates from the given embedded filesystem
 func (t *Theme) LoadTemplatesFS(fsys fs.FS, rootDir string) error {
+	// Always start from a fresh template set. This lets InitThemes be called
+	// multiple times in tests and ensures template content is not stale.
 	tmpl := template.New("")
 
 	// Register helper functions
 	tmpl.Funcs(template.FuncMap{
+		// default returns the fallback value when the piped value is the zero value.
+		// Usage: {{ .Something | default "fallback" }}
+		"default": func(v any, fallback any) any {
+			if v == nil {
+				return fallback
+			}
+			rv := reflect.ValueOf(v)
+			if !rv.IsValid() {
+				return fallback
+			}
+			// Handle pointers & interfaces
+			for rv.Kind() == reflect.Ptr || rv.Kind() == reflect.Interface {
+				if rv.IsNil() {
+					return fallback
+				}
+				rv = rv.Elem()
+			}
+			if !rv.IsValid() {
+				return fallback
+			}
+			// Zero checks for common kinds
+			switch rv.Kind() {
+			case reflect.String:
+				if rv.Len() == 0 {
+					return fallback
+				}
+			case reflect.Bool:
+				if !rv.Bool() {
+					return fallback
+				}
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				if rv.Int() == 0 {
+					return fallback
+				}
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+				if rv.Uint() == 0 {
+					return fallback
+				}
+			case reflect.Float32, reflect.Float64:
+				if rv.Float() == 0 {
+					return fallback
+				}
+			case reflect.Slice, reflect.Map, reflect.Array:
+				if rv.Len() == 0 {
+					return fallback
+				}
+			default:
+				// For other kinds, keep the original value.
+			}
+			return v
+		},
 		"themeClass": func(key string) string {
 			// For class-based themes, return the class; for inline style themes, return empty
 			option := t.getStyleOptionForKey(key)
 			return option.Class
 		},
-		"themeStyle": func(key string) string {
-			// For inline style themes, return the style; for class-based themes, return empty
+		"themeStyle": func(key string) template.CSS {
 			option := t.getStyleOptionForKey(key)
-			return option.Style
+			return template.CSS(option.Style)
 		},
 		"themeAttr": func(key string) string {
 			if attr, ok := t.AttrMap[key]; ok {
@@ -175,6 +230,12 @@ func (t *Theme) LoadTemplatesFS(fsys fs.FS, rootDir string) error {
 			}
 			return ""
 		},
+		// Placeholders for templates that expect callable blocks/functions.
+		// Callers can override these via template clone + Funcs() before executing.
+		"fields":               func() template.HTML { return "" },
+		"field":                func() template.HTML { return "" },
+		"label":                func() template.HTML { return "" },
+		"errors":               func() []string { return nil },
 		"form_print":           funcPrint,
 		"form_attributes":      funcAttributes,
 		"form_data_attributes": funcDataAttributes,
@@ -279,6 +340,8 @@ func (t *Theme) getStyleOptionForKey(key string) StyleOption {
 		return t.Classes.FormBody
 	case "formButtons":
 		return t.Classes.FormButtons
+	case "cancel":
+		return t.Classes.Cancel
 	case "inputGroup":
 		return t.Classes.InputGroup
 	case "inputGroupText":
@@ -300,22 +363,37 @@ func (t *Theme) RenderTemplate(name string, data interface{}) (template.HTML, er
 
 // Define existing function references
 var (
-	funcPrint          = func(loc types.Localizer, key string) string { return "" }     // Placeholder
-	funcAttributes     = func(attributes map[string]string) template.HTML { return "" } // Placeholder
-	funcDataAttributes = func(data map[string]string) template.HTML { return "" }       // Placeholder
+	funcPrint = func(loc types.Localizer, key string, args ...any) string {
+		_ = loc
+		if len(args) > 0 {
+			return fmt.Sprintf(key, args...)
+		}
+		return key
+	}
+	funcAttributes = func(attributes map[string]string) template.HTMLAttr {
+		var sb strings.Builder
+		for k, v := range attributes {
+			if v != "" {
+				sb.WriteString(" ")
+				sb.WriteString(k)
+				sb.WriteString("=\"")
+				sb.WriteString(template.HTMLEscapeString(v))
+				sb.WriteString("\"")
+			}
+		}
+		return template.HTMLAttr(sb.String())
+	}
+	funcDataAttributes = func(data map[string]string) template.HTMLAttr {
+		var sb strings.Builder
+		for k, v := range data {
+			if v != "" {
+				sb.WriteString(" data-")
+				sb.WriteString(k)
+				sb.WriteString("=\"")
+				sb.WriteString(template.HTMLEscapeString(v))
+				sb.WriteString("\"")
+			}
+		}
+		return template.HTMLAttr(sb.String())
+	}
 )
-
-// SetFuncPrint sets the print function used in templates
-func SetFuncPrint(fn func(loc types.Localizer, key string) string) {
-	funcPrint = fn
-}
-
-// SetFuncAttributes sets the attributes function used in templates
-func SetFuncAttributes(fn func(attributes map[string]string) template.HTML) {
-	funcAttributes = fn
-}
-
-// SetFuncDataAttributes sets the data-attributes function used in templates
-func SetFuncDataAttributes(fn func(data map[string]string) template.HTML) {
-	funcDataAttributes = fn
-}

@@ -3,7 +3,7 @@
        name="{{.Field.Name}}"
        {{ if .Field.Required }}required{{end}}
        style="{{themeStyle "select"}}"
-       class="{{themeClass "select"}}"
+       class="{{themeClass "select"}} {{.Field.Class}}"
        aria-labelledby="{{.Field.Id}}_label"
        {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}
        {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
@@ -12,4 +12,3 @@
   <option value="{{$option.Value}}" {{ if eq $value $option.Value }}selected{{ end }} {{ if eq $option.Disabled true }}disabled{{ end }}>{{$option.Name}}</option>
   {{ end }}
 </select>
-

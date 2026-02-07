@@ -28,6 +28,7 @@ var BootstrapTheme = ThemeClasses{
 	Range:           StyleOption{Class: "form-range"},
 	Color:           StyleOption{Class: "form-control form-control-color"},
 	Button:          StyleOption{Class: "btn btn-primary btn-sm"},
+	Cancel:          StyleOption{Class: "btn btn-outline-secondary btn-sm"},
 	File:            StyleOption{Class: "form-control form-control-sm"},
 
 	// Form container
@@ -63,6 +64,7 @@ var TailwindTheme = ThemeClasses{
 	Range:           StyleOption{Class: "w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-200 border border-gray-200"},
 	Color:           StyleOption{Class: "h-8 w-8 rounded border border-gray-200 p-0"},
 	Button:          StyleOption{Class: "rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"},
+	Cancel:          StyleOption{Class: "rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"},
 	File:            StyleOption{Class: "border border-gray-200 block w-full rounded-md px-3 py-1.5 text-gray-900 shadow-sm sm:text-sm"},
 
 	// Form container
@@ -75,6 +77,45 @@ var TailwindTheme = ThemeClasses{
 	// Input groups
 	InputGroup:     StyleOption{Class: "flex rounded-md shadow-sm"},
 	InputGroupText: StyleOption{Class: "inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 text-sm"},
+}
+
+// TailwindV4Theme defines Tailwind CSS v4 classes for form elements.
+//
+// Tailwind v4 is mostly compatible with v3 utilities, but this variant aligns with the
+// existing TailwindV4 template set (focus-visible patterns + optional dark mode utilities).
+var TailwindV4Theme = ThemeClasses{
+	// Common elements
+	Wrapper:     StyleOption{Class: "mb-2"},
+	Label:       StyleOption{Class: "block text-sm font-medium leading-6 text-gray-900 dark:text-gray-100"},
+	Error:       StyleOption{Class: "mt-1 text-sm text-red-600 dark:text-red-400"},
+	Description: StyleOption{Class: "mt-1 text-sm text-gray-500 dark:text-gray-300"},
+
+	// Input types
+	Input:           StyleOption{Class: "block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-400 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900"},
+	Select:          StyleOption{Class: "block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900"},
+	Textarea:        StyleOption{Class: "block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-400 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900"},
+	Radio:           StyleOption{Class: "h-4 w-4 border border-gray-300 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-gray-700 dark:text-indigo-400 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900"},
+	RadioWrapper:    StyleOption{Class: "inline-block mr-4"},
+	RadioLabel:      StyleOption{Class: "ml-2 text-sm text-gray-900 dark:text-gray-100"},
+	Checkbox:        StyleOption{Class: "h-4 w-4 rounded border border-gray-300 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-gray-700 dark:text-indigo-400 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900"},
+	CheckboxWrapper: StyleOption{Class: "inline-block"},
+	CheckboxLabel:   StyleOption{Class: "ml-2 text-sm text-gray-900 dark:text-gray-100"},
+	Range:           StyleOption{Class: "h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 dark:bg-gray-700"},
+	Color:           StyleOption{Class: "h-8 w-8 rounded border border-gray-300 bg-white p-0 dark:border-gray-700 dark:bg-gray-800"},
+	Button:          StyleOption{Class: "rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900"},
+	Cancel:          StyleOption{Class: "rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-700 dark:hover:bg-gray-700 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900"},
+	File:            StyleOption{Class: "block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900"},
+
+	// Form container
+	Form:        StyleOption{Class: "mx-auto max-w-md rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"},
+	FormGroup:   StyleOption{Class: "mb-2 rounded-md border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"},
+	FormHeader:  StyleOption{Class: "border-b border-gray-200 px-4 py-2 dark:border-gray-700"},
+	FormBody:    StyleOption{Class: "p-4"},
+	FormButtons: StyleOption{Class: "mt-4 flex justify-end gap-2"},
+
+	// Input groups
+	InputGroup:     StyleOption{Class: "flex w-full rounded-md shadow-sm"},
+	InputGroupText: StyleOption{Class: "inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"},
 }
 
 // PlainTheme defines simple, unstyled HTML with inline styles
@@ -98,6 +139,7 @@ var PlainTheme = ThemeClasses{
 	Range:           StyleOption{Style: "width: 100%; height: 0.5rem; border: 1px solid #ced4da; border-radius: 0.25rem;"},
 	Color:           StyleOption{Style: "width: 2rem; height: 2rem; padding: 0; border: 1px solid #ced4da; border-radius: 0.25rem;"},
 	Button:          StyleOption{Style: "display: inline-block; font-weight: 400; text-align: center; white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; border-radius: 0.25rem; color: #fff; background-color: #0d6efd; border-color: #0d6efd; cursor: pointer; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;"},
+	Cancel:          StyleOption{Style: "display: inline-block; font-weight: 400; text-align: center; white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid #ced4da; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; border-radius: 0.25rem; color: #212529; background-color: #fff; text-decoration: none; margin-right: 0.5rem;"},
 	File:            StyleOption{Style: "width: 100%; padding: 0.375rem 0.75rem; font-size: 0.875rem; line-height: 1.5; color: #212529; background-color: #fff; border: 1px solid #ced4da; border-radius: 0.25rem;"},
 
 	// Form container
@@ -113,20 +155,33 @@ var PlainTheme = ThemeClasses{
 }
 
 // Initialize themes
-func InitThemes() {
+func InitThemes() error {
 	// Register themes with appropriate inline style setting
-	RegisterTheme("bootstrap", BootstrapTheme, nil) // false = uses CSS classes
-	RegisterTheme("tailwind", TailwindTheme, nil)   // false = uses CSS classes
-	RegisterTheme("plain", PlainTheme, nil)         // true = uses inline styles
+	RegisterTheme("bootstrap", BootstrapTheme, nil)   // false = uses CSS classes
+	RegisterTheme("tailwind", TailwindTheme, nil)     // false = uses CSS classes
+	RegisterTheme("tailwindv4", TailwindV4Theme, nil) // false = uses CSS classes
+	RegisterTheme("plain", PlainTheme, nil)           // true = uses inline styles
 
 	// Load templates using the embedded filesystem
 	if theme, ok := GetTheme("bootstrap"); ok {
-		_ = theme.LoadTemplatesFS(TemplateFS, "gohtml")
+		if err := theme.LoadTemplatesFS(TemplateFS, "gohtml"); err != nil {
+			return err
+		}
 	}
 	if theme, ok := GetTheme("tailwind"); ok {
-		_ = theme.LoadTemplatesFS(TemplateFS, "gohtml")
+		if err := theme.LoadTemplatesFS(TemplateFS, "gohtml"); err != nil {
+			return err
+		}
+	}
+	if theme, ok := GetTheme("tailwindv4"); ok {
+		if err := theme.LoadTemplatesFS(TemplateFS, "gohtml"); err != nil {
+			return err
+		}
 	}
 	if theme, ok := GetTheme("plain"); ok {
-		_ = theme.LoadTemplatesFS(TemplateFS, "gohtml")
+		if err := theme.LoadTemplatesFS(TemplateFS, "gohtml"); err != nil {
+			return err
+		}
 	}
+	return nil
 }

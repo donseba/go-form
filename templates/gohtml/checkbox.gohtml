@@ -4,9 +4,9 @@
          name="{{.Field.Name}}"
          {{ if eq .Field.Required true }}required{{end}}
          {{ if eq .Field.Value true }}checked{{end}}
-         style="{{themeStyle "checkbox"}}" class="{{themeClass "checkbox"}}"
+         style="{{themeStyle "checkbox"}}" class="{{themeClass "checkbox"}} {{.Field.Class}}"
          aria-labelledby="{{.Field.Id}}_label"
          {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}
          {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
-  <label style="{{themeStyle "checkbox-label"}}" class="{{themeClass "checkbox-label"}}" for="{{.Field.Id}}" id="{{.Field.Id}}_label">{{.Field.Label}}</label>
+  <label style="{{themeStyle "checkbox-label"}}" class="{{themeClass "checkbox-label"}}" for="{{.Field.Id}}" id="{{.Field.Id}}_label">{{ form_print .Loc .Field.Label }}</label>
 </div>
