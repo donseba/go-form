@@ -280,3 +280,99 @@ func TestEnumWithTranslateTag(t *testing.T) {
 		}
 	}
 }
+
+func TestEnumWithDefaultEnumTranslationGlobal(t *testing.T) {
+	// Save original value
+	originalValue := DefaultEnumTranslation
+	defer func() { DefaultEnumTranslation = originalValue }()
+
+	// Test with global DefaultEnumTranslation = true
+	DefaultEnumTranslation = true
+
+	model := &ModelWithEnumNoTranslate{
+		Status: StatusActive,
+	}
+
+	transformer, err := NewTransformer(model)
+	if err != nil {
+		t.Fatalf("NewTransformer failed: %v", err)
+	}
+
+	if transformer == nil {
+		t.Fatal("transformer is nil")
+	}
+
+	// Find the Status field
+	var statusField *types.FormField
+	for i := range transformer.Fields {
+		if transformer.Fields[i].Name == "Status" {
+			statusField = &transformer.Fields[i]
+			break
+		}
+	}
+
+	if statusField == nil {
+		t.Fatal("Status field not found")
+	}
+
+	// Should use translation keys because DefaultEnumTranslation is true
+	expectedValues := []struct {
+		value string
+		name  string
+	}{
+		{value: "active", name: "enum||StatusEnum.active"},
+		{value: "inactive", name: "enum||StatusEnum.inactive"},
+		{value: "pending", name: "enum||StatusEnum.pending"},
+	}
+
+	for i, expected := range expectedValues {
+		if i >= len(statusField.Values) {
+			break
+		}
+		actual := statusField.Values[i]
+		if actual.Name != expected.name {
+			t.Errorf("Name[%d]: expected %s, got %s (should use global default)", i, expected.name, actual.Name)
+		}
+	}
+}
+
+func TestEnumTranslateTagOverridesGlobal(t *testing.T) {
+	// Save original value
+	originalValue := DefaultEnumTranslation
+	defer func() { DefaultEnumTranslation = originalValue }()
+
+	// Set global to true
+	DefaultEnumTranslation = true
+
+	// But use translate="false" to opt-out
+	type ModelWithEnumNoTranslateOverride struct {
+		Status StatusEnum `form:"dropdown" label:"Status" translate:"false"`
+	}
+
+	model := &ModelWithEnumNoTranslateOverride{
+		Status: StatusActive,
+	}
+
+	transformer, err := NewTransformer(model)
+	if err != nil {
+		t.Fatalf("NewTransformer failed: %v", err)
+	}
+
+	// Find the Status field
+	var statusField *types.FormField
+	for i := range transformer.Fields {
+		if transformer.Fields[i].Name == "Status" {
+			statusField = &transformer.Fields[i]
+			break
+		}
+	}
+
+	if statusField == nil {
+		t.Fatal("Status field not found")
+	}
+
+	// Should NOT use translation keys because translate="false" explicitly overrides global
+	if statusField.Values[0].Name != "active" {
+		t.Errorf("Expected plain value 'active', got %s (struct tag should override global default)", statusField.Values[0].Name)
+	}
+}

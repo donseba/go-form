@@ -207,7 +207,17 @@ type MyForm struct {
 }
 ```
 
-This generates translation keys like `enum||Status.active`. Provide translations in your function:
+To enable translation for **all enums by default**, set the global variable:
+
+```go
+import "github.com/donseba/go-form"
+
+func init() {
+    form.DefaultEnumTranslation = true  // All enums will be translatable by default
+}
+```
+
+Individual fields can still opt-out using `translate:"false"`. Translation keys follow the format `enum||{TypeName}.{value}`:
 
 ```go
 var translations = map[string]map[string]string{

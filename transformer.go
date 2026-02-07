@@ -34,7 +34,10 @@ const (
 	tagTranslate = "translate"
 )
 
-var DefaultSubmitText = "Submit"
+var (
+	DefaultSubmitText      = "Submit"
+	DefaultEnumTranslation = false // Set to true to enable translation for all enums by default
+)
 
 type (
 	Enumerator interface{ Enum() []any }
@@ -247,8 +250,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			enums := reflect.New(rType.Field(i).Type).Interface().(Enumerator).Enum()
 			var fieldValue []types.FieldValue
 
-			// Check if translation is enabled for this enum field
-			shouldTranslate := tags.Get(tagTranslate) == "true"
+			// Check if translation is enabled: struct tag takes precedence over global default
+			tagValue := tags.Get(tagTranslate)
+			shouldTranslate := tagValue == "true" || (tagValue != "false" && DefaultEnumTranslation)
 
 			var typeName string
 			if shouldTranslate {
