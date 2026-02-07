@@ -30,9 +30,14 @@ const (
 	tagData        = "data"
 	// Allow disabling fields via struct tags.
 	tagDisabled = "disabled"
+	// Enable translation support for enum values
+	tagTranslate = "translate"
 )
 
-var DefaultSubmitText = "Submit"
+var (
+	DefaultSubmitText      = "Submit"
+	DefaultEnumTranslation = false // Set to true to enable translation for all enums by default
+)
 
 type (
 	Enumerator interface{ Enum() []any }
@@ -244,10 +249,30 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		if rType.Field(i).Type.Implements(enumType) {
 			enums := reflect.New(rType.Field(i).Type).Interface().(Enumerator).Enum()
 			var fieldValue []types.FieldValue
+
+			// Check if translation is enabled: struct tag takes precedence over global default
+			tagValue := tags.Get(tagTranslate)
+			shouldTranslate := tagValue == "true" || (tagValue != "false" && DefaultEnumTranslation)
+
+			var typeName string
+			if shouldTranslate {
+				typeName = rType.Field(i).Type.Name()
+				if typeName == "" {
+					// Fallback for unnamed types (aliases, pointers, etc.)
+					typeName = strings.ReplaceAll(rType.Field(i).Type.String(), ".", "_")
+					typeName = strings.ReplaceAll(typeName, "*", "")
+				}
+			}
+
 			for _, v := range enums {
+				val := fmt.Sprint(v)
+				enumName := val
+				if shouldTranslate {
+					enumName = fmt.Sprintf("enum||%s.%s", typeName, val)
+				}
 				fieldValue = append(fieldValue, types.FieldValue{
-					Value:    fmt.Sprint(v),
-					Name:     fmt.Sprint(v),
+					Value:    val,
+					Name:     enumName,
 					Disabled: false,
 				})
 			}
