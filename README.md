@@ -88,6 +88,7 @@ Other supported tags:
 - `maxLength` — Maximum length for textarea or string input
 - `class` — Custom CSS class for the field
 - `data` — Custom data attributes (e.g., `data="custom:value,foo:bar,baz:qux"`)
+- `translate` — Enable translation for enum values (e.g., `translate:"true"` for Enumerator fields)
 
 ---
 
@@ -100,6 +101,30 @@ Other supported tags:
 - **values**: For radios/dropdowns, ensures the value is one of the allowed options.
 - **Email format**: Checks for a valid email address format (basic @ check).
 - **Enumerator, Mapper, SortedMapper**: If a field implements one of these interfaces, the value must be present in the allowed set returned by Enum(), Mapper(), or SortedMapper().
+
+#### Using Enumerator, Mapper, and SortedMapper Interfaces
+
+For enum values, implement `Enumerator`:
+
+```go
+type Status string
+func (s Status) Enum() []any { return []any{"active", "inactive"} }
+
+type MyForm struct {
+    Status Status `form:"dropdown" label:"Status"`
+}
+```
+
+For key-value pairs, use `Mapper` (unordered) or `SortedMapper` (ordered):
+
+```go
+type ColorMap string
+func (c ColorMap) Mapper() map[string]string {
+    return map[string]string{"red": "Red", "blue": "Blue"}
+}
+
+// For ordered pairs, implement SortedMapper with []SortedMap
+```
 
 ### Custom Validation
 You can add your own validation logic using the `validate` struct tag and by registering a custom validation function:
@@ -168,6 +193,28 @@ loc := MyLocalizer{Locale: "it"}
 ```
 
 See the example in `example/translation/main.go` for a complete usage demonstration.
+
+#### Translating Enum Values
+
+By default, enum values display as-is. To enable translation, add `translate:"true"`:
+
+```go
+type Status string
+func (s Status) Enum() []any { return []any{"active", "inactive"} }
+
+type MyForm struct {
+    Status Status `form:"dropdown" label:"Status" translate:"true"`
+}
+```
+
+This generates translation keys like `enum||Status.active`. Provide translations in your function:
+
+```go
+var translations = map[string]map[string]string{
+    "en": {"enum||Status.active": "Active", "enum||Status.inactive": "Inactive"},
+    "it": {"enum||Status.active": "Attivo", "enum||Status.inactive": "Inattivo"},
+}
+```
 
 ---
 
