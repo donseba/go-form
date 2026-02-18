@@ -1,6 +1,7 @@
 package form
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -11,29 +12,34 @@ import (
 )
 
 var (
-	TranslationKeyRequired            = "form||Validation required"
-	TranslationKeyMin                 = "form||Value should be greater than or equal to %v"
-	TranslationKeyMax                 = "form||Value should be less than or equal to %v"
-	TranslationKeyMaxLength           = "form||Value should not exceed %d characters"
-	TranslationKeyMinLength           = "form||Value should be at least %d characters"
-	TranslationKeyInvalidValue        = "form||Invalid value '%s' provided"
-	TranslationKeyInvalidEmail        = "form||Invalid email format"
-	TranslationKeyInvalidEnum         = "form||Invalid enum value '%s' provided"
-	TranslationKeyInvalidMapper       = "form||Invalid mapper value '%s' provided"
-	TranslationKeyInvalidSortedMapper = "form||Invalid sorted mapper value '%s' provided"
-	TranslationKeyPattern             = "form||Value does not match the required pattern '%s'"
-	TranslationKeyURL                 = "form||Invalid URL format"
-	TranslationKeyBool                = "form||Value should be either true or false"
-	TranslationKeyZero                = "form||Value should be zero"
-	TranslationKeyMinItems            = "form||Value should have at least %d items"
-	TranslationKeyMaxItems            = "form||Value should have at most %d items"
-	TranslationKeyPrefix              = "form||Value should start with '%s'"
-	TranslationKeySuffix              = "form||Value should end with '%s'"
-	TranslationKeyContains            = "form||Value should contain '%s'"
-	TranslationKeyStep                = "form||Value should be a multiple of %f"
-	TranslationKeyCSRFTokenMissing    = "form||CSRF token is missing"
-	TranslationKeyCSRFTokenInvalid    = "form||Invalid CSRF token"
-	TranslationKeyCSRFTokenError      = "form||Error processing CSRF token"
+	TranslationKeyRequired                      = "form||Validation required"
+	TranslationKeyMin                           = "form||Value should be greater than or equal to %v"
+	TranslationKeyMax                           = "form||Value should be less than or equal to %v"
+	TranslationKeyMaxLength                     = "form||Value should not exceed %d characters"
+	TranslationKeyMinLength                     = "form||Value should be at least %d characters"
+	TranslationKeyInvalidValue                  = "form||Invalid value '%s' provided"
+	TranslationKeyInvalidEmail                  = "form||Invalid email format"
+	TranslationKeyInvalidEnum                   = "form||Invalid enum value '%s' provided"
+	TranslationKeyInvalidMapper                 = "form||Invalid mapper value '%s' provided"
+	TranslationKeyInvalidSortedMapper           = "form||Invalid sorted mapper value '%s' provided"
+	TranslationKeyPattern                       = "form||Value does not match the required pattern '%s'"
+	TranslationKeyURL                           = "form||Invalid URL format"
+	TranslationKeyBool                          = "form||Value should be either true or false"
+	TranslationKeyZero                          = "form||Value should be zero"
+	TranslationKeyMinItems                      = "form||Value should have at least %d items"
+	TranslationKeyMaxItems                      = "form||Value should have at most %d items"
+	TranslationKeyPrefix                        = "form||Value should start with '%s'"
+	TranslationKeySuffix                        = "form||Value should end with '%s'"
+	TranslationKeyContains                      = "form||Value should contain '%s'"
+	TranslationKeyStep                          = "form||Value should be a multiple of %f"
+	TranslationKeyCSRFTokenMissing              = "form||CSRF token is missing"
+	TranslationKeyCSRFTokenInvalid              = "form||Invalid CSRF token"
+	TranslationKeyCSRFTokenError                = "form||Error processing CSRF token"
+	TranslationKeySortedSelectNotFound          = "form||SortedSelect: value '%v' not found in source"
+	TranslationKeySortedSelectKeyNotFound       = "form||SortedSelect: key '%s' not found in source"
+	TranslationKeySortedSelectSourceNil         = "form||SortedSelect: source map is nil"
+	TranslationKeySortedSelectTypeError         = "form||Cannot assign or convert value of type %T to %s"
+	TranslationKeySortedSelectUnmarshalNotFound = "form||SortedSelect: value '%v' not found in source during unmarshal"
 )
 
 type FieldValidationError struct {
@@ -272,7 +278,21 @@ func validateSortedMapper(f *Form, field reflect.StructField, value reflect.Valu
 			}
 		}
 		if !found && valStr != "" {
-			errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyInvalidSortedMapper, valStr)})
+			// Wrap as FieldValidationError
+			errMsg := getErr(TranslationKeyInvalidSortedMapper, valStr)
+			errs = append(errs, FieldValidationError{Field: field.Name, Err: errMsg})
+		}
+		// If ValueSorted returns an error, wrap as FieldValidationError
+		if value.CanAddr() {
+			vsErr := value.Addr().Interface()
+			if err, ok := vsErr.(error); ok && err != nil {
+				// Check for ValueSortedError
+				var vserr SortedSelectError
+				if errors.As(err, &vserr) {
+					translated := f.validationErrorTranslated(loc, vserr.Key, vserr.Args...)
+					errs = append(errs, FieldValidationError{Field: field.Name, Err: translated})
+				}
+			}
 		}
 	}
 	return
@@ -342,6 +362,11 @@ func (f *Form) validationErrorTranslated(loc Localizer, key string, args ...any)
 
 		return f.translationFunc(loc, key, args...)
 	}
+
+	if len(args) == 1 && args[0] == nil {
+		return fmt.Sprint(key)
+	}
+
 	return fmt.Sprintf(key, args...)
 }
 
@@ -418,6 +443,14 @@ func isEmptyValue(v reflect.Value) bool {
 	default:
 		// For unhandled kinds, treat as empty only if zero value
 		z := reflect.Zero(v.Type())
-		return reflect.DeepEqual(v.Interface(), z.Interface())
+
+		de := reflect.DeepEqual(v.Interface(), z.Interface())
+
+		// Use fmt.Sprint for a more forgiving comparison (e.g., for UUIDs, time.Time, etc.)
+		if de == false && fmt.Sprint(v.Interface()) == fmt.Sprint(z.Interface()) {
+			return true
+		}
+
+		return de
 	}
 }

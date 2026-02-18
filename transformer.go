@@ -28,6 +28,7 @@ const (
 	tagMaxLength   = "maxLength"
 	tagDescription = "description"
 	tagData        = "data"
+	tagNot         = "not"
 	// Allow disabling fields via struct tags.
 	tagDisabled = "disabled"
 	// Enable translation support for enum values
@@ -337,6 +338,8 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 			field.Type = types.FieldTypeDropdownMapped
 			field.Values = fieldValue
+			// Set Value as string for template eq compatibility
+			field.Value = fmt.Sprint(rValue.Field(i).Interface())
 
 			fields = append(fields, field)
 			continue
@@ -356,8 +359,11 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 			field.Type = types.FieldTypeDropdownMapped
 			field.Values = fieldValue
+			// Set Value as string for template eq compatibility
+			field.Value = fmt.Sprint(rValue.Field(i).Interface())
 
 			fields = append(fields, field)
+
 			continue
 		}
 
@@ -426,6 +432,7 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			if tags.Get(tagMaxLength) != "" {
 				field.MaxLength = tags.Get(tagMaxLength)
 			}
+
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 
