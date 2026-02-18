@@ -87,5 +87,28 @@ func (vs ValueSorted[T]) String() string {
 	return fmt.Sprint(vs.value)
 }
 
+// SetFromKey sets the value from a string key (as submitted by forms)
+func (vs *ValueSorted[T]) SetFromKey(key string) error {
+	if vs == nil || vs.Source == nil {
+		return fmt.Errorf("ValueSorted: Source map is nil")
+	}
+	var found bool
+	var typedKey T
+	for k := range vs.Source {
+		if fmt.Sprint(k) == key {
+			typedKey = k
+			found = true
+			break
+		}
+	}
+	if !found {
+		var zero T
+		vs.value = zero
+		return fmt.Errorf("ValueSorted: key '%s' not found in Source", key)
+	}
+	vs.value = typedKey
+	return nil
+}
+
 // Ensure ValueSorted implements SortedMapper
 var _ SortedMapper = ValueSorted[string]{}

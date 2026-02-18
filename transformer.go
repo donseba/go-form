@@ -337,6 +337,8 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 			field.Type = types.FieldTypeDropdownMapped
 			field.Values = fieldValue
+			// Set Value as string for template eq compatibility
+			field.Value = fmt.Sprint(rValue.Field(i).Interface())
 
 			fields = append(fields, field)
 			continue
@@ -356,8 +358,11 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 			field.Type = types.FieldTypeDropdownMapped
 			field.Values = fieldValue
+			// Set Value as string for template eq compatibility
+			field.Value = fmt.Sprint(rValue.Field(i).Interface())
 
 			fields = append(fields, field)
+
 			continue
 		}
 
