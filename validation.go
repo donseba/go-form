@@ -12,34 +12,34 @@ import (
 )
 
 var (
-	TranslationKeyRequired                     = "form||Validation required"
-	TranslationKeyMin                          = "form||Value should be greater than or equal to %v"
-	TranslationKeyMax                          = "form||Value should be less than or equal to %v"
-	TranslationKeyMaxLength                    = "form||Value should not exceed %d characters"
-	TranslationKeyMinLength                    = "form||Value should be at least %d characters"
-	TranslationKeyInvalidValue                 = "form||Invalid value '%s' provided"
-	TranslationKeyInvalidEmail                 = "form||Invalid email format"
-	TranslationKeyInvalidEnum                  = "form||Invalid enum value '%s' provided"
-	TranslationKeyInvalidMapper                = "form||Invalid mapper value '%s' provided"
-	TranslationKeyInvalidSortedMapper          = "form||Invalid sorted mapper value '%s' provided"
-	TranslationKeyPattern                      = "form||Value does not match the required pattern '%s'"
-	TranslationKeyURL                          = "form||Invalid URL format"
-	TranslationKeyBool                         = "form||Value should be either true or false"
-	TranslationKeyZero                         = "form||Value should be zero"
-	TranslationKeyMinItems                     = "form||Value should have at least %d items"
-	TranslationKeyMaxItems                     = "form||Value should have at most %d items"
-	TranslationKeyPrefix                       = "form||Value should start with '%s'"
-	TranslationKeySuffix                       = "form||Value should end with '%s'"
-	TranslationKeyContains                     = "form||Value should contain '%s'"
-	TranslationKeyStep                         = "form||Value should be a multiple of %f"
-	TranslationKeyCSRFTokenMissing             = "form||CSRF token is missing"
-	TranslationKeyCSRFTokenInvalid             = "form||Invalid CSRF token"
-	TranslationKeyCSRFTokenError               = "form||Error processing CSRF token"
-	TranslationKeyValueSortedNotFound          = "form||ValueSorted: value '%v' not found in source"
-	TranslationKeyValueSortedKeyNotFound       = "form||ValueSorted: key '%s' not found in source"
-	TranslationKeyValueSortedSourceNil         = "form||ValueSorted: source map is nil"
-	TranslationKeyValueSortedTypeError         = "form||Cannot assign or convert value of type %T to %s"
-	TranslationKeyValueSortedUnmarshalNotFound = "form||ValueSorted: value '%v' not found in source during unmarshal"
+	TranslationKeyRequired                      = "form||Validation required"
+	TranslationKeyMin                           = "form||Value should be greater than or equal to %v"
+	TranslationKeyMax                           = "form||Value should be less than or equal to %v"
+	TranslationKeyMaxLength                     = "form||Value should not exceed %d characters"
+	TranslationKeyMinLength                     = "form||Value should be at least %d characters"
+	TranslationKeyInvalidValue                  = "form||Invalid value '%s' provided"
+	TranslationKeyInvalidEmail                  = "form||Invalid email format"
+	TranslationKeyInvalidEnum                   = "form||Invalid enum value '%s' provided"
+	TranslationKeyInvalidMapper                 = "form||Invalid mapper value '%s' provided"
+	TranslationKeyInvalidSortedMapper           = "form||Invalid sorted mapper value '%s' provided"
+	TranslationKeyPattern                       = "form||Value does not match the required pattern '%s'"
+	TranslationKeyURL                           = "form||Invalid URL format"
+	TranslationKeyBool                          = "form||Value should be either true or false"
+	TranslationKeyZero                          = "form||Value should be zero"
+	TranslationKeyMinItems                      = "form||Value should have at least %d items"
+	TranslationKeyMaxItems                      = "form||Value should have at most %d items"
+	TranslationKeyPrefix                        = "form||Value should start with '%s'"
+	TranslationKeySuffix                        = "form||Value should end with '%s'"
+	TranslationKeyContains                      = "form||Value should contain '%s'"
+	TranslationKeyStep                          = "form||Value should be a multiple of %f"
+	TranslationKeyCSRFTokenMissing              = "form||CSRF token is missing"
+	TranslationKeyCSRFTokenInvalid              = "form||Invalid CSRF token"
+	TranslationKeyCSRFTokenError                = "form||Error processing CSRF token"
+	TranslationKeySortedSelectNotFound          = "form||SortedSelect: value '%v' not found in source"
+	TranslationKeySortedSelectKeyNotFound       = "form||SortedSelect: key '%s' not found in source"
+	TranslationKeySortedSelectSourceNil         = "form||SortedSelect: source map is nil"
+	TranslationKeySortedSelectTypeError         = "form||Cannot assign or convert value of type %T to %s"
+	TranslationKeySortedSelectUnmarshalNotFound = "form||SortedSelect: value '%v' not found in source during unmarshal"
 )
 
 type FieldValidationError struct {
@@ -287,7 +287,7 @@ func validateSortedMapper(f *Form, field reflect.StructField, value reflect.Valu
 			vsErr := value.Addr().Interface()
 			if err, ok := vsErr.(error); ok && err != nil {
 				// Check for ValueSortedError
-				var vserr ValueSortedError
+				var vserr SortedSelectError
 				if errors.As(err, &vserr) {
 					translated := f.validationErrorTranslated(loc, vserr.Key, vserr.Args...)
 					errs = append(errs, FieldValidationError{Field: field.Name, Err: translated})

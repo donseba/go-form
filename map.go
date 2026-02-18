@@ -91,7 +91,7 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 			continue
 		}
 
-		// If the field has a SetFromKey(string) error method, call it (for ValueSorted types)
+		// If the field has a SetFromKey(string) error method, call it (for SortedSelect types)
 		if fv.CanAddr() {
 			addr := fv.Addr().Interface()
 			if setter, ok := addr.(interface{ SetFromKey(string) error }); ok {

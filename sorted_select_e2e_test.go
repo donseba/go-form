@@ -11,10 +11,10 @@ import (
 )
 
 type testForm struct {
-	DepartmentID ValueSorted[int64] `form:"dropdown"`
+	DepartmentID SortedSelect[int64] `form:"dropdown"`
 }
 
-func TestValueSorted_MapForm_E2E(t *testing.T) {
+func TestSortedSelect_MapForm_E2E(t *testing.T) {
 	f := &testForm{}
 	f.DepartmentID.SetSource(map[int64]string{
 		1: "Department 1",
@@ -46,9 +46,9 @@ func TestValueSorted_MapForm_E2E(t *testing.T) {
 	// }
 }
 
-func TestValueSorted_ScanAndValue_DB(t *testing.T) {
+func TestSortedSelect_ScanAndValue_DB(t *testing.T) {
 	// int64 key
-	vsInt := &ValueSorted[int64]{}
+	vsInt := &SortedSelect[int64]{}
 	vsInt.SetSource(map[int64]string{1: "One", 2: "Two"})
 	if err := vsInt.Scan(int64(2)); err != nil {
 		t.Errorf("Scan failed for int64: %v", err)
@@ -58,7 +58,7 @@ func TestValueSorted_ScanAndValue_DB(t *testing.T) {
 	}
 
 	// string key
-	vsStr := &ValueSorted[string]{}
+	vsStr := &SortedSelect[string]{}
 	vsStr.SetSource(map[string]string{"a": "Alpha", "b": "Beta"})
 	if err := vsStr.Scan("b"); err != nil {
 		t.Errorf("Scan failed for string: %v", err)
@@ -68,7 +68,7 @@ func TestValueSorted_ScanAndValue_DB(t *testing.T) {
 	}
 
 	// float64 key
-	vsFloat := &ValueSorted[float64]{}
+	vsFloat := &SortedSelect[float64]{}
 	vsFloat.SetSource(map[float64]string{1.1: "One", 2.2: "Two"})
 	if err := vsFloat.Scan(2.2); err != nil {
 		t.Errorf("Scan failed for float64: %v", err)
@@ -80,7 +80,7 @@ func TestValueSorted_ScanAndValue_DB(t *testing.T) {
 	// uuid.UUID key
 	u1 := uuid.New()
 	u2 := uuid.New()
-	vsUUID := &ValueSorted[uuid.UUID]{}
+	vsUUID := &SortedSelect[uuid.UUID]{}
 	vsUUID.SetSource(map[uuid.UUID]string{u1: "First", u2: "Second"})
 	if err := vsUUID.Scan(u2); err != nil {
 		t.Errorf("Scan failed for uuid.UUID: %v", err)
@@ -92,7 +92,7 @@ func TestValueSorted_ScanAndValue_DB(t *testing.T) {
 	// time.Time key
 	t1 := time.Now().Truncate(time.Second)
 	t2 := t1.Add(time.Hour)
-	vsTime := &ValueSorted[time.Time]{}
+	vsTime := &SortedSelect[time.Time]{}
 	vsTime.SetSource(map[time.Time]string{t1: "Now", t2: "Later"})
 
 	if err := vsTime.Scan(t2); err != nil {
@@ -113,15 +113,15 @@ func TestValueSorted_ScanAndValue_DB(t *testing.T) {
 	}
 }
 
-func TestValueSorted_JSON(t *testing.T) {
-	vs := &ValueSorted[int64]{}
+func TestSortedSelect_JSON(t *testing.T) {
+	vs := &SortedSelect[int64]{}
 	vs.SetSource(map[int64]string{1: "One", 2: "Two"})
 	_ = vs.Set(2)
 	data, err := json.Marshal(vs)
 	if err != nil {
 		t.Fatalf("MarshalJSON failed: %v", err)
 	}
-	var vs2 ValueSorted[int64]
+	var vs2 SortedSelect[int64]
 	if err := json.Unmarshal(data, &vs2); err != nil {
 		t.Fatalf("UnmarshalJSON failed: %v", err)
 	}
@@ -132,7 +132,7 @@ func TestValueSorted_JSON(t *testing.T) {
 		t.Errorf("Expected Source length=2 after unmarshal, got %d", len(vs2.Source()))
 	}
 	// Edge case: value not in Source
-	bad := &ValueSorted[int64]{}
+	bad := &SortedSelect[int64]{}
 	bad.SetSource(map[int64]string{1: "One"})
 	badData := []byte(`{"value":2,"source":{"1":"One"}}`)
 	if err := json.Unmarshal(badData, bad); err == nil {

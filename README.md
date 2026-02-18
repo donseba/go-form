@@ -363,9 +363,9 @@ See the example in `example/csrf/main.go` for a complete usage demonstration.
 
 ---
 
-## ValueSorted: Sorted Map Field Type
+## SortedSelect: Sorted Map Field Type
 
-`ValueSorted` is a generic struct for sorted dropdowns and mapped fields with custom key types. It supports form mapping, validation, database integration, and JSON serialization.
+`SortedSelect` is a generic struct for sorted dropdowns and mapped fields with custom key types. It supports form mapping, validation, database integration, and JSON serialization.
 
 ### Usage Example
 
@@ -377,20 +377,20 @@ import "time"
 // Supported key types: int, int64, string, float64, uuid.UUID, time.Time, custom comparable types
 
 type MyForm struct {
-    DepartmentID form.ValueSorted[int64]   `form:"dropdown" label:"Department"`
-    ColorID      form.ValueSorted[string]   `form:"dropdown" label:"Color"`
-    PriceID      form.ValueSorted[float64]  `form:"dropdown" label:"Price"`
-    UUIDField    form.ValueSorted[uuid.UUID] `form:"dropdown" label:"UUID"`
-    TimeField    form.ValueSorted[time.Time] `form:"dropdown" label:"Time"`
+    DepartmentID SortedSelect[int64]   `form:"dropdown" label:"Department"`
+    ColorID      SortedSelect[string]   `form:"dropdown" label:"Color"`
+    PriceID      SortedSelect[float64]  `form:"dropdown" label:"Price"`
+    UUIDField    SortedSelect[uuid.UUID] `form:"dropdown" label:"UUID"`
+    TimeField    SortedSelect[time.Time] `form:"dropdown" label:"Time"`
 }
 
-// Recommended: use NewValueSorted for initialization
+// Recommended: use NewSortedSelect for initialization
 myForm := MyForm{
-    DepartmentID: form.NewValueSorted(map[int64]string{1: "HR", 2: "IT"}),
-    ColorID:      form.NewValueSorted(map[string]string{"r": "Red", "g": "Green"}),
-    PriceID:      form.NewValueSorted(map[float64]string{1.99: "Cheap", 5.49: "Medium", 9.99: "Expensive"}),
-    UUIDField:    form.NewValueSorted(map[uuid.UUID]string{uuid.New(): "A", uuid.New(): "B"}),
-    TimeField:    form.NewValueSorted(map[time.Time]string{time.Now(): "Now", time.Now().Add(time.Hour): "Later"}),
+    DepartmentID: NewSortedSelect(map[int64]string{1: "HR", 2: "IT"}),
+    ColorID:      NewSortedSelect(map[string]string{"r": "Red", "g": "Green"}),
+    PriceID:      NewSortedSelect(map[float64]string{1.99: "Cheap", 5.49: "Medium", 9.99: "Expensive"}),
+    UUIDField:    NewSortedSelect(map[uuid.UUID]string{uuid.New(): "A", uuid.New(): "B"}),
+    TimeField:    NewSortedSelect(map[time.Time]string{time.Now(): "Now", time.Now().Add(time.Hour): "Later"}),
 }
 ```
 
@@ -413,7 +413,7 @@ err := myForm.DepartmentID.Set(2) // sets value to 2 if present in Source
 
 ### Database Integration
 
-`ValueSorted` implements `Scan` and `Value` for database operations:
+`SortedSelect` implements `Scan` and `Value` for database operations:
 
 ```go
 // Scan from DB value (type-safe):
@@ -424,12 +424,12 @@ v, _ := myForm.DepartmentID.Value() // returns 2
 
 ### JSON Support
 
-`ValueSorted` supports JSON marshal/unmarshal for API and persistence scenarios:
+`SortedSelect` supports JSON marshal/unmarshal for API and persistence scenarios:
 
 ```go
 jsonData, _ := json.Marshal(myForm.DepartmentID)
-var vs form.ValueSorted[int64]
-_ = json.Unmarshal(jsonData, &vs)
+var ss SortedSelect[int64]
+_ = json.Unmarshal(jsonData, &ss)
 ```
 
 ### Source Map Access
@@ -458,11 +458,11 @@ for _, err := range errs {
 }
 ```
 
-Translation works seamlessly for all ValueSorted validation errors, including those with variables. See the translation example for details.
+Translation works seamlessly for all SortedSelect validation errors, including those with variables. See the translation example for details.
 
 ### Testing
 
-See `value_sorted_e2e_test.go` for comprehensive tests covering:
+See `value_sorted_e2e_test.go` (to be renamed) for comprehensive tests covering:
 - Form mapping
 - DB integration
 - JSON serialization
