@@ -1,6 +1,7 @@
 package form
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
@@ -12,7 +13,7 @@ import (
 // T must be comparable to be used as map key.
 type ValueSorted[T comparable] struct {
 	value  T
-	Source map[T]string
+	source map[T]string
 }
 
 // entry implements SortedMap for ValueSorted
@@ -21,19 +22,49 @@ type vsEntry struct {
 	v string
 }
 
+func NewValueSorted[T comparable](source map[T]string) ValueSorted[T] {
+	return ValueSorted[T]{source: source}
+}
+
 func (e vsEntry) Key() string   { return e.k }
 func (e vsEntry) Value() string { return e.v }
+
+// Get returns the current value of the ValueSorted field (typed as T)
+func (vs ValueSorted[T]) Get() T {
+	return vs.value
+}
+
+// Set sets the value of the ValueSorted field, ensuring it exists in Source if Source is not nil
+func (vs *ValueSorted[T]) Set(val T) error {
+	if vs.source != nil {
+		found := false
+		for k := range vs.source {
+			if fmt.Sprint(k) == fmt.Sprint(val) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			var zero T
+			vs.value = zero
+			return ValueSortedError{Key: TranslationKeyValueSortedNotFound, Args: []any{val}}
+		}
+	}
+
+	vs.value = val
+	return nil
+}
 
 // SortedMapper returns entries sorted by key string representation
 // Uses fmt.Sprint to produce string representations of keys (no converters required).
 func (vs ValueSorted[T]) SortedMapper() []SortedMap {
-	if vs.Source == nil {
+	if vs.source == nil {
 		return nil
 	}
 	// collect keys as strings using fmt.Sprint
-	keys := make([]string, 0, len(vs.Source))
+	keys := make([]string, 0, len(vs.source))
 	keyMap := make(map[string]T)
-	for k := range vs.Source {
+	for k := range vs.source {
 		ks := fmt.Sprint(k)
 		// only record the formatted key once to avoid duplicate entries when Format collides
 		if _, exists := keyMap[ks]; !exists {
@@ -45,13 +76,9 @@ func (vs ValueSorted[T]) SortedMapper() []SortedMap {
 	out := make([]SortedMap, 0, len(keys))
 	for _, ks := range keys {
 		k := keyMap[ks]
-		out = append(out, vsEntry{ks, vs.Source[k]})
+		out = append(out, vsEntry{ks, vs.source[k]})
 	}
 	return out
-}
-
-func (vs ValueSorted[T]) Val() T {
-	return vs.value
 }
 
 func (vs *ValueSorted[T]) Scan(val any) error {
@@ -64,18 +91,29 @@ func (vs *ValueSorted[T]) Scan(val any) error {
 		vs.value = zero
 		return nil
 	}
-	// use a stable type for T (derived from a zero value) rather than reflecting the current value
 	var zero T
 	typ := reflect.TypeOf(zero)
+	var assigned T
 	if v.Type().AssignableTo(typ) {
-		vs.value = v.Interface().(T)
-		return nil
+		assigned = v.Interface().(T)
+	} else if v.Type().ConvertibleTo(typ) {
+		assigned = v.Convert(typ).Interface().(T)
+	} else {
+		return fmt.Errorf("%s", TranslationKeyValueSortedTypeError)
 	}
-	if v.Type().ConvertibleTo(typ) {
-		vs.value = v.Convert(typ).Interface().(T)
-		return nil
+	found := false
+	for k := range vs.source {
+		if fmt.Sprint(k) == fmt.Sprint(assigned) {
+			found = true
+			break
+		}
 	}
-	return fmt.Errorf("cannot assign or convert value of type %T to %s", val, typ.String())
+	if !found {
+		vs.value = zero
+		return ValueSortedError{Key: TranslationKeyValueSortedNotFound, Args: []any{assigned}}
+	}
+	vs.value = assigned
+	return nil
 }
 
 func (vs *ValueSorted[T]) Value() (any, error) {
@@ -89,12 +127,12 @@ func (vs ValueSorted[T]) String() string {
 
 // SetFromKey sets the value from a string key (as submitted by forms)
 func (vs *ValueSorted[T]) SetFromKey(key string) error {
-	if vs == nil || vs.Source == nil {
-		return fmt.Errorf("ValueSorted: Source map is nil")
+	if vs == nil || vs.source == nil {
+		return fmt.Errorf("%s", TranslationKeyValueSortedSourceNil)
 	}
 	var found bool
 	var typedKey T
-	for k := range vs.Source {
+	for k := range vs.source {
 		if fmt.Sprint(k) == key {
 			typedKey = k
 			found = true
@@ -104,10 +142,75 @@ func (vs *ValueSorted[T]) SetFromKey(key string) error {
 	if !found {
 		var zero T
 		vs.value = zero
-		return fmt.Errorf("ValueSorted: key '%s' not found in Source", key)
+		return fmt.Errorf("%s", TranslationKeyValueSortedKeyNotFound)
 	}
 	vs.value = typedKey
 	return nil
+}
+
+// SetSource sets or updates the source map for ValueSorted
+func (vs *ValueSorted[T]) SetSource(source map[T]string) {
+	vs.source = source
+}
+
+// Source returns a copy of the internal source map for read-only access
+func (vs ValueSorted[T]) Source() map[T]string {
+	return vs.source
+}
+
+// MarshalJSON outputs {"value":..., "source":...}
+func (vs ValueSorted[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Value  T            `json:"value"`
+		Source map[T]string `json:"source"`
+	}{
+		Value:  vs.value,
+		Source: vs.source,
+	})
+}
+
+// UnmarshalJSON restores value and Source, validates value
+func (vs *ValueSorted[T]) UnmarshalJSON(data []byte) error {
+	var temp struct {
+		Value  T            `json:"value"`
+		Source map[T]string `json:"source"`
+	}
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+	vs.source = temp.Source
+	vs.value = temp.Value
+	if vs.source != nil {
+		found := false
+		for k := range vs.source {
+			if fmt.Sprint(k) == fmt.Sprint(vs.value) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			var zero T
+			vs.value = zero
+			return ValueSortedError{Key: TranslationKeyValueSortedNotFound, Args: []any{vs.value}}
+		}
+	}
+	return nil
+}
+
+// ValueSortedError is a structured error for translation
+// Holds the translation key and arguments for formatting
+// Implements error interface
+// Usage: return ValueSortedError{Key: key, Args: args}
+type ValueSortedError struct {
+	Key  string
+	Args []any
+}
+
+func (e ValueSortedError) Error() string {
+	if len(e.Args) > 0 {
+		return fmt.Sprintf(e.Key, e.Args...)
+	}
+	return e.Key
 }
 
 // Ensure ValueSorted implements SortedMapper
