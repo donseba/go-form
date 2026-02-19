@@ -247,13 +247,13 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			field.Disabled = true
 		}
 
+		// Check if translation is enabled: struct tag takes precedence over global default
+		tagValue := tags.Get(tagTranslate)
+		shouldTranslate := tagValue == "true" || (tagValue != "false" && DefaultEnumTranslation)
+
 		if rType.Field(i).Type.Implements(enumType) {
 			enums := reflect.New(rType.Field(i).Type).Interface().(Enumerator).Enum()
 			var fieldValue []types.FieldValue
-
-			// Check if translation is enabled: struct tag takes precedence over global default
-			tagValue := tags.Get(tagTranslate)
-			shouldTranslate := tagValue == "true" || (tagValue != "false" && DefaultEnumTranslation)
 
 			var typeName string
 			if shouldTranslate {
@@ -272,9 +272,10 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 					enumName = fmt.Sprintf("enum||%s.%s", typeName, val)
 				}
 				fieldValue = append(fieldValue, types.FieldValue{
-					Value:    val,
-					Name:     enumName,
-					Disabled: false,
+					Value:     val,
+					Name:      enumName,
+					Disabled:  false,
+					Translate: shouldTranslate,
 				})
 			}
 
@@ -328,11 +329,13 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		if rType.Field(i).Type.Implements(mapperType) {
 			maps := rValue.Field(i).Interface().(Mapper).Mapper()
 			var fieldValue []types.FieldValue
+
 			for k, v := range maps {
 				fieldValue = append(fieldValue, types.FieldValue{
-					Value:    k,
-					Name:     v,
-					Disabled: false,
+					Value:     k,
+					Name:      v,
+					Disabled:  false,
+					Translate: shouldTranslate,
 				})
 			}
 
@@ -349,11 +352,13 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		if rType.Field(i).Type.Implements(sortedMapperType) {
 			maps := rValue.Field(i).Interface().(SortedMapper).SortedMapper()
 			var fieldValue []types.FieldValue
+
 			for _, v := range maps {
 				fieldValue = append(fieldValue, types.FieldValue{
-					Value:    v.Key(),
-					Name:     v.Value(),
-					Disabled: false,
+					Value:     v.Key(),
+					Name:      v.Value(),
+					Disabled:  false,
+					Translate: shouldTranslate,
 				})
 			}
 
