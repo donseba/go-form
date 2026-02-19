@@ -362,11 +362,25 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				})
 			}
 
-			field.Type = types.FieldTypeDropdownMapped
-			field.Values = fieldValue
-			// Set Value as string for template eq compatibility
-			field.Value = fmt.Sprint(rValue.Field(i).Interface())
+			// Use multicheckbox if form tag is multicheckbox, else fallback to dropdownmapped
+			if field.Type == types.FieldTypeMultiCheckbox || rType.Field(i).Tag.Get(tagForm) == "multicheckbox" {
+				field.Type = types.FieldTypeMultiCheckbox
+				// For checkboxes, Value should be a map[string]bool for checked state
+				valueMap := map[string]bool{}
+				if rValue.Field(i).IsValid() && rValue.Field(i).CanInterface() {
+					if sms, ok := rValue.Field(i).Interface().(MultiSelectGetter); ok {
+						for _, v := range sms.GetKeysAsStrings() {
+							valueMap[v] = true
+						}
+					}
+				}
+				field.ValueMap = valueMap
+			} else {
+				field.Type = types.FieldTypeDropdownMapped
+				field.Value = fmt.Sprint(rValue.Field(i).Interface())
+			}
 
+			field.Values = fieldValue
 			fields = append(fields, field)
 
 			continue

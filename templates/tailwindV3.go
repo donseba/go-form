@@ -117,4 +117,14 @@ var TailwindV3 = map[types.FieldType]map[types.InputFieldType]string{
   </div>
 </form>`,
 	},
+	types.FieldTypeMultiCheckbox: {
+		types.InputFieldTypeNone: `<div class="form-multicheckbox {{ .Field.Class }}">
+  {{ range $k, $option := .Field.Values }}
+  <div class="inline-block mr-4">
+    <input type="checkbox" id="{{$.Field.Id}}_{{$k}}" name="{{$.Field.Name}}" value="{{$option.Value}}" {{ if (index $.Field.ValueMap $option.Value) }}checked{{end}} {{ if eq $option.Disabled true }}disabled{{ end }} class="h-4 w-4 rounded border border-gray-200 text-indigo-600 focus:ring-indigo-600" aria-labelledby="{{$.Field.Id}}_{{$k}}_label" {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
+    <label for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label" class="ml-1 text-sm text-gray-900">{{$option.Name}}</label>
+  </div>
+  {{ end }}
+</div>`,
+	},
 }

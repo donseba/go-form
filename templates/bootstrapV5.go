@@ -119,4 +119,14 @@ var BootstrapV5 = map[types.FieldType]map[types.InputFieldType]string{
   </div>
 </form>`,
 	},
+	types.FieldTypeMultiCheckbox: {
+		types.InputFieldTypeNone: `<div class="form-multicheckbox {{ .Field.Class }}">
+  {{ range $k, $option := .Field.Values }}
+  <div class="form-check form-check-inline">
+    <input type="checkbox" class="form-check-input" id="{{$.Field.Id}}_{{$k}}" name="{{$.Field.Name}}" value="{{$option.Value}}" {{ if (index $.Field.ValueMap $option.Value) }}checked{{end}} {{ if eq $option.Disabled true }}disabled{{ end }} aria-labelledby="{{$.Field.Id}}_{{$k}}_label" {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
+    <label class="form-check-label" for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label" style="font-size: 0.875rem; color: #212529; margin-left: 0.25rem;">{{$option.Name}}</label>
+  </div>
+  {{ end }}
+</div>`,
+	},
 }

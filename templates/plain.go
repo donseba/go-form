@@ -117,4 +117,14 @@ var Plain = map[types.FieldType]map[types.InputFieldType]string{
   {{if .GroupAfter}}<span style="display: inline-flex; align-items: center; padding: 0 0.75rem; background: #f8f9fa; border: 1px solid #ced4da; border-left: 0; border-radius: 0 0.25rem 0.25rem 0; color: #6c757d; font-size: 0.875rem;">{{.GroupAfter}}</span>{{end}}
 </div>`,
 	},
+	types.FieldTypeMultiCheckbox: {
+		types.InputFieldTypeNone: `<div class="form-multicheckbox {{ .Field.Class }}">
+  {{ range $k, $option := .Field.Values }}
+  <div style="display: inline-block; margin-right: 1rem;">
+    <input type="checkbox" id="{{$.Field.Id}}_{{$k}}" name="{{$.Field.Name}}" value="{{$option.Value}}" {{ if (index $.Field.ValueMap $option.Value) }}checked{{end}} {{ if eq $option.Disabled true }}disabled{{ end }} aria-labelledby="{{$.Field.Id}}_{{$k}}_label" {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
+    <label for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label" style="margin-left: 0.25rem; font-size: 0.875rem; color: #212529;">{{$option.Name}}</label>
+  </div>
+  {{ end }}
+</div>`,
+	},
 }

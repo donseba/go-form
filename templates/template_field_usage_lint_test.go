@@ -66,6 +66,7 @@ func TestTemplateMaps_FieldAccessIsValid(t *testing.T) {
 		"GroupAfter":   {},
 		"Class":        {},
 		"Data":         {},
+		"ValueMap":     {}, // allow ValueMap for multicheckbox
 	}
 
 	allowedRoot := map[string]struct{}{

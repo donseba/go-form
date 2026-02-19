@@ -49,6 +49,7 @@ type FormField struct {
 	GroupAfter   string            `json:"groupAfter,omitempty"`
 	Class        string            `json:"class,omitempty"`
 	Data         map[string]string `json:"data,omitempty"` // Data attributes
+	ValueMap     map[string]bool   `json:"valueMap,omitempty"`
 }
 
 // TemplateMap represents a map of field types to their input type templates
@@ -69,6 +70,7 @@ const (
 	FieldTypeWrapper        FieldType = "wrapper"
 	FieldTypeForm           FieldType = "form"
 	FieldTypeInputGroup     FieldType = "inputgroup"
+	FieldTypeMultiCheckbox  FieldType = "multicheckbox"
 )
 
 // Constants for input types
