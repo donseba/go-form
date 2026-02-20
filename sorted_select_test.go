@@ -133,7 +133,7 @@ func testTranslateSorted(loc Localizer, key string, args ...any) string {
 
 func TestSortedSelect_TranslationWithVariable(t *testing.T) {
 	loc := testLocalizer{Locale: "it"}
-	f := NewTranslatedForm(nil, testTranslateSorted)
+	f := NewTranslatedForm(testTranslateSorted)
 	ss := &SortedSelect[int]{source: map[int]string{1: "one"}}
 	err := ss.Set(42)
 	var key string

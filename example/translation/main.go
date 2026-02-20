@@ -65,6 +65,7 @@ type TranslationForm struct {
 
 func main() {
 	f := form.NewTranslatedForm(myTranslate)
+	f.SetTheme("plain")
 
 	// Add navigation links to other examples
 	htmlLinks := `<div style="margin-bottom:1em">
