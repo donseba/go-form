@@ -44,12 +44,17 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 			!(field.Type.PkgPath() == "time" && field.Type.Name() == "Time") &&
 			field.Type != reflect.TypeOf(Info{}) &&
 			fv.CanAddr() {
-			name := field.Tag.Get("name")
-			if name == "" {
-				name = field.Name
+			// If the address implements SetFromKey, treat the struct as a single field
+			if fv.Addr().Type().Implements(reflect.TypeOf((*interface{ SetFromKey(string) error })(nil)).Elem()) {
+				// do not recurse; let the SetFromKey path handle this field later
+			} else {
+				name := field.Tag.Get("name")
+				if name == "" {
+					name = field.Name
+				}
+				_ = MapForm(r, fv.Addr().Interface(), prefix+name+".")
+				continue
 			}
-			_ = MapForm(r, fv.Addr().Interface(), prefix+name+".")
-			continue
 		}
 		formKey := field.Tag.Get("name")
 		if formKey == "" {
@@ -86,6 +91,20 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 			continue
 		}
 
+		// If the field has a SetFromKey(string) error method, call it (for SortedSelect types)
+		if fv.CanAddr() {
+			addr := fv.Addr().Interface()
+			if setter, ok := addr.(interface{ SetFromKey(string) error }); ok {
+				if err := setter.SetFromKey(formValue); err != nil {
+					// Log and continue; mapping shouldn't abort the whole form
+					fmt.Printf("error setting key from form for field %s: %v\n", field.Name, err)
+				}
+				continue
+			}
+		}
+
+		// If this is a primitive kind, use the shared helper. For arrays/structs/pointers
+		// we fall through to the special-case handling below (UUID, time.Time, etc.).
 		switch fv.Kind() {
 		case reflect.String:
 			fv.SetString(formValue)

@@ -19,9 +19,10 @@ func (i InputFieldType) String() string {
 
 // FieldValue represents a value in a dropdown or radio group
 type FieldValue struct {
-	Value    string `json:"value"`
-	Name     string `json:"name"`
-	Disabled bool   `json:"disabled"`
+	Value     string `json:"value"`
+	Name      string `json:"name"`
+	Disabled  bool   `json:"disabled"`
+	Translate bool   `json:"translate,omitempty"`
 }
 
 // FormField represents a form field

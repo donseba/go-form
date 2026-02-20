@@ -36,6 +36,8 @@ import (
 type ExampleForm struct {
     Username string `form:"input,text" label:"Username" placeholder:"Enter your username" required:"true"`
     Password string `form:"input,password" label:"Password" placeholder:"Enter your password" required:"true"`
+    Email    string `form:"input,email" label:"Email" placeholder:"Enter your email" required:"true"`
+    Age      int    `form:"input,number" label:"Age" placeholder:"Enter your age" step:"1"`
 }
 
 f := form.NewForm()
@@ -82,43 +84,387 @@ Other supported tags:
 - `description` — Field description/help text
 - `maxLength` — Maximum length for textarea or string input
 - `class` — Custom CSS class for the field
-- `data` — Custom data attributes
+- `data` — Custom data attributes (e.g., `data="custom:value,foo:bar,baz:qux"`)
+- `translate` — Enable translation for enum values (e.g., `translate:"true"` for Enumerator fields)
 
 ---
 
-## Struct-based Radio Groups (explicit)
+## Validation
 
-In addition to classic radio groups defined via `values`, go-form supports *struct-based* radio groups.
+### Built-in Validation
+- **required**: Ensures the field is not empty.
+- **min, max, step**: For numeric fields, enforces minimum, maximum, and step values.
+- **minLength, maxLength**: For string/textarea fields, enforces minimum and maximum character count (Unicode-aware).
+- **values**: For radios/dropdowns, ensures the value is one of the allowed options.
+- **Email format**: Checks for a valid email address format (basic @ check).
+- **Enumerator, Mapper, SortedMapper**: If a field implements one of these interfaces, the value must be present in the allowed set returned by Enum(), Mapper(), or SortedMapper().
 
-### Classic radios (values-based)
+#### Using Enumerator, Mapper, and SortedMapper Interfaces
+
+For enum values, implement `Enumerator`:
 
 ```go
+type Status string
+func (s Status) Enum() []any { return []any{"active", "inactive"} }
+
 type MyForm struct {
-    RadioOption string `form:"radios" label:"Radio Option" values:"option1:Option 1;option2:Option 2"`
+    Status Status `form:"dropdown" label:"Status"`
 }
 ```
 
-### Struct-based radio group
-
-Declare the parent struct field explicitly as a radio group using:
-
-- `form:"radios,radio_group"`
-- optional `legend:"..."` (acts as the group label)
+For key-value pairs, use `Mapper` (unordered) or `SortedMapper` (ordered):
 
 ```go
-type RadioGroupBlock struct {
-    Option1 bool `name:"RadioGroup" label:"first option"`
-    Option2 bool `name:"RadioGroup" label:"second option"`
+type ColorMap string
+func (c ColorMap) Mapper() map[string]string {
+    return map[string]string{"red": "Red", "blue": "Blue"}
 }
 
+// For ordered pairs, implement SortedMapper with []SortedMap
+```
+
+### Custom Validation
+You can add your own validation logic using the `validate` struct tag and by registering a custom validation function:
+
+```go
+// 1. Define your validation function (must return form.FieldErrors)
+func isHexColor(val any, field reflect.StructField) form.FieldErrors { /* ... */ }
+
+// 2. Register it with your Form instance
+f.RegisterValidationMethod("isHexColor", isHexColor)
+
+// 3. Use it in your struct
 type MyForm struct {
-    RadioGroup RadioGroupBlock `form:"radios,radio_group" legend:"Radio Group"`
+    Color string `form:"input,text" label:"Color" validate:"isHexColor"`
+}
+
+// 4. Call f.ValidateForm(&myForm) to run both built-in and custom validations
+```
+
+Custom validators can be chained with commas in the `validate` tag. All errors are collected and can be rendered in your template.
+
+---
+
+## Translation / Internationalization
+
+go-form supports translation of form labels, error messages, and other UI text. You can provide your own translation function and a Localizer implementation to render forms in different languages or customize the wording for your application.
+
+### How to Use
+
+1. **Create a translation function**: This function receives a Localizer, a key, and optional arguments, and returns the translated string.
+2. **Implement a Localizer**: This determines the current locale (e.g., from the user session or request).
+3. **Create the form with translation support**: Use `form.NewTranslatedForm(template, translateFunc)`.
+4. **Pass your Localizer when rendering or validating**: The form will use your translation function and Localizer to fetch translations.
+
+```go
+// Example translation function and Localizer
+var translations = map[string]map[string]string{
+    "en": {"Name": "Name", "form.validation.required": "is required"},
+    "it": {"Name": "Nome", "form.validation.required": "è obbligatorio"},
+}
+
+type MyLocalizer struct { Locale string }
+func (l MyLocalizer) GetLocale() string { return l.Locale }
+
+func myTranslate(loc form.Localizer, key string, args ...any) string {
+    locale := "en"
+    if l, ok := loc.(MyLocalizer); ok {
+        locale = l.Locale
+    }
+    msg := key
+    if m, ok := translations[locale]; ok {
+        if t, ok := m[key]; ok {
+            msg = t
+        }
+    }
+    if len(args) > 0 {
+        return fmt.Sprintf(msg, args...)
+    }
+    return msg
+}
+
+f := form.NewTranslatedForm(templates.Plain, myTranslate)
+// When rendering or validating, pass your Localizer:
+loc := MyLocalizer{Locale: "it"}
+// ...
+```
+
+See the example in `example/translation/main.go` for a complete usage demonstration.
+
+#### Translating Enum Values
+
+By default, enum values display as-is. To enable translation, add `translate:"true"`:
+
+```go
+type Status string
+func (s Status) Enum() []any { return []any{"active", "inactive"} }
+
+type MyForm struct {
+    Status Status `form:"dropdown" label:"Status" translate:"true"`
 }
 ```
 
-Notes:
-- All option fields must share the same `name:"..."` so the browser treats them as one group.
-- Exactly one option should be true at a time (it will render with `checked`).
+To enable translation for **all enums by default**, set the global variable:
+
+```go
+import "github.com/donseba/go-form"
+
+func init() {
+    form.DefaultEnumTranslation = true  // All enums will be translatable by default
+}
+```
+
+Individual fields can still opt-out using `translate:"false"`. Translation keys follow the format `enum||{TypeName}.{value}`:
+
+```go
+var translations = map[string]map[string]string{
+    "en": {"enum||Status.active": "Active", "enum||Status.inactive": "Inactive"},
+    "it": {"enum||Status.active": "Attivo", "enum||Status.inactive": "Inattivo"},
+}
+```
+
+---
+
+### Custom Form Attributes
+You can set custom HTML attributes on forms (e.g., `hx-post`, `data-*`, etc.) using the `Attributes` field in your form struct:
+
+```go
+form := &FormField{
+    // ...other fields...
+    Attributes: map[string]string{
+        "hx-post": "/some-url",
+        "data-custom": "value",
+    },
+}
+```
+
+### Input Groups (Prepend/Append)
+You can prepend or append content to input fields using the `group` tag. This is supported in all template sets (Plain, Bootstrap 5, Tailwind CSS):
+
+```go
+type ExampleForm struct {
+    Username string `form:"input,text" label:"Username" group:"@,.com"`
+}
+```
+This will render an input with `@` before and `.com` after the field, styled according to the selected template.
+
+---
+
+### CSRF Protection
+
+go-form includes built-in CSRF (Cross-Site Request Forgery) protection for your forms. This prevents attackers from tricking users into submitting unauthorized requests.
+
+#### Basic Usage
+
+1. Create a form renderer which adds a default CSRF protection by default:
+   ```go
+   formRenderer := form.NewForm(templates.BootstrapV5)
+   ```
+
+2. Apply the CSRF middleware to your handlers:
+   ```go
+   // With standard http.ServeMux:
+   protectedHandler := formRenderer.CSRFMiddleware()(yourHandler) // <-- wrap your handler
+   mux.Handle("/", protectedHandler)
+   
+   // With Chi router:
+   import "github.com/go-chi/chi/v5"
+   
+   router := chi.NewRouter()
+   router.Use(formRenderer.CSRFMiddleware()) // <-- load the middleware
+   ```
+
+3. Inject the CSRF token into your form object Info before rendering:
+```go
+   
+  loginForm := LoginForm{
+    Info: form.Info{
+      Target:     "/login",
+      Method:     "post",
+      SubmitText: "Log In",
+    },
+  }
+  
+  form.InjectCSRFToken(r, &loginForm.Info)
+
+```
+
+The middleware automatically:
+- Generates a secure random token for each form
+- Validates the token on submission
+- Refreshes tokens after each submission
+- Rejects requests with missing or invalid tokens
+
+#### Custom Error Handling
+
+By default, CSRF validation failures return HTTP error responses. For a better user experience, you can provide custom error handling:
+
+```go
+options := form.CSRFOptions{
+  ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+    switch {
+      case errors.Is(err, csrf.ErrTokenMismatch):
+      http.Error(w, "Invalid CSRF token", http.StatusForbidden)
+      case errors.Is(err, csrf.ErrTokenExpired):
+      http.Error(w, "CSRF token expired", http.StatusForbidden)
+      case errors.Is(err, csrf.ErrKeyOrTokenEmpty):
+      http.Error(w, "CSRF token or session ID is empty", http.StatusBadRequest)
+      case errors.Is(err, csrf.ErrTokenNotFound):
+      http.Error(w, "CSRF token not found", http.StatusBadRequest)
+      default:
+      http.Error(w, "CSRF validation error: "+err.Error(), http.StatusBadRequest)
+    }
+  },
+}
+
+// Use the custom options
+protectedHandler := formRenderer.CSRFMiddlewareWithOptions(options)(yourHandler)
+```
+
+#### Alternative CSRF Stores
+
+The default in-memory CSRF store is suitable for single-server applications. For production or distributed environments, you can implement a custom `CSRFStore` that uses Redis, a database, or another shared storage mechanism:
+
+```go
+// Example Redis CSRF Store implementation
+type RedisCSRFStore struct {
+    client *redis.Client
+    prefix string
+    ttl    time.Duration
+}
+
+func (s *RedisCSRFStore) Store(key, token string) error {
+    return s.client.Set(ctx, s.prefix+key, token, s.ttl).Err()
+}
+
+func (s *RedisCSRFStore) Get(key string) (string, error) {
+    val, err := s.client.Get(ctx, s.prefix+key).Result()
+    if err == redis.Nil {
+        return "", csrf.ErrTokenNotFound
+    }
+    return val, err
+}
+
+// ... implement other required methods ...
+
+// Then use it with your form:
+store := &RedisCSRFStore{
+    client: redisClient,
+    prefix: "csrf:",
+    ttl:    30 * time.Minute,
+}
+formRenderer.SetCSRFStore(store)
+```
+
+See the example in `example/csrf/main.go` for a complete usage demonstration.
+
+---
+
+## SortedSelect: Sorted Map Field Type
+
+`SortedSelect` is a generic struct for sorted dropdowns and mapped fields with custom key types. It supports form mapping, validation, database integration, and JSON serialization.
+
+### Usage Example
+
+```go
+import "github.com/donseba/go-form"
+import "github.com/google/uuid"
+import "time"
+
+// Supported key types: int, int64, string, float64, uuid.UUID, time.Time, custom comparable types
+
+type MyForm struct {
+    DepartmentID SortedSelect[int64]   `form:"dropdown" label:"Department"`
+    ColorID      SortedSelect[string]   `form:"dropdown" label:"Color"`
+    PriceID      SortedSelect[float64]  `form:"dropdown" label:"Price"`
+    UUIDField    SortedSelect[uuid.UUID] `form:"dropdown" label:"UUID"`
+    TimeField    SortedSelect[time.Time] `form:"dropdown" label:"Time"`
+}
+
+// Recommended: use NewSortedSelect for initialization
+myForm := MyForm{
+    DepartmentID: NewSortedSelect(map[int64]string{1: "HR", 2: "IT"}),
+    ColorID:      NewSortedSelect(map[string]string{"r": "Red", "g": "Green"}),
+    PriceID:      NewSortedSelect(map[float64]string{1.99: "Cheap", 5.49: "Medium", 9.99: "Expensive"}),
+    UUIDField:    NewSortedSelect(map[uuid.UUID]string{uuid.New(): "A", uuid.New(): "B"}),
+    TimeField:    NewSortedSelect(map[time.Time]string{time.Now(): "Now", time.Now().Add(time.Hour): "Later"}),
+}
+```
+
+### Mapping from Form Input
+
+When mapping from form input (string), go-form uses the `SetFromKey` method:
+
+```go
+// Called internally by MapForm:
+err := myForm.DepartmentID.SetFromKey("2") // sets value to 2 if present in Source
+```
+
+### Programmatic Assignment
+
+If you already have a value of type T, use the `Set` method:
+
+```go
+err := myForm.DepartmentID.Set(2) // sets value to 2 if present in Source
+```
+
+### Database Integration
+
+`SortedSelect` implements `Scan` and `Value` for database operations:
+
+```go
+// Scan from DB value (type-safe):
+err := myForm.DepartmentID.Scan(2)
+// Retrieve value for DB storage:
+v, _ := myForm.DepartmentID.Value() // returns 2
+```
+
+### JSON Support
+
+`SortedSelect` supports JSON marshal/unmarshal for API and persistence scenarios:
+
+```go
+jsonData, _ := json.Marshal(myForm.DepartmentID)
+var ss SortedSelect[int64]
+_ = json.Unmarshal(jsonData, &ss)
+```
+
+### Source Map Access
+
+Use the `Source()` method for read-only access to the source map:
+
+```go
+source := myForm.DepartmentID.Source() // returns map[int64]string
+```
+
+### Error Handling
+
+- If the key is not found in Source, `SetFromKey`, `Set`, and `Scan` return an error and reset the value to zero.
+- If the type is invalid, `Scan` returns an error.
+
+### Validation and Translation
+
+When a submitted value is not found in the source map, go-form automatically provides a localized, interpolated error message. You do not need to handle internal error types—errors are surfaced as translated messages via form validation.
+
+For example, if a user submits a value not present in the dropdown:
+
+```go
+errs := f.ValidateForm(&myForm)
+for _, err := range errs {
+    fmt.Println(err) // e.g. "UUIDField: valore '42' non trovato (IT)" (Italian translation)
+}
+```
+
+Translation works seamlessly for all SortedSelect validation errors, including those with variables. See the translation example for details.
+
+### Testing
+
+See `value_sorted_e2e_test.go` (to be renamed) for comprehensive tests covering:
+- Form mapping
+- DB integration
+- JSON serialization
+- Supported key types
+- Edge cases
 
 ---
 

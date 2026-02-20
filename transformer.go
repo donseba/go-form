@@ -28,11 +28,17 @@ const (
 	tagMaxLength   = "maxLength"
 	tagDescription = "description"
 	tagData        = "data"
+	tagNot         = "not"
 	// Allow disabling fields via struct tags.
 	tagDisabled = "disabled"
+	// Enable translation support for enum values
+	tagTranslate = "translate"
 )
 
-var DefaultSubmitText = "Submit"
+var (
+	DefaultSubmitText      = "Submit"
+	DefaultEnumTranslation = false // Set to true to enable translation for all enums by default
+)
 
 type (
 	Enumerator interface{ Enum() []any }
@@ -246,14 +252,35 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			field.Disabled = true
 		}
 
+		// Check if translation is enabled: struct tag takes precedence over global default
+		tagValue := tags.Get(tagTranslate)
+		shouldTranslate := tagValue == "true" || (tagValue != "false" && DefaultEnumTranslation)
+
 		if rType.Field(i).Type.Implements(enumType) {
 			enums := reflect.New(rType.Field(i).Type).Interface().(Enumerator).Enum()
 			var fieldValue []types.FieldValue
+
+			var typeName string
+			if shouldTranslate {
+				typeName = rType.Field(i).Type.Name()
+				if typeName == "" {
+					// Fallback for unnamed types (aliases, pointers, etc.)
+					typeName = strings.ReplaceAll(rType.Field(i).Type.String(), ".", "_")
+					typeName = strings.ReplaceAll(typeName, "*", "")
+				}
+			}
+
 			for _, v := range enums {
+				val := fmt.Sprint(v)
+				enumName := val
+				if shouldTranslate {
+					enumName = fmt.Sprintf("enum||%s.%s", typeName, val)
+				}
 				fieldValue = append(fieldValue, types.FieldValue{
-					Value:    fmt.Sprint(v),
-					Name:     fmt.Sprint(v),
-					Disabled: false,
+					Value:     val,
+					Name:      enumName,
+					Disabled:  false,
+					Translate: shouldTranslate,
 				})
 			}
 
@@ -307,16 +334,20 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		if rType.Field(i).Type.Implements(mapperType) {
 			maps := rValue.Field(i).Interface().(Mapper).Mapper()
 			var fieldValue []types.FieldValue
+
 			for k, v := range maps {
 				fieldValue = append(fieldValue, types.FieldValue{
-					Value:    k,
-					Name:     v,
-					Disabled: false,
+					Value:     k,
+					Name:      v,
+					Disabled:  false,
+					Translate: shouldTranslate,
 				})
 			}
 
 			field.Type = types.FieldTypeDropdownMapped
 			field.Values = fieldValue
+			// Set Value as string for template eq compatibility
+			field.Value = fmt.Sprint(rValue.Field(i).Interface())
 
 			fields = append(fields, field)
 			continue
@@ -326,18 +357,23 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		if rType.Field(i).Type.Implements(sortedMapperType) {
 			maps := rValue.Field(i).Interface().(SortedMapper).SortedMapper()
 			var fieldValue []types.FieldValue
+
 			for _, v := range maps {
 				fieldValue = append(fieldValue, types.FieldValue{
-					Value:    v.Key(),
-					Name:     v.Value(),
-					Disabled: false,
+					Value:     v.Key(),
+					Name:      v.Value(),
+					Disabled:  false,
+					Translate: shouldTranslate,
 				})
 			}
 
 			field.Type = types.FieldTypeDropdownMapped
 			field.Values = fieldValue
+			// Set Value as string for template eq compatibility
+			field.Value = fmt.Sprint(rValue.Field(i).Interface())
 
 			fields = append(fields, field)
+
 			continue
 		}
 
@@ -406,6 +442,7 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			if tags.Get(tagMaxLength) != "" {
 				field.MaxLength = tags.Get(tagMaxLength)
 			}
+
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 
