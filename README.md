@@ -60,24 +60,28 @@ _ = template.Must(template.New("form").Funcs(funcMap).Parse(`{{ form_render .For
 
 ## Supported Input Fields & Options
 
-| Field Type / Tag Example        | Description          | Options (Struct Tags)                                   |
-|---------------------------------|----------------------|---------------------------------------------------------|
-| `form:"input,text"`            | Text input           | `label`, `placeholder`, `required`, `maxlength`         |
-| `form:"input,password"`        | Password input       | `label`, `placeholder`, `required`                      |
-| `form:"input,email"`           | Email input          | `label`, `placeholder`, `required`                      |
-| `form:"input,number"`          | Number input         | `label`, `placeholder`, `required`, `min`, `max`, `step`|
-| `form:"input,date"`            | Date input           | `label`, `placeholder`, `required`                      |
-| `form:"input,datetime-local"`  | DateTime input       | `label`, `placeholder`, `required`                      |
-| `form:"input,time"`            | Time input           | `label`, `placeholder`, `required`                      |
-| `form:"input,week"`            | Week input           | `label`, `placeholder`, `required`                      |
-| `form:"input,month"`           | Month input          | `label`, `placeholder`, `required`                      |
-| `form:"input,color"`           | Color input          | `label`, `placeholder`, `required`                      |
-| `form:"input,range"`           | Range input          | `label`, `min`, `max`, `step`                           |
-| `form:"input,hidden"`          | Hidden input         | `value`                                                 |
-| `form:"checkbox"`              | Checkbox             | `label`, `required`                                     |
-| `form:"radios"`                | Radio group          | `label`, `values` (e.g. `a:A;b:B`), `required`          |
-| `form:"dropdown"`              | Dropdown/select      | `label`, `values` (e.g. `a:A;b:B`), `required`          |
-| `form:"textarea"`              | Multi-line text      | `label`, `placeholder`, `rows`, `cols`, `maxlength`     |
+| Field Type / Tag Example         | Description         | Options (Struct Tags)                                  |
+|----------------------------------|---------------------|-------------------------------------------------------|
+| `form:"input,text"`             | Text input          | `label`, `placeholder`, `required`, `maxlength`        |
+| `form:"input,password"`         | Password input      | `label`, `placeholder`, `required`                     |
+| `form:"input,email"`            | Email input         | `label`, `placeholder`, `required`                     |
+| `form:"input,number"`           | Number input        | `label`, `placeholder`, `required`, `min`, `max`, `step`|
+| `form:"input,date"`             | Date input          | `label`, `placeholder`, `required`                     |
+| `form:"input,datetime-local"`   | DateTime input      | `label`, `placeholder`, `required`                     |
+| `form:"input,time"`             | Time input          | `label`, `placeholder`, `required`                     |
+| `form:"input,week"`             | Week input          | `label`, `placeholder`, `required`                     |
+| `form:"input,month"`            | Month input         | `label`, `placeholder`, `required`                     |
+| `form:"input,color"`            | Color input         | `label`, `placeholder`, `required`                     |
+| `form:"input,range"`            | Range input         | `label`, `min`, `max`, `step`                          |
+| `form:"input,hidden"`           | Hidden input        | `value`                                               |
+| `form:"input,search"`           | Search input        | `label`, `placeholder`                                 |
+| `form:"input,url"`              | URL input           | `label`, `placeholder`                                 |
+| `form:"input,tel"`              | Telephone input     | `label`, `placeholder`                                 |
+| `form:"input,image"`            | Image input         | `label`, `src`, `alt`                                  |
+| `form:"checkbox"`               | Checkbox            | `label`, `required`                                    |
+| `form:"radios"`                 | Radio group         | `label`, `values` (e.g. `a:A;b:B`), `required`         |
+| `form:"dropdown"`               | Dropdown/select     | `label`, `values` (e.g. `a:A;b:B`), `required`         |
+| `form:"multicheckbox"`          | Multi-checkbox group| `label`, `values` (e.g. `a:A;b:B`), `required`         |
 
 Other supported tags:
 - `legend` — For grouping/nested structs (section title)
