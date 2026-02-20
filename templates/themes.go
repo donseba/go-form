@@ -30,6 +30,7 @@ var BootstrapTheme = ThemeClasses{
 	Button:          StyleOption{Class: "btn btn-primary btn-sm"},
 	Cancel:          StyleOption{Class: "btn btn-outline-secondary btn-sm"},
 	File:            StyleOption{Class: "form-control form-control-sm"},
+	Multicheckbox:   StyleOption{Class: "form-multicheckbox"},
 
 	// Form container
 	Form:        StyleOption{Class: "mx-auto border rounded shadow-sm p-3"},
@@ -66,6 +67,7 @@ var TailwindTheme = ThemeClasses{
 	Button:          StyleOption{Class: "rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"},
 	Cancel:          StyleOption{Class: "rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"},
 	File:            StyleOption{Class: "border border-gray-200 block w-full rounded-md px-3 py-1.5 text-gray-900 shadow-sm sm:text-sm"},
+	Multicheckbox:   StyleOption{Class: "inline-block"},
 
 	// Form container
 	Form:        StyleOption{Class: "mx-auto max-w-md rounded-lg border border-gray-200 bg-white p-4 shadow-sm"},
@@ -86,7 +88,7 @@ var TailwindTheme = ThemeClasses{
 var TailwindV4Theme = ThemeClasses{
 	// Common elements
 	Wrapper:     StyleOption{Class: "mb-2"},
-	Label:       StyleOption{Class: "block text-sm font-medium leading-6 text-gray-900 dark:text-gray-100"},
+	Label:       StyleOption{Class: "block text-sm font-medium leading-6 text-gray-900"},
 	Error:       StyleOption{Class: "mt-1 text-sm text-red-600 dark:text-red-400"},
 	Description: StyleOption{Class: "mt-1 text-sm text-gray-500 dark:text-gray-300"},
 
@@ -105,6 +107,7 @@ var TailwindV4Theme = ThemeClasses{
 	Button:          StyleOption{Class: "rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900"},
 	Cancel:          StyleOption{Class: "rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-700 dark:hover:bg-gray-700 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900"},
 	File:            StyleOption{Class: "block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus-visible:ring-indigo-500 dark:focus-visible:ring-offset-gray-900"},
+	Multicheckbox:   StyleOption{Class: "inline-block mr-4"},
 
 	// Form container
 	Form:        StyleOption{Class: "mx-auto max-w-md rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"},

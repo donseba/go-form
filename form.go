@@ -262,6 +262,8 @@ func (f *Form) themeFieldHTML(theme *templates.Theme, loc types.Localizer, field
 			name = "radio-group"
 		}
 		control, err = f.themeExec(theme, name, map[string]any{"Field": field, "Loc": loc}, nil)
+	case types.FieldTypeMultiCheckbox:
+		control, err = f.themeExec(theme, "multicheckbox", map[string]any{"Field": field, "Loc": loc}, nil)
 	default:
 		return "", fmt.Errorf("unsupported field type %q for theme renderer", field.Type)
 	}

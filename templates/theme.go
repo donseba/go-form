@@ -41,6 +41,7 @@ type ThemeClasses struct {
 	Color           StyleOption
 	Button          StyleOption
 	File            StyleOption
+	Multicheckbox   StyleOption
 
 	// Form containers
 	Form        StyleOption
@@ -346,6 +347,8 @@ func (t *Theme) getStyleOptionForKey(key string) StyleOption {
 		return t.Classes.InputGroup
 	case "inputGroupText":
 		return t.Classes.InputGroupText
+	case "multicheckbox":
+		return t.Classes.Multicheckbox
 	default:
 		return StyleOption{}
 	}
