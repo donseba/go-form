@@ -158,14 +158,18 @@ func (ss SortedSelect[T]) Source() map[T]string {
 	return ss.source
 }
 
-// MarshalJSON outputs {"value":..., "source":...}
+// MarshalJSON outputs {"value":..., "source":...} with string keys for source
 func (ss SortedSelect[T]) MarshalJSON() ([]byte, error) {
+	source := make(map[string]string, len(ss.source))
+	for k, v := range ss.source {
+		source[fmt.Sprint(k)] = v
+	}
 	return json.Marshal(struct {
-		Value  T            `json:"value"`
-		Source map[T]string `json:"source"`
+		Value  T                 `json:"value"`
+		Source map[string]string `json:"source"`
 	}{
 		Value:  ss.value,
-		Source: ss.source,
+		Source: source,
 	})
 }
 

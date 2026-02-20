@@ -13,6 +13,7 @@ A Go library for rendering HTML forms from Go structs using struct tags and Go t
 - Built-in template sets: Plain, Bootstrap 5, Tailwind CSS
 - Integrates with `html/template` via a FuncMap
 - CSRF Protection
+- **SortedSelect** and **SortedMultiSelect** for type-safe, mapped dropdowns and multi-selects (see examples)
 
 ---
 
@@ -49,12 +50,11 @@ _ = template.Must(template.New("form").Funcs(funcMap).Parse(`{{ form_render .For
 
 ## Supported Templates
 
-Built-in gohtml themes:
-
-- `plain`
-- `bootstrap`
-- `tailwind`
-- `tailwindv4`
+| Template Name            | Description                |
+|-------------------------|----------------------------|
+| `templates.Plain`       | Plain HTML, minimal styles |
+| `templates.BootstrapV5` | Bootstrap 5 form styles    |
+| `templates.TailwindV3`  | Tailwind CSS v3 styles     |
 
 ---
 
@@ -266,17 +266,17 @@ go-form includes built-in CSRF (Cross-Site Request Forgery) protection for your 
    // With standard http.ServeMux:
    protectedHandler := formRenderer.CSRFMiddleware()(yourHandler) // <-- wrap your handler
    mux.Handle("/", protectedHandler)
-   
+
    // With Chi router:
    import "github.com/go-chi/chi/v5"
-   
+
    router := chi.NewRouter()
    router.Use(formRenderer.CSRFMiddleware()) // <-- load the middleware
    ```
 
 3. Inject the CSRF token into your form object Info before rendering:
 ```go
-   
+
   loginForm := LoginForm{
     Info: form.Info{
       Target:     "/login",
@@ -284,7 +284,7 @@ go-form includes built-in CSRF (Cross-Site Request Forgery) protection for your 
       SubmitText: "Log In",
     },
   }
-  
+
   form.InjectCSRFToken(r, &loginForm.Info)
 
 ```
@@ -360,111 +360,32 @@ See the example in `example/csrf/main.go` for a complete usage demonstration.
 
 ---
 
-## SortedSelect: Sorted Map Field Type
+## SortedSelect and SortedMultiSelect
 
-`SortedSelect` is a generic struct for sorted dropdowns and mapped fields with custom key types. It supports form mapping, validation, database integration, and JSON serialization.
+`SortedSelect` and `SortedMultiSelect` are generic types for type-safe, mapped dropdowns and multi-selects with custom key types. They support form mapping, validation, database integration, and JSON serialization.
 
-### Usage Example
+- **SortedSelect** is for single-value dropdowns (e.g., `DepartmentID form.SortedSelect[int64]`).
+- **SortedMultiSelect** is for multi-value selections (e.g., `DepartmentsMulti form.SortedMultiSelect[int64]`).
+- Both support any comparable Go type as the key: `int`, `int64`, `string`, `float64`, `uuid.UUID`, `time.Time`, etc.
+- They work seamlessly with form rendering, validation, and database/sql or JSON marshalling.
+
+**Minimal usage example:**
 
 ```go
 import "github.com/donseba/go-form"
-import "github.com/google/uuid"
-import "time"
 
-// Supported key types: int, int64, string, float64, uuid.UUID, time.Time, custom comparable types
+// Single select
+DepartmentID form.SortedSelect[int64] `form:"dropdown" label:"Department"`
 
-type MyForm struct {
-    DepartmentID SortedSelect[int64]   `form:"dropdown" label:"Department"`
-    ColorID      SortedSelect[string]   `form:"dropdown" label:"Color"`
-    PriceID      SortedSelect[float64]  `form:"dropdown" label:"Price"`
-    UUIDField    SortedSelect[uuid.UUID] `form:"dropdown" label:"UUID"`
-    TimeField    SortedSelect[time.Time] `form:"dropdown" label:"Time"`
-}
+// Multi select
+DepartmentsMulti form.SortedMultiSelect[int64] `form:"multicheckbox" label:"Departments"`
 
-// Recommended: use NewSortedSelect for initialization
-myForm := MyForm{
-    DepartmentID: NewSortedSelect(map[int64]string{1: "HR", 2: "IT"}),
-    ColorID:      NewSortedSelect(map[string]string{"r": "Red", "g": "Green"}),
-    PriceID:      NewSortedSelect(map[float64]string{1.99: "Cheap", 5.49: "Medium", 9.99: "Expensive"}),
-    UUIDField:    NewSortedSelect(map[uuid.UUID]string{uuid.New(): "A", uuid.New(): "B"}),
-    TimeField:    NewSortedSelect(map[time.Time]string{time.Now(): "Now", time.Now().Add(time.Hour): "Later"}),
-}
+// Initialize with a source map
+form.NewSortedSelect(map[int64]string{1: "HR", 2: "IT"})
+form.NewSortedMultiSelect(map[int64]string{1: "HR", 2: "IT"})
 ```
 
-### Mapping from Form Input
-
-When mapping from form input (string), go-form uses the `SetFromKey` method:
-
-```go
-// Called internally by MapForm:
-err := myForm.DepartmentID.SetFromKey("2") // sets value to 2 if present in Source
-```
-
-### Programmatic Assignment
-
-If you already have a value of type T, use the `Set` method:
-
-```go
-err := myForm.DepartmentID.Set(2) // sets value to 2 if present in Source
-```
-
-### Database Integration
-
-`SortedSelect` implements `Scan` and `Value` for database operations:
-
-```go
-// Scan from DB value (type-safe):
-err := myForm.DepartmentID.Scan(2)
-// Retrieve value for DB storage:
-v, _ := myForm.DepartmentID.Value() // returns 2
-```
-
-### JSON Support
-
-`SortedSelect` supports JSON marshal/unmarshal for API and persistence scenarios:
-
-```go
-jsonData, _ := json.Marshal(myForm.DepartmentID)
-var ss SortedSelect[int64]
-_ = json.Unmarshal(jsonData, &ss)
-```
-
-### Source Map Access
-
-Use the `Source()` method for read-only access to the source map:
-
-```go
-source := myForm.DepartmentID.Source() // returns map[int64]string
-```
-
-### Error Handling
-
-- If the key is not found in Source, `SetFromKey`, `Set`, and `Scan` return an error and reset the value to zero.
-- If the type is invalid, `Scan` returns an error.
-
-### Validation and Translation
-
-When a submitted value is not found in the source map, go-form automatically provides a localized, interpolated error message. You do not need to handle internal error types—errors are surfaced as translated messages via form validation.
-
-For example, if a user submits a value not present in the dropdown:
-
-```go
-errs := f.ValidateForm(&myForm)
-for _, err := range errs {
-    fmt.Println(err) // e.g. "UUIDField: valore '42' non trovato (IT)" (Italian translation)
-}
-```
-
-Translation works seamlessly for all SortedSelect validation errors, including those with variables. See the translation example for details.
-
-### Testing
-
-See `value_sorted_e2e_test.go` (to be renamed) for comprehensive tests covering:
-- Form mapping
-- DB integration
-- JSON serialization
-- Supported key types
-- Edge cases
+For advanced usage, see [`example/sortedselect/main.go`](example/sortedselect/main.go) — covers single and multi-select fields, supported key types, pre-filled and user-submitted values, validation, error handling, JSON and DB integration.
 
 ---
 
