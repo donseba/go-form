@@ -269,6 +269,23 @@ func validateMapper(f *Form, field reflect.StructField, value reflect.Value, loc
 func validateSortedMapper(f *Form, field reflect.StructField, value reflect.Value, loc Localizer, getErr func(string, any) string) (errs FieldErrors) {
 	if value.IsValid() && value.Type().Implements(reflect.TypeOf((*SortedMapper)(nil)).Elem()) {
 		smaps := value.Interface().(SortedMapper).SortedMapper()
+		// Multi-select: check if value implements MultiSelectGetter
+		if value.CanInterface() {
+			if multi, ok := value.Interface().(interface{ GetKeysAsStrings() []string }); ok {
+				allowed := map[string]struct{}{}
+				for _, sm := range smaps {
+					allowed[sm.Key()] = struct{}{}
+				}
+				for _, key := range multi.GetKeysAsStrings() {
+					if _, found := allowed[key]; !found && key != "" {
+						errMsg := getErr(TranslationKeyInvalidSortedMapper, key)
+						errs = append(errs, FieldValidationError{Field: field.Name, Err: errMsg})
+					}
+				}
+				return
+			}
+		}
+		// Single-value fallback (original logic)
 		valStr := fmt.Sprint(value.Interface())
 		found := false
 		for _, sm := range smaps {

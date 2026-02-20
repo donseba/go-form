@@ -47,6 +47,8 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 			// If the address implements SetFromKey, treat the struct as a single field
 			if fv.Addr().Type().Implements(reflect.TypeOf((*interface{ SetFromKey(string) error })(nil)).Elem()) {
 				// do not recurse; let the SetFromKey path handle this field later
+			} else if fv.Addr().Type().Implements(reflect.TypeOf((*interface{ SetFromKeys([]string) error })(nil)).Elem()) {
+				// do not recurse; let the SetFromKeys path handle this field later
 			} else {
 				name := field.Tag.Get("name")
 				if name == "" {
@@ -98,6 +100,22 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 				if err := setter.SetFromKey(formValue); err != nil {
 					// Log and continue; mapping shouldn't abort the whole form
 					fmt.Printf("error setting key from form for field %s: %v\n", field.Name, err)
+				}
+				continue
+			}
+
+			if setter, ok := addr.(interface{ SetFromKeys([]string) error }); ok {
+				var formValues []string
+				if r.Method == http.MethodPost && r.PostForm != nil {
+					formValues = r.PostForm[prefix+formKey]
+				} else if r.Form != nil {
+					formValues = r.Form[prefix+formKey]
+				}
+
+				if len(formValues) > 0 {
+					if err := setter.SetFromKeys(formValues); err != nil {
+						return err
+					}
 				}
 				continue
 			}
