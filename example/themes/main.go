@@ -20,6 +20,7 @@ import (
 type ThemeExampleForm struct {
 	form.Info
 
+	Prefix    string                         `form:"dropdown" label:"Prefix" description:"Select a prefix for your name" values:"mr:MR;ms:MS" required:"true"`
 	Name      string                         `form:"input,text" label:"Name" placeholder:"Jane" required:"true"`
 	Email     string                         `form:"input,email" label:"Email" placeholder:"jane@example.com" required:"true"`
 	Upload    string                         `form:"input,file" label:"Profile picture" description:"Choose an image to upload"`
@@ -112,7 +113,7 @@ func main() {
 			errList := f.ValidateForm(&data)
 			errs = errList
 
-			debug = fmt.Sprintf("Name=%q\nEmail=%q\nInterests=%q\nLanguages=%q\n", data.Name, data.Email, data.Interests, data.Languages)
+			debug = fmt.Sprintf("Prefix=%q\nName=%q\nEmail=%q\nInterests=%q\nLanguages=%q\n", data.Prefix, data.Name, data.Email, data.Interests, data.Languages)
 			if fh, _, err := r.FormFile("Upload"); err == nil {
 				_ = fh.Close()
 				debug += "Upload=<received file>\n"
