@@ -1,5 +1,12 @@
 package types
 
+type (
+	Localizer interface {
+		// GetLocale returns the locale of the localizer, ie. "en_US"
+		GetLocale() string
+	}
+)
+
 // FieldType represents the type of form field
 type FieldType string
 
@@ -52,9 +59,6 @@ type FormField struct {
 	ValueMap     map[string]bool   `json:"valueMap,omitempty"`
 }
 
-// TemplateMap represents a map of field types to their input type templates
-type TemplateMap map[FieldType]map[InputFieldType]string
-
 // Constants for field types
 const (
 	FieldTypeBase           FieldType = "base"
@@ -79,11 +83,13 @@ const (
 	InputFieldTypeDate          InputFieldType = "date"
 	InputFieldTypeDateTimeLocal InputFieldType = "datetime-local"
 	InputFieldTypeEmail         InputFieldType = "email"
+	InputFieldTypeFile          InputFieldType = "file"
 	InputFieldTypeHidden        InputFieldType = "hidden"
 	InputFieldTypeImage         InputFieldType = "image"
 	InputFieldTypeMonth         InputFieldType = "month"
 	InputFieldTypeNumber        InputFieldType = "number"
 	InputFieldTypePassword      InputFieldType = "password"
+	InputFieldTypeRadioGroup    InputFieldType = "radio_group"
 	InputFieldTypeRadioStruct   InputFieldType = "radio_struct"
 	InputFieldTypeRange         InputFieldType = "range"
 	InputFieldTypeSearch        InputFieldType = "search"

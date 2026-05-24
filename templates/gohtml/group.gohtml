@@ -1,0 +1,8 @@
+<div style="{{themeStyle "form-group"}}" class="{{themeClass "form-group"}}">
+  <div style="{{themeStyle "form-header"}}" class="{{themeClass "form-header"}}">
+    <h6 style="{{themeStyle "form-legend"}}" class="{{themeClass "form-legend"}}" id="{{.Field.Id}}_legend">{{ form_print .Loc .Field.Legend }}</h6>
+  </div>
+  <div style="{{themeStyle "form-body"}}" class="{{themeClass "form-body"}}" role="group" aria-labelledby="{{.Field.Id}}_legend">
+    {{ fields }}
+  </div>
+</div>

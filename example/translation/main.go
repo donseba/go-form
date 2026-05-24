@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/donseba/go-form"
-	"github.com/donseba/go-form/templates"
 )
 
 // Dummy Localizer implementation
@@ -65,7 +64,8 @@ type TranslationForm struct {
 }
 
 func main() {
-	f := form.NewTranslatedForm(templates.Plain, myTranslate)
+	f := form.NewTranslatedForm(myTranslate)
+	f.SetTheme("plain")
 
 	// Add navigation links to other examples
 	htmlLinks := `<div style="margin-bottom:1em">

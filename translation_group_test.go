@@ -3,8 +3,6 @@ package form
 import (
 	"strings"
 	"testing"
-
-	"github.com/donseba/go-form/templates"
 )
 
 type translatedGroupModel struct {
@@ -21,7 +19,8 @@ func TestTranslatedForm_GroupLegendIsTranslated(t *testing.T) {
 		return "T(" + key + ")"
 	}
 
-	f := NewTranslatedForm(templates.Plain, translate)
+	f := NewTranslatedForm(translate)
+	f.SetTheme("plain")
 
 	html, err := f.formRenderLocalized(testLocalizer{Locale: "it"}, &translatedGroupModel{}, nil)
 	if err != nil {

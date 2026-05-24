@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/donseba/go-form"
-	"github.com/donseba/go-form/templates"
 )
 
 // Custom validation: checks if a string is a valid hex color (e.g. #aabbcc)
@@ -53,7 +52,8 @@ type CustomForm struct {
 }
 
 func main() {
-	f := form.NewForm(templates.BootstrapV5)
+	f := form.NewForm()
+	f.SetTheme("bootstrap")
 	f.RegisterValidationMethod("isHexColor", isHexColor)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

@@ -19,7 +19,7 @@ A Go library for rendering HTML forms from Go structs using struct tags and Go t
 
 ## Installation
 
-```
+```sh
 go get github.com/donseba/go-form
 ```
 
@@ -29,9 +29,9 @@ go get github.com/donseba/go-form
 
 ```go
 import (
-    "github.com/donseba/go-form"
-    "github.com/donseba/go-form/templates"
     "html/template"
+
+    "github.com/donseba/go-form"
 )
 
 type ExampleForm struct {
@@ -41,9 +41,9 @@ type ExampleForm struct {
     Age      int    `form:"input,number" label:"Age" placeholder:"Enter your age" step:"1"`
 }
 
-f := form.NewForm(templates.Plain) // or templates.BootstrapV5, templates.TailwindV3
+f := form.NewForm()
 funcMap := f.FuncMap()
-tmpl := template.Must(template.New("form").Funcs(funcMap).Parse(`{{ form_render .Form nil }}`))
+_ = template.Must(template.New("form").Funcs(funcMap).Parse(`{{ form_render .Form nil }}`))
 ```
 
 ---
@@ -81,7 +81,7 @@ tmpl := template.Must(template.New("form").Funcs(funcMap).Parse(`{{ form_render 
 | `form:"checkbox"`               | Checkbox            | `label`, `required`                                    |
 | `form:"radios"`                 | Radio group         | `label`, `values` (e.g. `a:A;b:B`), `required`         |
 | `form:"dropdown"`               | Dropdown/select     | `label`, `values` (e.g. `a:A;b:B`), `required`         |
-| `form:"textarea"`               | Multi-line text     | `label`, `placeholder`, `rows`, `cols`, `maxlength`    |
+| `form:"multicheckbox"`          | Multi-checkbox group| `label`, `values` (e.g. `a:A;b:B`), `required`         |
 
 Other supported tags:
 - `legend` — For grouping/nested structs (section title)

@@ -1,0 +1,18 @@
+<div style="{{themeStyle "multicheckbox"}}" class="{{themeClass "multicheckbox"}} {{.Field.Class}}">
+  {{ range $k, $option := .Field.Values }}
+  <div style="{{themeStyle "checkbox-wrapper"}}" class="{{themeClass "checkbox-wrapper"}}">
+    <input type="checkbox"
+           id="{{$.Field.Id}}_{{$k}}"
+           name="{{$.Field.Name}}"
+           value="{{$option.Value}}"
+           {{ if (index $.Field.ValueMap $option.Value) }}checked{{end}}
+           {{ if eq $option.Disabled true }}disabled{{ end }}
+           style="{{themeStyle "checkbox"}}"
+           class="{{themeClass "checkbox"}}"
+           aria-labelledby="{{$.Field.Id}}_{{$k}}_label"
+           {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
+    <label style="{{themeStyle "checkbox-label"}}" class="{{themeClass "checkbox-label"}}" for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label">{{ form_print $.Loc $option.Name }}</label>
+  </div>
+  {{ end }}
+</div>
+

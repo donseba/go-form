@@ -42,15 +42,18 @@ var (
 	TranslationKeySortedSelectUnmarshalNotFound = "form||SortedSelect: value '%v' not found in source during unmarshal"
 )
 
+// FieldValidationError represents a validation error for a specific field.
 type FieldValidationError struct {
 	Field string
 	Err   string
 }
 
+// Error implements the error interface for FieldValidationError.
 func (e FieldValidationError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Field, e.Err)
 }
 
+// FieldError returns the field and error message.
 func (e FieldValidationError) FieldError() (field, err string) {
 	return e.Field, e.Err
 }
@@ -171,15 +174,15 @@ func validateZero(f *Form, field reflect.StructField, value reflect.Value, loc L
 func validateSliceArrayLength(f *Form, field reflect.StructField, value reflect.Value, loc Localizer, getErr func(string, any) string) (errs FieldErrors) {
 	if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
 		if minItems := field.Tag.Get("minItems"); minItems != "" {
-			min, err := strconv.Atoi(minItems)
-			if err == nil && value.Len() < min {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyMinItems, min)})
+			minCount, err := strconv.Atoi(minItems)
+			if err == nil && value.Len() < minCount {
+				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyMinItems, minCount)})
 			}
 		}
 		if maxItems := field.Tag.Get("maxItems"); maxItems != "" {
-			max, err := strconv.Atoi(maxItems)
-			if err == nil && value.Len() > max {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyMaxItems, max)})
+			maxCount, err := strconv.Atoi(maxItems)
+			if err == nil && value.Len() > maxCount {
+				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyMaxItems, maxCount)})
 			}
 		}
 	}

@@ -1,0 +1,14 @@
+<div style="{{themeStyle "textarea-wrapper"}}" class="{{themeClass "textarea-wrapper"}}">
+  <textarea
+       id="{{.Field.Id}}"
+       name="{{.Field.Name}}"
+       rows="{{.Field.Rows}}"
+       cols="{{.Field.Cols}}"
+       placeholder="{{ form_print .Loc .Field.Placeholder}}"
+       {{if .Field.Required}}required{{end}}
+       style="{{themeStyle "textarea"}}"
+       class="{{themeClass "textarea"}} {{.Field.Class}}"
+       aria-labelledby="{{.Field.Id}}_label"
+       {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}
+       {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>{{.Field.Value}}</textarea>
+</div>

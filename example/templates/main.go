@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/donseba/go-form"
-	"github.com/donseba/go-form/templates"
 )
 
 const (
@@ -55,7 +54,7 @@ type (
 		Message string `form:"textarea" label:"Message" placeholder:"Enter your message" rows:"5" cols:"50"`
 		Hidden  string `form:"input,hidden" value:"hidden value"`
 
-		RadioGroup RadioGroupBlock `form:"radios" label:"Radio Group"`
+		RadioGroup RadioGroupBlock `form:"radios,radio_group" legend:"Radio Group"`
 
 		// Nested group
 		Address Address `legend:"Address Information"`
@@ -116,13 +115,10 @@ func main() {
 
 	// Create the template
 	tmpl := template.Must(template.New("example").
-		Funcs(map[string]any{
-			"form_render": func(formInstance form.Form, errors []form.FieldError) template.HTML {
-				return template.HTML("")
-			},
-			"form_render_localized": func(loc form.Localizer, formInstance form.Form, errors []form.FieldError) template.HTML {
-				return template.HTML("")
-			},
+		Funcs(template.FuncMap{
+			// Stubbed so the template can be parsed; overridden at render-time with formInstance.FuncMap().
+			"form_render":           func(any, any, ...any) (template.HTML, error) { return "", nil },
+			"form_render_localized": func(any, any, any, ...any) (template.HTML, error) { return "", nil },
 		}).
 		Parse(`
 <!DOCTYPE html>
@@ -185,20 +181,20 @@ func main() {
 	})
 
 	http.HandleFunc("/plain", func(w http.ResponseWriter, r *http.Request) {
-		formInstance := form.NewForm(templates.Plain)
-
+		formInstance := form.NewForm()
+		formInstance.SetTheme("plain")
 		renderPage(w, formInstance, formData, tmpl)
 	})
 
 	http.HandleFunc("/bootstrap", func(w http.ResponseWriter, r *http.Request) {
-		formInstance := form.NewForm(templates.BootstrapV5)
-
+		formInstance := form.NewForm()
+		formInstance.SetTheme("bootstrap")
 		renderPage(w, formInstance, formData, tmpl)
 	})
 
 	http.HandleFunc("/tailwind", func(w http.ResponseWriter, r *http.Request) {
-		formInstance := form.NewForm(templates.TailwindV3)
-
+		formInstance := form.NewForm()
+		formInstance.SetTheme("tailwind")
 		renderPage(w, formInstance, formData, tmpl)
 	})
 

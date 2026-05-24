@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/donseba/go-form/csrf"
-	"github.com/donseba/go-form/templates"
 )
 
 // TestGenerateCSRFToken verifies that token generation creates valid tokens
@@ -69,7 +68,7 @@ func TestInjectCSRFToken(t *testing.T) {
 
 // TestCSRFMiddleware_GET tests the middleware handling for GET requests
 func TestCSRFMiddleware_GET(t *testing.T) {
-	f := NewForm(templates.BootstrapV5)
+	f := NewForm()
 
 	// Create a test handler that verifies a token is present in the context
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +113,7 @@ func TestCSRFMiddleware_GET(t *testing.T) {
 
 // TestCSRFMiddleware_POST_Valid tests the middleware handling for POST requests with valid tokens
 func TestCSRFMiddleware_POST_Valid(t *testing.T) {
-	f := NewForm(templates.BootstrapV5)
+	f := NewForm()
 	store := f.GetCSRFStore()
 
 	// Generate a session ID and token
@@ -165,7 +164,7 @@ func TestCSRFMiddleware_POST_Valid(t *testing.T) {
 
 // TestCSRFMiddleware_POST_Invalid tests the middleware handling for POST requests with invalid tokens
 func TestCSRFMiddleware_POST_Invalid(t *testing.T) {
-	f := NewForm(templates.BootstrapV5)
+	f := NewForm()
 	store := f.GetCSRFStore()
 
 	// Generate a session ID and token
@@ -210,7 +209,7 @@ func TestCSRFMiddleware_POST_Invalid(t *testing.T) {
 
 // TestCSRFMiddleware_POST_MissingToken tests the middleware handling for POST requests without tokens
 func TestCSRFMiddleware_POST_MissingToken(t *testing.T) {
-	f := NewForm(templates.BootstrapV5)
+	f := NewForm()
 
 	// Create a test handler
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -240,7 +239,7 @@ func TestCSRFMiddleware_POST_MissingToken(t *testing.T) {
 // TestCSRFEndToEnd tests a complete request flow including form rendering and submission
 func TestCSRFEndToEnd(t *testing.T) {
 	// Create form renderer
-	f := NewForm(templates.BootstrapV5)
+	f := NewForm()
 
 	// Create a simple test form
 	type TestForm struct {
@@ -328,7 +327,7 @@ func TestCSRFEndToEnd(t *testing.T) {
 // TestMultipleFormSubmissions tests that CSRF tokens are properly refreshed on multiple submissions
 func TestMultipleFormSubmissions(t *testing.T) {
 	// Create form renderer
-	f := NewForm(templates.BootstrapV5)
+	f := NewForm()
 
 	// Create a sequence of tokens to verify refreshing
 	var tokens []string
@@ -446,7 +445,7 @@ func (m *MockCSRFStore) Validate(key, token string) error {
 	return nil
 }
 
-func (m *MockCSRFStore) ValidateCSRFToken(r *http.Request, csrfField, token string) error {
+func (m *MockCSRFStore) ValidateCSRFToken(r *http.Request, _ string, token string) error {
 	m.calls["ValidateCSRFToken"]++
 	sessionID, err := getSessionID(r)
 	if err != nil {
@@ -455,7 +454,7 @@ func (m *MockCSRFStore) ValidateCSRFToken(r *http.Request, csrfField, token stri
 	return m.Validate(sessionID, token)
 }
 
-func (m *MockCSRFStore) AddCSRFToken(r *http.Request, csrfField string) error {
+func (m *MockCSRFStore) AddCSRFToken(r *http.Request, _ string) error {
 	m.calls["AddCSRFToken"]++
 	sessionID, err := getSessionID(r)
 	if err != nil {
@@ -470,7 +469,7 @@ func (m *MockCSRFStore) AddCSRFToken(r *http.Request, csrfField string) error {
 	return nil
 }
 
-func (m *MockCSRFStore) DeleteToken(r *http.Request, csrfField string) error {
+func (m *MockCSRFStore) DeleteToken(r *http.Request, _ string) error {
 	m.calls["DeleteToken"]++
 	sessionID, err := getSessionID(r)
 	if err != nil {
@@ -483,7 +482,7 @@ func (m *MockCSRFStore) DeleteToken(r *http.Request, csrfField string) error {
 // TestCustomCSRFStore tests that a custom CSRF store can be used
 func TestCustomCSRFStore(t *testing.T) {
 	mockStore := NewMockCSRFStore()
-	f := NewForm(templates.BootstrapV5)
+	f := NewForm()
 	f.SetCSRFStore(mockStore)
 
 	// Create a simple handler
@@ -508,7 +507,7 @@ func TestCustomCSRFStore(t *testing.T) {
 // TestCSRFFailureCases tests various failure scenarios for CSRF protection
 func TestCSRFFailureCases(t *testing.T) {
 	// Create form renderer
-	f := NewForm(templates.BootstrapV5)
+	f := NewForm()
 
 	// Success tracker
 	handlerCalled := false
@@ -617,7 +616,7 @@ func TestCSRFFailureCases(t *testing.T) {
 // TestCSRFTokenReuseAttempt tests that a token cannot be reused after it's been consumed
 func TestCSRFTokenReuseAttempt(t *testing.T) {
 	// Create form renderer
-	f := NewForm(templates.BootstrapV5)
+	f := NewForm()
 
 	// Create a simple handler
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

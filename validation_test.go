@@ -62,7 +62,7 @@ func TestValidateForm(t *testing.T) {
 		},
 	}
 
-	f := NewForm(nil)
+	f := NewForm()
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -101,7 +101,7 @@ func TestValidateForm_Values(t *testing.T) {
 		},
 	}
 
-	f := NewForm(nil)
+	f := NewForm()
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -140,7 +140,7 @@ func isHexColor(val any, field reflect.StructField) (out FieldErrors) {
 }
 
 func TestValidateForm_CustomValidation(t *testing.T) {
-	f := NewForm(nil)
+	f := NewForm()
 	f.RegisterValidationMethod("isHexColor", isHexColor)
 
 	type CustomForm struct {
@@ -210,7 +210,7 @@ func TestValidateForm_Enumerator(t *testing.T) {
 		{"empty enum", EnumForm{Color: ""}, 0},
 	}
 
-	f := NewForm(nil)
+	f := NewForm()
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -245,7 +245,7 @@ func TestValidateForm_Mapper(t *testing.T) {
 		{"empty map", MapForm{Color: ""}, 0},
 	}
 
-	f := NewForm(nil)
+	f := NewForm()
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -291,7 +291,7 @@ func TestValidateForm_SortedMapper(t *testing.T) {
 		{"empty sortedmap", SortedMapForm{Color: ""}, 0},
 	}
 
-	f := NewForm(nil)
+	f := NewForm()
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -341,7 +341,7 @@ func TestValidateForm_Translation(t *testing.T) {
 		Name string `form:"input,text" label:"Name" required:"true"`
 		Age  int    `form:"input,number" label:"Age" required:"true" min:"18"`
 	}
-	f := NewTranslatedForm(nil, testTranslate)
+	f := NewTranslatedForm(testTranslate)
 
 	cases := []struct {
 		name   string
@@ -425,7 +425,7 @@ func TestExtendedValidations(t *testing.T) {
 		{"custom error msg", func() ExtendedForm { f := valid; f.CustomMsg = "baz"; return f }(), 1},
 	}
 
-	f := NewForm(nil)
+	f := NewForm()
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			errList := f.internalFormValidation(&c.form, &DefaultLocalizer{})

@@ -3,9 +3,6 @@ package form
 import (
 	"strings"
 	"testing"
-
-	"github.com/donseba/go-form/templates"
-	"github.com/donseba/go-form/types"
 )
 
 // TestStructWithClassTags tests that class tags are properly processed by the transformer
@@ -70,37 +67,32 @@ func TestClassInRenderedHTML(t *testing.T) {
 		Text string `name:"text" form:"input,text" label:"Text Field" class:"text-input custom-class"`
 	}
 
-	simpleForm := SimpleForm{
-		Text: "Sample text",
-	}
+	simpleForm := SimpleForm{Text: "Sample text"}
 
-	// Test with different templates
-	templateSets := []struct {
-		name     string
-		template types.TemplateMap
+	themeSets := []struct {
+		name  string
+		theme string
 	}{
-		{"Bootstrap", templates.BootstrapV5},
-		{"Plain", templates.Plain},
-		{"Tailwind", templates.TailwindV3},
-		{"TailwindV4", templates.TailwindV4},
+		{"Bootstrap", "bootstrap"},
+		{"Plain", "plain"},
+		{"Tailwind", "tailwind"},
+		{"TailwindV4", "tailwindv4"},
 	}
 
-	for _, ts := range templateSets {
+	for _, ts := range themeSets {
+		ts := ts
 		t.Run(ts.name, func(t *testing.T) {
-			// Create a Form with the template
-			form := NewForm(ts.template)
+			f := NewForm()
+			f.SetTheme(ts.theme)
 
-			// Render the form using the existing formRenderFunc method
-			html, err := form.formRenderFunc(&DefaultLocalizer{}, simpleForm, nil)
+			html, err := f.formRenderFunc(&DefaultLocalizer{}, simpleForm, nil)
 			if err != nil {
 				t.Fatalf("Failed to render form: %v", err)
 			}
 
-			// Check if both class values are included in the output
-			// Instead of checking for exact attribute format, check that both class values are present
 			htmlStr := string(html)
 			if !strings.Contains(htmlStr, "text-input") || !strings.Contains(htmlStr, "custom-class") {
-				t.Errorf("%s template: class attribute values not found in rendered HTML", ts.name)
+				t.Errorf("%s theme: class attribute values not found in rendered HTML", ts.name)
 				t.Logf("Rendered HTML: %s", htmlStr)
 			}
 		})

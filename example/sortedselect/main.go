@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/donseba/go-form"
-	"github.com/donseba/go-form/templates"
 )
 
 type DemoForm struct {
@@ -26,7 +25,8 @@ type DemoForm struct {
 }
 
 func main() {
-	f := form.NewForm(templates.BootstrapV5)
+	f := form.NewForm()
+	f.SetTheme("plain")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		u1 := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
