@@ -210,7 +210,19 @@ func GetCSRFToken(r *http.Request) (string, bool) {
 
 // InjectCSRFToken adds the CSRF token to the form Info struct
 func InjectCSRFToken(r *http.Request, info *Info) {
-	if token, ok := GetCSRFToken(r); ok && token != "" {
+	if r == nil {
+		return
+	}
+	InjectCSRFTokenContext(r.Context(), info)
+}
+
+// InjectCSRFTokenContext adds the CSRF token from ctx to the form Info struct.
+// It is useful when rendering happens below the HTTP controller layer.
+func InjectCSRFTokenContext(ctx context.Context, info *Info) {
+	if ctx == nil || info == nil {
+		return
+	}
+	if token, ok := ctx.Value(csrf.CSRFTokenContextKey).(string); ok && token != "" {
 		info.CsrfValue = token
 		if info.CsrfField == "" {
 			info.CsrfField = DefaultCSRFField
