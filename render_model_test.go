@@ -96,3 +96,17 @@ func TestHasFieldsUnderstandsRenderModels(t *testing.T) {
 		t.Fatal("external model field was not detected")
 	}
 }
+
+func TestThemePrintDoesNotTranslateEmptyMetadata(t *testing.T) {
+	called := false
+	f := NewTranslatedForm(func(_ Localizer, key string, _ ...any) string {
+		called = true
+		return "translated:" + key
+	})
+	if got := f.themePrint(&DefaultLocalizer{}, ""); got != "" {
+		t.Fatalf("empty metadata rendered as %q", got)
+	}
+	if called {
+		t.Fatal("translator was called for an empty key")
+	}
+}
