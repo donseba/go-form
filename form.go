@@ -176,6 +176,12 @@ func ensureThemesLoaded() error {
 
 // themePrint mirrors the legacy form_print behavior.
 func (f *Form) themePrint(loc types.Localizer, key string, args ...any) string {
+	// Empty gettext keys represent the translation catalog header. Form
+	// metadata frequently leaves optional labels and placeholders empty, so
+	// never send an empty value to the application's translator.
+	if key == "" {
+		return ""
+	}
 	if f.translationEnabled && f.translationFunc != nil {
 		return f.translationFunc(loc, key, args...)
 	}
