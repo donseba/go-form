@@ -1,8 +1,10 @@
 package form
 
 import (
+	"context"
 	"fmt"
 	"html/template"
+	"net/http"
 	"reflect"
 	"sync"
 
@@ -40,6 +42,14 @@ type (
 		CsrfField  string            `json:"csrf_field,omitempty"` // Name of the CSRF field (defaults to "_csrf")
 	}
 
+	// RenderModel associates form metadata with a model without requiring the
+	// model's concrete type to embed Info. Construct it with WithInfo,
+	// WithContextInfo, or WithRequestInfo.
+	RenderModel struct {
+		Info  Info
+		Model any
+	}
+
 	Form struct {
 		validators         map[string]ValidationFunc
 		translationEnabled bool
@@ -50,6 +60,29 @@ type (
 		themeName string
 	}
 )
+
+// WithInfo associates form metadata with a model for rendering. The model's
+// fields keep their original names and nesting; RenderModel is transparent to
+// the transformer.
+func WithInfo(model any, info Info) RenderModel {
+	return RenderModel{Info: info, Model: model}
+}
+
+// WithContextInfo associates form metadata with a model and injects any CSRF
+// token available in ctx.
+func WithContextInfo(ctx context.Context, model any, info Info) RenderModel {
+	InjectCSRFTokenContext(ctx, &info)
+	return WithInfo(model, info)
+}
+
+// WithRequestInfo associates form metadata with a model and injects any CSRF
+// token available on r.
+func WithRequestInfo(r *http.Request, model any, info Info) RenderModel {
+	if r != nil {
+		return WithContextInfo(r.Context(), model, info)
+	}
+	return WithInfo(model, info)
+}
 
 func (d *DefaultLocalizer) GetLocale() string {
 	return "en" // Default locale

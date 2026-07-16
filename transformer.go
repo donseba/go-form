@@ -72,13 +72,37 @@ type Transformer struct {
 }
 
 func NewTransformer(model interface{}) (*Transformer, error) {
+	var renderInfo *Info
+	switch wrapped := model.(type) {
+	case RenderModel:
+		model = wrapped.Model
+		info := wrapped.Info
+		renderInfo = &info
+	case *RenderModel:
+		if wrapped == nil {
+			return nil, fmt.Errorf("form model must not be nil")
+		}
+		model = wrapped.Model
+		info := wrapped.Info
+		renderInfo = &info
+	}
+
 	modelValue := reflect.ValueOf(model)
+	if !modelValue.IsValid() {
+		return nil, fmt.Errorf("form model must not be nil")
+	}
 	modelType := modelValue.Type()
 
 	// check if we received a pointer
-	if modelValue.Kind() == reflect.Ptr || modelValue.Kind() == reflect.Interface {
+	for modelValue.Kind() == reflect.Ptr || modelValue.Kind() == reflect.Interface {
+		if modelValue.IsNil() {
+			return nil, fmt.Errorf("form model must not be nil")
+		}
 		modelValue = modelValue.Elem()
-		modelType = modelType.Elem()
+		modelType = modelValue.Type()
+	}
+	if modelValue.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("form model must be a struct, got %s", modelValue.Kind())
 	}
 
 	tr := &Transformer{}
@@ -86,10 +110,46 @@ func NewTransformer(model interface{}) (*Transformer, error) {
 	if err != nil {
 		return nil, err
 	}
+	if renderInfo != nil {
+		fields = removeFormFields(fields)
+		fields = append([]types.FormField{formFieldFromInfo(*renderInfo)}, fields...)
+	}
 
 	tr.Fields = collapseStructRadioGroups(fields)
 
 	return tr, nil
+}
+
+func removeFormFields(fields []types.FormField) []types.FormField {
+	out := fields[:0]
+	for _, field := range fields {
+		if field.Type != types.FieldTypeForm {
+			out = append(out, field)
+		}
+	}
+	return out
+}
+
+func formFieldFromInfo(info Info) types.FormField {
+	label := info.SubmitText
+	if label == "" {
+		label = DefaultSubmitText
+	}
+	field := types.FormField{
+		Type:         types.FieldTypeForm,
+		Target:       info.Target,
+		Method:       info.Method,
+		Label:        label,
+		CancelTarget: info.CancelTarget,
+		CancelText:   info.CancelText,
+	}
+	for key, value := range info.Attributes {
+		if field.Attributes == nil {
+			field.Attributes = make(map[string]string)
+		}
+		field.Attributes[key] = value
+	}
+	return field
 }
 
 func (t *Transformer) JSON() json.RawMessage {
@@ -103,32 +163,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 	var fields []types.FormField
 
 	// Check for form metadata
-	if rType.Field(0).Anonymous && rType.Field(0).Type == reflect.TypeOf(Info{}) {
+	if rType.NumField() > 0 && rType.Field(0).Anonymous && rType.Field(0).Type == reflect.TypeOf(Info{}) {
 		info := rValue.Field(0).Interface().(Info)
-
-		label := info.SubmitText
-		if label == "" {
-			label = DefaultSubmitText
-		}
-
-		formField := types.FormField{
-			Type:   types.FieldTypeForm,
-			Target: info.Target,
-			Method: info.Method,
-			Label:  label,
-
-			CancelTarget: info.CancelTarget,
-			CancelText:   info.CancelText,
-		}
-
-		for k, v := range info.Attributes {
-			if formField.Attributes == nil {
-				formField.Attributes = make(map[string]string)
-			}
-			formField.Attributes[k] = v
-		}
-
-		fields = append(fields, formField)
+		fields = append(fields, formFieldFromInfo(info))
 	}
 
 	for i := 0; i < rType.NumField(); i++ {

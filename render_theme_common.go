@@ -26,6 +26,15 @@ func (f *Form) getTheme() (*templates.Theme, error) {
 
 // csrfHiddenInputHTML extracts CSRF settings from the model and returns a hidden input.
 func csrfHiddenInputHTML(v any) template.HTML {
+	switch wrapped := v.(type) {
+	case RenderModel:
+		return csrfHiddenInputHTMLFromInfo(wrapped.Info)
+	case *RenderModel:
+		if wrapped != nil {
+			return csrfHiddenInputHTMLFromInfo(wrapped.Info)
+		}
+	}
+
 	// Prefer explicit GetFormInfo.
 	if fm, ok := v.(interface{ GetFormInfo() Info }); ok {
 		info := fm.GetFormInfo()

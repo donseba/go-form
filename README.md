@@ -278,20 +278,26 @@ go-form includes built-in CSRF (Cross-Site Request Forgery) protection for your 
    router.Use(formRenderer.CSRFMiddleware()) // <-- load the middleware
    ```
 
-3. Inject the CSRF token into your form object Info before rendering:
+3. Associate the form metadata with the model before rendering. This also
+   injects the request's CSRF token:
 ```go
 
-  loginForm := LoginForm{
-    Info: form.Info{
-      Target:     "/login",
-      Method:     "post",
-      SubmitText: "Log In",
-    },
-  }
-
-  form.InjectCSRFToken(r, &loginForm.Info)
+  loginForm := LoginForm{Email: "name@example.com"}
+  renderModel := form.WithRequestInfo(r, loginForm, form.Info{
+    Target:     "/login",
+    Method:     "post",
+    SubmitText: "Log In",
+  })
 
 ```
+
+`WithInfo` works when CSRF is not needed. `WithContextInfo` is useful in a
+rendering service that receives a `context.Context` rather than an HTTP
+request. These wrappers let application- or provider-owned structs use full
+form metadata without embedding `form.Info` or changing their field names.
+
+Models that already embed `form.Info` remain supported. For those models,
+`InjectCSRFToken` can still populate the embedded metadata directly.
 
 The middleware automatically:
 - Generates a secure random token for each form
