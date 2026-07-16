@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/donseba/go-form/types"
+	"github.com/donseba/go-form/v2/types"
 )
 
 // StyleOption represents either a CSS class or an inline style
@@ -24,6 +24,7 @@ type ThemeClasses struct {
 	// Common UI elements
 	Wrapper     StyleOption
 	Label       StyleOption
+	Required    StyleOption
 	Error       StyleOption
 	Description StyleOption
 
@@ -31,13 +32,17 @@ type ThemeClasses struct {
 	Input           StyleOption
 	Select          StyleOption
 	Textarea        StyleOption
+	TextareaWrapper StyleOption
 	Checkbox        StyleOption
 	CheckboxWrapper StyleOption
 	CheckboxLabel   StyleOption
 	Radio           StyleOption
 	RadioWrapper    StyleOption
 	RadioLabel      StyleOption
+	RadioGroup      StyleOption
 	Range           StyleOption
+	RangeWrapper    StyleOption
+	RangeValue      StyleOption
 	Color           StyleOption
 	Button          StyleOption
 	File            StyleOption
@@ -47,6 +52,7 @@ type ThemeClasses struct {
 	Form        StyleOption
 	FormGroup   StyleOption
 	FormHeader  StyleOption
+	FormLegend  StyleOption
 	FormBody    StyleOption
 	FormButtons StyleOption
 	Cancel      StyleOption
@@ -301,6 +307,8 @@ func (t *Theme) getStyleOptionForKey(key string) StyleOption {
 		return t.Classes.Wrapper
 	case "label":
 		return t.Classes.Label
+	case "required":
+		return t.Classes.Required
 	case "error":
 		return t.Classes.Error
 	case "description":
@@ -311,6 +319,8 @@ func (t *Theme) getStyleOptionForKey(key string) StyleOption {
 		return t.Classes.Select
 	case "textarea":
 		return t.Classes.Textarea
+	case "textareaWrapper":
+		return t.Classes.TextareaWrapper
 	case "checkbox":
 		return t.Classes.Checkbox
 	case "checkboxWrapper":
@@ -323,8 +333,14 @@ func (t *Theme) getStyleOptionForKey(key string) StyleOption {
 		return t.Classes.RadioWrapper
 	case "radioLabel":
 		return t.Classes.RadioLabel
+	case "radioGroup":
+		return t.Classes.RadioGroup
 	case "range":
 		return t.Classes.Range
+	case "rangeWrapper":
+		return t.Classes.RangeWrapper
+	case "rangeValue":
+		return t.Classes.RangeValue
 	case "color":
 		return t.Classes.Color
 	case "button":
@@ -337,6 +353,8 @@ func (t *Theme) getStyleOptionForKey(key string) StyleOption {
 		return t.Classes.FormGroup
 	case "formHeader":
 		return t.Classes.FormHeader
+	case "formLegend":
+		return t.Classes.FormLegend
 	case "formBody":
 		return t.Classes.FormBody
 	case "formButtons":

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/donseba/go-form/types"
+	"github.com/donseba/go-form/v2/types"
 )
 
 // Single “dummy” data struct used only for template execution.

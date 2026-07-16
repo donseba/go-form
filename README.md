@@ -20,7 +20,7 @@ A Go library for rendering HTML forms from Go structs using struct tags and Go t
 ## Installation
 
 ```sh
-go get github.com/donseba/go-form
+go get github.com/donseba/go-form/v2
 ```
 
 ---
@@ -31,7 +31,7 @@ go get github.com/donseba/go-form
 import (
     "html/template"
 
-    "github.com/donseba/go-form"
+    "github.com/donseba/go-form/v2"
 )
 
 type ExampleForm struct {
@@ -211,7 +211,7 @@ type MyForm struct {
 To enable translation for **all enums by default**, set the global variable:
 
 ```go
-import "github.com/donseba/go-form"
+import "github.com/donseba/go-form/v2"
 
 func init() {
     form.DefaultEnumTranslation = true  // All enums will be translatable by default
@@ -376,7 +376,7 @@ See the example in `example/csrf/main.go` for a complete usage demonstration.
 **Minimal usage example:**
 
 ```go
-import "github.com/donseba/go-form"
+import "github.com/donseba/go-form/v2"
 
 // Single select
 DepartmentID form.SortedSelect[int64] `form:"dropdown" label:"Department"`

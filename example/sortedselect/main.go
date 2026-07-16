@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/donseba/go-form"
+	"github.com/donseba/go-form/v2"
 )
 
 type DemoForm struct {

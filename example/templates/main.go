@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/donseba/go-form"
+	"github.com/donseba/go-form/v2"
 )
 
 const (

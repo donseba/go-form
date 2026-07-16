@@ -3,7 +3,7 @@ package form
 import (
 	"testing"
 
-	"github.com/donseba/go-form/types"
+	"github.com/donseba/go-form/v2/types"
 )
 
 type ModelA struct {
@@ -82,9 +82,9 @@ func TestNewTransformer(t *testing.T) {
 		t.Error(err)
 	}
 
-	expected := `{"fields":[{"type":"","name":"SomeRandomTextFieldName","id":"SomeRandomTextFieldName","label":"SomeRandomTextFieldName","value":"","required":true},{"type":"input","inputType":"number","name":"IntField","id":"IntField","label":"IntField","value":0,"step":"1"},{"type":"input","inputType":"number","name":"FloatField","id":"FloatField","label":"FloatField","value":0,"step":"any"},{"type":"group","name":"SubGroup","id":"SubGroup","label":"SubGroup","value":{"SubTextField":"","SubIntField":0},"legend":"legendSubGroup","fields":[{"type":"","name":"SubGroup.SubTextField","id":"SubGroup.SubTextField","label":"SubTextField","value":"","required":true},{"type":"input","inputType":"number","name":"SubGroup.SubIntField","id":"SubGroup.SubIntField","label":"SubIntField","value":0,"step":"1"}]}]}`
+	expected := `{"fields":[{"type":"input","inputType":"text","name":"SomeRandomTextFieldName","id":"SomeRandomTextFieldName","label":"SomeRandomTextFieldName","value":"","required":true},{"type":"input","inputType":"number","name":"IntField","id":"IntField","label":"IntField","value":0,"step":"1"},{"type":"input","inputType":"number","name":"FloatField","id":"FloatField","label":"FloatField","value":0,"step":"any"},{"type":"group","name":"SubGroup","id":"SubGroup","label":"SubGroup","value":{"SubTextField":"","SubIntField":0},"legend":"legendSubGroup","fields":[{"type":"input","inputType":"text","name":"SubGroup.SubTextField","id":"SubGroup.SubTextField","label":"SubTextField","value":"","required":true},{"type":"input","inputType":"number","name":"SubGroup.SubIntField","id":"SubGroup.SubIntField","label":"SubIntField","value":0,"step":"1"}]}]}`
 	if string(out.JSON()) != expected {
-		t.Error("transformer render changed")
+		t.Errorf("transformer render changed\ngot:  %s\nwant: %s", out.JSON(), expected)
 	}
 }
 

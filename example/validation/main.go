@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/donseba/go-form"
+	"github.com/donseba/go-form/v2"
 )
 
 // Custom validation: checks if a string is a valid hex color (e.g. #aabbcc)

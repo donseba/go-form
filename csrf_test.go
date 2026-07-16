@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/donseba/go-form/csrf"
+	"github.com/donseba/go-form/v2/csrf"
 )
 
 // TestGenerateCSRFToken verifies that token generation creates valid tokens

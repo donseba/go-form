@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/donseba/go-form"
+	"github.com/donseba/go-form/v2"
 )
 
 // LoginForm demonstrates a form with CSRF protection

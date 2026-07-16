@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/donseba/go-form/types"
+	"github.com/donseba/go-form/v2/types"
 )
 
 var (

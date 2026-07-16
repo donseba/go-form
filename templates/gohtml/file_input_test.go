@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/donseba/go-form/templates"
-	"github.com/donseba/go-form/types"
+	"github.com/donseba/go-form/v2/templates"
+	"github.com/donseba/go-form/v2/types"
 )
 
 type dummyLoc struct{}

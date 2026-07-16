@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/donseba/go-form"
+	"github.com/donseba/go-form/v2"
 )
 
 // ThemeExampleForm showcases:

@@ -5,8 +5,8 @@ import (
 	"html/template"
 	"reflect"
 
-	"github.com/donseba/go-form/templates"
-	"github.com/donseba/go-form/types"
+	"github.com/donseba/go-form/v2/templates"
+	"github.com/donseba/go-form/v2/types"
 )
 
 // getTheme loads embedded themes (once) and returns the selected theme.

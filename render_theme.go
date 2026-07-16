@@ -4,8 +4,8 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/donseba/go-form/templates"
-	"github.com/donseba/go-form/types"
+	"github.com/donseba/go-form/v2/templates"
+	"github.com/donseba/go-form/v2/types"
 )
 
 // themeExec clones a theme template set, injects standard form functions, and executes one template.

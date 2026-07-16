@@ -3,8 +3,8 @@ package form
 import (
 	"html/template"
 
-	"github.com/donseba/go-form/templates"
-	"github.com/donseba/go-form/types"
+	"github.com/donseba/go-form/v2/templates"
+	"github.com/donseba/go-form/v2/types"
 )
 
 // themeWrapIfGrouped wraps control HTML with the theme's input-group template when

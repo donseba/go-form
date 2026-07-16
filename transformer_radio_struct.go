@@ -1,7 +1,7 @@
 package form
 
 import (
-	"github.com/donseba/go-form/types"
+	"github.com/donseba/go-form/v2/types"
 )
 
 // collapseStructRadioGroups inspects group fields and, when a parent group declared as

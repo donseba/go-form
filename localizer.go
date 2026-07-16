@@ -1,6 +1,6 @@
 package form
 
-import "github.com/donseba/go-form/types"
+import "github.com/donseba/go-form/v2/types"
 
 // Localizer is the public interface used by go-form for translations.
 //

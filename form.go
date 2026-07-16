@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/donseba/go-form/csrf"
-	"github.com/donseba/go-form/templates"
-	"github.com/donseba/go-form/types"
+	"github.com/donseba/go-form/v2/csrf"
+	"github.com/donseba/go-form/v2/templates"
+	"github.com/donseba/go-form/v2/types"
 )
 
 type (

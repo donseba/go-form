@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/donseba/go-form/csrf"
+	"github.com/donseba/go-form/v2/csrf"
 )
 
 // CSRF errors

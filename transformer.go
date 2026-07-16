@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/donseba/go-form/types"
+	"github.com/donseba/go-form/v2/types"
 )
 
 const (
@@ -551,6 +551,10 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			}
 		default:
 			return nil, fmt.Errorf("unsupported type: %s", fType.Kind())
+		}
+		if field.Type == "" {
+			field.Type = types.FieldTypeInput
+			field.InputType = types.InputFieldTypeText
 		}
 
 		fields = append(fields, field)
