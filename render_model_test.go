@@ -87,3 +87,12 @@ func TestTransformerAcceptsEmptyStruct(t *testing.T) {
 		t.Fatalf("got %d fields, want none", len(transformer.Fields))
 	}
 }
+
+func TestHasFieldsUnderstandsRenderModels(t *testing.T) {
+	if HasFields(WithInfo(struct{}{}, Info{})) {
+		t.Fatal("metadata-only model must not report fields")
+	}
+	if !HasFields(WithInfo(externalSettings{}, Info{})) {
+		t.Fatal("external model field was not detected")
+	}
+}

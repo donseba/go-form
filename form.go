@@ -135,9 +135,25 @@ func (f *Form) FuncMap() template.FuncMap {
 	funcMap := template.FuncMap{
 		"form_render":           f.formRender,
 		"form_render_localized": f.formRenderLocalized,
+		"form_has_fields":       HasFields,
 	}
 
 	return funcMap
+}
+
+// HasFields reports whether model contains at least one renderable field. Form
+// metadata does not count as a field.
+func HasFields(model any) bool {
+	transformer, err := NewTransformer(model)
+	if err != nil {
+		return false
+	}
+	for _, field := range transformer.Fields {
+		if field.Type != types.FieldTypeForm {
+			return true
+		}
+	}
+	return false
 }
 
 func (f *Form) formRender(v any, errs FieldErrors, kv ...any) (template.HTML, error) {
