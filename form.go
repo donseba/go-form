@@ -88,7 +88,8 @@ func (d *DefaultLocalizer) GetLocale() string {
 	return "en" // Default locale
 }
 
-// SetCSRFStore sets the CSRF store for the Form
+// SetCSRFStore sets the CSRF store for the Form. Configure a shared store before
+// creating middleware when requests may reach different application instances.
 func (f *Form) SetCSRFStore(store csrf.Store) {
 	f.csrfStore = store
 }

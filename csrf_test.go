@@ -111,6 +111,37 @@ func TestCSRFMiddleware_GET(t *testing.T) {
 	}
 }
 
+func TestCSRFMiddlewareSharedStoreAcrossForms(t *testing.T) {
+	shared := csrf.NewMemoryCSRFStore()
+	first := NewForm()
+	second := NewForm()
+	first.SetCSRFStore(shared)
+	second.SetCSRFStore(shared)
+
+	var token string
+	getHandler := first.CSRFMiddleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, _ = GetCSRFToken(r)
+	}))
+	getResponse := httptest.NewRecorder()
+	getHandler.ServeHTTP(getResponse, httptest.NewRequest(http.MethodGet, "/", nil))
+	if token == "" || len(getResponse.Result().Cookies()) == 0 {
+		t.Fatal("first form did not issue a token and session cookie")
+	}
+
+	postHandler := second.CSRFMiddleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	values := url.Values{DefaultCSRFField: {token}}
+	postRequest := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(values.Encode()))
+	postRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	postRequest.AddCookie(getResponse.Result().Cookies()[0])
+	postResponse := httptest.NewRecorder()
+	postHandler.ServeHTTP(postResponse, postRequest)
+	if postResponse.Code != http.StatusNoContent {
+		t.Fatalf("second form rejected token from shared store: status %d", postResponse.Code)
+	}
+}
+
 // TestCSRFMiddleware_POST_Valid tests the middleware handling for POST requests with valid tokens
 func TestCSRFMiddleware_POST_Valid(t *testing.T) {
 	f := NewForm()
