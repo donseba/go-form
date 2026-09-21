@@ -48,7 +48,7 @@ func (f *Form) CSRFMiddleware() func(next http.Handler) http.Handler {
 // CSRFMiddlewareWithOptions creates middleware for CSRF protection with custom options
 func (f *Form) CSRFMiddlewareWithOptions(options CSRFOptions) func(next http.Handler) http.Handler {
 	if !f.HasCSRFStore() {
-		f.SetCSRFStore(csrf.NewMemoryCSRFStore())
+		f.SetCSRFStore(csrf.NewDefaultMemoryCSRFStore())
 	}
 
 	return func(next http.Handler) http.Handler {

@@ -333,38 +333,49 @@ protectedHandler := formRenderer.CSRFMiddlewareWithOptions(options)(yourHandler)
 
 #### Alternative CSRF Stores
 
-The default in-memory CSRF store is suitable for single-server applications. For production or distributed environments, you can implement a custom `CSRFStore` that uses Redis, a database, or another shared storage mechanism:
+The default in-memory CSRF store belongs to one `Form` instance in one
+process. For multiple application instances, configure every instance with a
+store backed by the same Redis or database service before creating the
+middleware. A request that renders a form and the later submission may reach
+different instances. Use the same token expiration on every instance.
+
+Implement `csrf.Store` with `Store` and `Validate` methods. For example, with
+`github.com/redis/go-redis/v9`:
 
 ```go
-// Example Redis CSRF Store implementation
 type RedisCSRFStore struct {
     client *redis.Client
-    prefix string
-    ttl    time.Duration
 }
 
 func (s *RedisCSRFStore) Store(key, token string) error {
-    return s.client.Set(ctx, s.prefix+key, token, s.ttl).Err()
+    return s.client.Set(context.Background(), "csrf:"+key, token, csrf.DefaultExpirationTime).Err()
 }
 
-func (s *RedisCSRFStore) Get(key string) (string, error) {
-    val, err := s.client.Get(ctx, s.prefix+key).Result()
-    if err == redis.Nil {
-        return "", csrf.ErrTokenNotFound
+func (s *RedisCSRFStore) Validate(key, token string) error {
+    if key == "" || token == "" {
+        return csrf.ErrKeyOrTokenEmpty
     }
-    return val, err
+    stored, err := s.client.Get(context.Background(), "csrf:"+key).Result()
+    if err == redis.Nil {
+        return csrf.ErrTokenNotFound
+    }
+    if err != nil {
+        return err
+    }
+    if subtle.ConstantTimeCompare([]byte(stored), []byte(token)) != 1 {
+        return csrf.ErrTokenMismatch
+    }
+    return nil
 }
 
-// ... implement other required methods ...
-
-// Then use it with your form:
-store := &RedisCSRFStore{
-    client: redisClient,
-    prefix: "csrf:",
-    ttl:    30 * time.Minute,
-}
-formRenderer.SetCSRFStore(store)
+formRenderer := form.NewForm()
+formRenderer.SetCSRFStore(&RedisCSRFStore{client: redisClient})
+protectedHandler := formRenderer.CSRFMiddleware()(yourHandler)
 ```
+
+The snippet uses `context`, `crypto/subtle`, `redis`, `form`, and `csrf` imports.
+Configure the shared store on every server. The default memory store is useful
+for local development and single-process deployments.
 
 See the example in `example/csrf/main.go` for a complete usage demonstration.
 
