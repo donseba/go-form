@@ -1,6 +1,7 @@
 package csrf
 
 import (
+	"crypto/subtle"
 	"sync"
 	"time"
 )
@@ -57,31 +58,48 @@ func (s *DefaultMemoryCSRFStore) Store(key, token string) error {
 }
 
 func (s *DefaultMemoryCSRFStore) Validate(key, token string) error {
+	_, err := s.validEntry(key, token)
+	return err
+}
+
+// Consume validates and removes a token in one atomic operation.
+func (s *DefaultMemoryCSRFStore) Consume(key, token string) error {
+	entry, err := s.validEntry(key, token)
+	if err != nil {
+		return err
+	}
+	if !s.tokens.CompareAndDelete(key, entry) {
+		return ErrTokenNotFound
+	}
+	return nil
+}
+
+func (s *DefaultMemoryCSRFStore) validEntry(key, token string) (TokenEntry, error) {
 	if key == "" || token == "" {
-		return ErrKeyOrTokenEmpty
+		return TokenEntry{}, ErrKeyOrTokenEmpty
 	}
 
 	value, ok := s.tokens.Load(key)
 	if !ok {
-		return ErrTokenNotFound
+		return TokenEntry{}, ErrTokenNotFound
 	}
 
 	entry, ok := value.(TokenEntry)
 	if !ok {
-		return ErrTokenNotFound
+		return TokenEntry{}, ErrTokenNotFound
 	}
 
 	// Check if the token is expired
 	if time.Now().After(entry.Expiration) {
-		s.tokens.Delete(key)
-		return ErrTokenExpired
+		s.tokens.CompareAndDelete(key, entry)
+		return TokenEntry{}, ErrTokenExpired
 	}
 
-	if entry.Token != token {
-		return ErrTokenMismatch
+	if subtle.ConstantTimeCompare([]byte(entry.Token), []byte(token)) != 1 {
+		return TokenEntry{}, ErrTokenMismatch
 	}
 
-	return nil
+	return entry, nil
 }
 
 // cleanupRoutine periodically removes expired tokens
@@ -91,7 +109,7 @@ func (s *DefaultMemoryCSRFStore) cleanupRoutine() {
 		s.tokens.Range(func(key, value interface{}) bool {
 			entry, ok := value.(TokenEntry)
 			if !ok || now.After(entry.Expiration) {
-				s.tokens.Delete(key)
+				s.tokens.CompareAndDelete(key, value)
 			}
 			return true
 		})

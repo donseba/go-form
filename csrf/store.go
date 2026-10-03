@@ -35,6 +35,13 @@ type Store interface {
 	Validate(key, token string) error
 }
 
+// TokenConsumer optionally validates and removes a token atomically. Stores
+// shared by concurrent requests or application instances should implement this
+// interface to prevent concurrent submissions from consuming the same token.
+type TokenConsumer interface {
+	Consume(key, token string) error
+}
+
 // GenerateCSRFToken creates a secure random token for CSRF protection
 func GenerateCSRFToken() (string, error) {
 	bytes := make([]byte, 32)
