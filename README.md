@@ -147,6 +147,11 @@ type MyForm struct {
 
 Custom validators can be chained with commas in the `validate` tag. All errors are collected and can be rendered in your template.
 
+Validation errors use the same `name` tags as form mapping and rendering,
+including nested paths such as `shipping.city_name`. Custom validators still
+receive the original Go struct field; errors they return for that field are
+mapped to its rendered name.
+
 ---
 
 ## Translation / Internationalization
