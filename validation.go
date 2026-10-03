@@ -63,7 +63,7 @@ func validateRequired(f *Form, field reflect.StructField, value reflect.Value, l
 	req := field.Tag.Get("required")
 	if req == "true" {
 		if isEmptyValue(value) {
-			errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyRequired, nil)})
+			errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyRequired, nil)})
 		}
 	}
 	return
@@ -80,13 +80,13 @@ func validateMinMax(f *Form, field reflect.StructField, value reflect.Value, loc
 		if minTag := field.Tag.Get("min"); minTag != "" {
 			minVal, _ := strconv.ParseFloat(minTag, 64)
 			if val < minVal {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyMin, minVal)})
+				errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyMin, minVal)})
 			}
 		}
 		if maxTag := field.Tag.Get("max"); maxTag != "" {
 			maxVal, _ := strconv.ParseFloat(maxTag, 64)
 			if val > maxVal {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyMax, maxVal)})
+				errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyMax, maxVal)})
 			}
 		}
 	}
@@ -105,7 +105,7 @@ func validateStep(f *Form, field reflect.StructField, value reflect.Value, loc L
 		if err == nil && step > 0 {
 			mod := val / step
 			if mod != float64(int64(mod)) {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyStep, step)})
+				errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyStep, step)})
 			}
 		}
 	}
@@ -117,13 +117,13 @@ func validateLength(f *Form, field reflect.StructField, value reflect.Value, loc
 		if maxLength := field.Tag.Get("maxLength"); maxLength != "" {
 			maxLen, err := strconv.Atoi(maxLength)
 			if err == nil && utf8.RuneCountInString(value.String()) > maxLen {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyMaxLength, maxLen)})
+				errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyMaxLength, maxLen)})
 			}
 		}
 		if minLength := field.Tag.Get("minLength"); minLength != "" {
 			minLen, err := strconv.Atoi(minLength)
 			if err == nil && utf8.RuneCountInString(value.String()) < minLen {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyMinLength, minLen)})
+				errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyMinLength, minLen)})
 			}
 		}
 	}
@@ -134,7 +134,7 @@ func validatePattern(f *Form, field reflect.StructField, value reflect.Value, lo
 	if pattern := field.Tag.Get("pattern"); pattern != "" && value.Kind() == reflect.String {
 		matched, err := regexp.MatchString(pattern, value.String())
 		if err == nil && !matched {
-			errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyPattern, pattern)})
+			errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyPattern, pattern)})
 		}
 	}
 	return
@@ -146,7 +146,7 @@ func validateURL(f *Form, field reflect.StructField, value reflect.Value, loc Lo
 		if str != "" {
 			_, err := url.ParseRequestURI(str)
 			if err != nil {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyURL, nil)})
+				errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyURL, nil)})
 			}
 		}
 	}
@@ -156,7 +156,7 @@ func validateURL(f *Form, field reflect.StructField, value reflect.Value, loc Lo
 func validateBool(f *Form, field reflect.StructField, value reflect.Value, loc Localizer, getErr func(string, any) string) (errs FieldErrors) {
 	if field.Tag.Get("bool") == "true" && value.Kind() == reflect.Bool {
 		if !value.Bool() {
-			errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyBool, nil)})
+			errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyBool, nil)})
 		}
 	}
 	return
@@ -165,7 +165,7 @@ func validateBool(f *Form, field reflect.StructField, value reflect.Value, loc L
 func validateZero(f *Form, field reflect.StructField, value reflect.Value, loc Localizer, getErr func(string, any) string) (errs FieldErrors) {
 	if field.Tag.Get("zero") == "true" {
 		if !isEmptyValue(value) {
-			errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyZero, nil)})
+			errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyZero, nil)})
 		}
 	}
 	return
@@ -176,13 +176,13 @@ func validateSliceArrayLength(f *Form, field reflect.StructField, value reflect.
 		if minItems := field.Tag.Get("minItems"); minItems != "" {
 			minCount, err := strconv.Atoi(minItems)
 			if err == nil && value.Len() < minCount {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyMinItems, minCount)})
+				errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyMinItems, minCount)})
 			}
 		}
 		if maxItems := field.Tag.Get("maxItems"); maxItems != "" {
 			maxCount, err := strconv.Atoi(maxItems)
 			if err == nil && value.Len() > maxCount {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyMaxItems, maxCount)})
+				errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyMaxItems, maxCount)})
 			}
 		}
 	}
@@ -194,17 +194,17 @@ func validatePrefixSuffixContains(f *Form, field reflect.StructField, value refl
 		str := value.String()
 		if prefix := field.Tag.Get("prefix"); prefix != "" {
 			if !strings.HasPrefix(str, prefix) {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyPrefix, prefix)})
+				errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyPrefix, prefix)})
 			}
 		}
 		if suffix := field.Tag.Get("suffix"); suffix != "" {
 			if !strings.HasSuffix(str, suffix) {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeySuffix, suffix)})
+				errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeySuffix, suffix)})
 			}
 		}
 		if contains := field.Tag.Get("contains"); contains != "" {
 			if !strings.Contains(str, contains) {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyContains, contains)})
+				errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyContains, contains)})
 			}
 		}
 	}
@@ -224,7 +224,7 @@ func validateValues(f *Form, field reflect.StructField, value reflect.Value, loc
 		}
 		if value.String() != "" {
 			if _, ok := allowed[value.String()]; !ok {
-				errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyInvalidValue, value.String())})
+				errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyInvalidValue, value.String())})
 			}
 		}
 	}
@@ -234,7 +234,7 @@ func validateValues(f *Form, field reflect.StructField, value reflect.Value, loc
 func validateEmail(f *Form, field reflect.StructField, value reflect.Value, loc Localizer, getErr func(string, any) string) (errs FieldErrors) {
 	if field.Tag.Get("form") == "input,email" && value.Kind() == reflect.String {
 		if val := value.String(); val != "" && !strings.Contains(val, "@") {
-			errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyInvalidEmail, nil)})
+			errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyInvalidEmail, nil)})
 		}
 	}
 	return
@@ -252,7 +252,7 @@ func validateEnum(f *Form, field reflect.StructField, value reflect.Value, loc L
 			}
 		}
 		if !found && valStr != "" {
-			errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyInvalidEnum, valStr)})
+			errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyInvalidEnum, valStr)})
 		}
 	}
 	return
@@ -263,7 +263,7 @@ func validateMapper(f *Form, field reflect.StructField, value reflect.Value, loc
 		maps := value.Interface().(Mapper).Mapper()
 		valStr := fmt.Sprint(value.Interface())
 		if _, ok := maps[valStr]; !ok && valStr != "" {
-			errs = append(errs, FieldValidationError{Field: field.Name, Err: getErr(TranslationKeyInvalidMapper, valStr)})
+			errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyInvalidMapper, valStr)})
 		}
 	}
 	return
@@ -282,7 +282,7 @@ func validateSortedMapper(f *Form, field reflect.StructField, value reflect.Valu
 				for _, key := range multi.GetKeysAsStrings() {
 					if _, found := allowed[key]; !found && key != "" {
 						errMsg := getErr(TranslationKeyInvalidSortedMapper, key)
-						errs = append(errs, FieldValidationError{Field: field.Name, Err: errMsg})
+						errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: errMsg})
 					}
 				}
 				return
@@ -300,7 +300,7 @@ func validateSortedMapper(f *Form, field reflect.StructField, value reflect.Valu
 		if !found && valStr != "" {
 			// Wrap as FieldValidationError
 			errMsg := getErr(TranslationKeyInvalidSortedMapper, valStr)
-			errs = append(errs, FieldValidationError{Field: field.Name, Err: errMsg})
+			errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: errMsg})
 		}
 		// If ValueSorted returns an error, wrap as FieldValidationError
 		if value.CanAddr() {
@@ -310,7 +310,7 @@ func validateSortedMapper(f *Form, field reflect.StructField, value reflect.Valu
 				var vserr SortedSelectError
 				if errors.As(err, &vserr) {
 					translated := f.validationErrorTranslated(loc, vserr.Key, vserr.Args...)
-					errs = append(errs, FieldValidationError{Field: field.Name, Err: translated})
+					errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: translated})
 				}
 			}
 		}
@@ -411,7 +411,7 @@ func (f *Form) ValidateFormLocalized(form any, loc Localizer) FieldErrors {
 			for _, err := range nestedErrs {
 				f, e := err.FieldError()
 				errList = append(errList, FieldValidationError{
-					Field: field.Name + "." + f,
+					Field: validationFieldName(field) + "." + f,
 					Err:   e,
 				})
 			}
@@ -423,7 +423,7 @@ func (f *Form) ValidateFormLocalized(form any, loc Localizer) FieldErrors {
 				f, e := err.FieldError()
 
 				errList = append(errList, FieldValidationError{
-					Field: field.Name + "." + f,
+					Field: validationFieldName(field) + "." + f,
 					Err:   e,
 				})
 			}
@@ -439,11 +439,25 @@ func (f *Form) ValidateFormLocalized(form any, loc Localizer) FieldErrors {
 				continue
 			}
 			if fn, ok := f.validators[validatorName]; ok {
-				errList = append(errList, fn(value.Interface(), field)...)
+				for _, validationErr := range fn(value.Interface(), field) {
+					name, message := validationErr.FieldError()
+					if name == field.Name {
+						validationErr = FieldValidationError{Field: validationFieldName(field), Err: message}
+					}
+					errList = append(errList, validationErr)
+				}
 			}
 		}
 	}
 	return errList
+}
+
+// validationFieldName matches the name used by form mapping and rendering.
+func validationFieldName(field reflect.StructField) string {
+	if name := field.Tag.Get(tagName); name != "" {
+		return name
+	}
+	return field.Name
 }
 
 func isEmptyValue(v reflect.Value) bool {
