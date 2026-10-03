@@ -1,4 +1,12 @@
+<p align="center">
+    <a href="https://docs.gowebthings.com/go-form">
+        <img src="./assets/go-form-logo.png" alt="go-form" height="70">
+    </a>
+</p>
+
 # go-form
+
+[Documentation](https://docs.gowebthings.com/go-form) · Part of [go-webthings](https://gowebthings.com/components).
 
 A Go library for rendering HTML forms from Go structs using struct tags and Go templates. Supports multiple template styles (Plain, Bootstrap 5, Tailwind CSS) and a wide range of HTML input types.
 
@@ -10,7 +18,7 @@ A Go library for rendering HTML forms from Go structs using struct tags and Go t
 - Supports many HTML input types: text, password, email, tel, number, date, color, range, datetime-local, time, week, month, hidden
 - Checkbox, radio, dropdown, and textarea fields
 - Grouping and nested struct support for form sections
-- Built-in template sets: Plain, Bootstrap 5, Tailwind CSS
+- Built-in themes: Plain, Bootstrap 5, Tailwind CSS v3 and v4
 - Integrates with `html/template` via a FuncMap
 - CSRF Protection
 - **SortedSelect** and **SortedMultiSelect** for type-safe, mapped dropdowns and multi-selects (see examples)
@@ -28,33 +36,55 @@ go get github.com/donseba/go-form/v2
 ## Quick Start
 
 ```go
-import (
-    "html/template"
+package main
 
-    "github.com/donseba/go-form/v2"
+import (
+	"html/template"
+	"log"
+	"os"
+
+	"github.com/donseba/go-form/v2"
 )
 
-type ExampleForm struct {
-    Username string `form:"input,text" label:"Username" placeholder:"Enter your username" required:"true"`
-    Password string `form:"input,password" label:"Password" placeholder:"Enter your password" required:"true"`
-    Email    string `form:"input,email" label:"Email" placeholder:"Enter your email" required:"true"`
-    Age      int    `form:"input,number" label:"Age" placeholder:"Enter your age" step:"1"`
+type Contact struct {
+	Name  string `form:"input,text" label:"Name" required:"true"`
+	Email string `form:"input,email" label:"Email" required:"true"`
 }
 
-f := form.NewForm()
-funcMap := f.FuncMap()
-_ = template.Must(template.New("form").Funcs(funcMap).Parse(`{{ form_render .Form nil }}`))
+func main() {
+	renderer := form.NewForm()
+	renderer.SetTheme("plain")
+
+	page := template.Must(template.New("contact").Funcs(renderer.FuncMap()).Parse(
+		`{{ form_render .Form .Errors }}`,
+	))
+	model := form.WithInfo(Contact{}, form.Info{
+		Target: "/contacts", Method: "post", SubmitText: "Save contact",
+	})
+	if err := page.Execute(os.Stdout, map[string]any{
+		"Form": model, "Errors": form.FieldErrors(nil),
+	}); err != nil {
+		log.Fatal(err)
+	}
+}
 ```
 
 ---
 
+The example prints form HTML. In an HTTP handler, use `WithRequestInfo` and wrap the handler with the same renderer's `CSRFMiddleware()` to supply and validate the CSRF token. Use `form.MapForm(r, &input)` to map a submission and `renderer.ValidateForm(&input)` to collect field errors. Form metadata stays outside your application struct.
+
 ## Supported Templates
 
-| Template Name            | Description                |
-|-------------------------|----------------------------|
-| `templates.Plain`       | Plain HTML, minimal styles |
-| `templates.BootstrapV5` | Bootstrap 5 form styles    |
-| `templates.TailwindV3`  | Tailwind CSS v3 styles     |
+Select a theme with `renderer.SetTheme(name)` before serving requests.
+
+| Theme name | Description |
+|------------|-------------|
+| `plain` | Plain HTML with minimal inline styles |
+| `bootstrap` | Bootstrap 5 classes (default) |
+| `tailwind` | Tailwind CSS v3 classes |
+| `tailwindv4` | Tailwind CSS v4 classes |
+
+Class-based themes require your application to load the corresponding stylesheet.
 
 ---
 
@@ -162,7 +192,7 @@ go-form supports translation of form labels, error messages, and other UI text. 
 
 1. **Create a translation function**: This function receives a Localizer, a key, and optional arguments, and returns the translated string.
 2. **Implement a Localizer**: This determines the current locale (e.g., from the user session or request).
-3. **Create the form with translation support**: Use `form.NewTranslatedForm(template, translateFunc)`.
+3. **Create the form with translation support**: Use `form.NewTranslatedForm(translateFunc)`.
 4. **Pass your Localizer when rendering or validating**: The form will use your translation function and Localizer to fetch translations.
 
 ```go
@@ -192,7 +222,8 @@ func myTranslate(loc form.Localizer, key string, args ...any) string {
     return msg
 }
 
-f := form.NewTranslatedForm(templates.Plain, myTranslate)
+f := form.NewTranslatedForm(myTranslate)
+f.SetTheme("plain")
 // When rendering or validating, pass your Localizer:
 loc := MyLocalizer{Locale: "it"}
 // ...
@@ -235,16 +266,17 @@ var translations = map[string]map[string]string{
 ---
 
 ### Custom Form Attributes
-You can set custom HTML attributes on forms (e.g., `hx-post`, `data-*`, etc.) using the `Attributes` field in your form struct:
+You can set custom HTML attributes on forms (e.g., `hx-post`, `data-*`, etc.) using `form.Info.Attributes` with `WithInfo` or `WithRequestInfo`:
 
 ```go
-form := &FormField{
-    // ...other fields...
+model := form.WithRequestInfo(r, input, form.Info{
+    Target: "/some-url",
+    Method: "post",
     Attributes: map[string]string{
         "hx-post": "/some-url",
         "data-custom": "value",
     },
-}
+})
 ```
 
 ### Input Groups (Prepend/Append)
@@ -267,7 +299,8 @@ go-form includes built-in CSRF (Cross-Site Request Forgery) protection for your 
 
 1. Create a form renderer which adds a default CSRF protection by default:
    ```go
-   formRenderer := form.NewForm(templates.BootstrapV5)
+   formRenderer := form.NewForm()
+   formRenderer.SetTheme("bootstrap")
    ```
 
 2. Apply the CSRF middleware to your handlers:
