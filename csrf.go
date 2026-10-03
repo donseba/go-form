@@ -2,8 +2,11 @@ package form
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/donseba/go-form/v2/csrf"
@@ -32,7 +35,7 @@ func DefaultCSRFOptions() CSRFOptions {
 			case errors.Is(err, csrf.ErrKeyOrTokenEmpty):
 				http.Error(w, "CSRF token or session ID is empty", http.StatusBadRequest)
 			case errors.Is(err, csrf.ErrTokenNotFound):
-				http.Error(w, "CSRF token not found", http.StatusBadRequest)
+				http.Error(w, "CSRF token not found", http.StatusForbidden)
 			default:
 				http.Error(w, "CSRF validation error: "+err.Error(), http.StatusBadRequest)
 			}
@@ -53,8 +56,15 @@ func (f *Form) CSRFMiddlewareWithOptions(options CSRFOptions) func(next http.Han
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Get session key (from cookie or create one)
-			sessionID, err := getOrCreateSessionID(w, r)
+			// Submissions must use an existing session. Safe requests may create one.
+			var sessionID string
+			var err error
+			unsafeMethod := r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodDelete || r.Method == http.MethodPatch
+			if unsafeMethod {
+				sessionID, err = getSessionID(r)
+			} else {
+				sessionID, err = getOrCreateSessionID(w, r)
+			}
 			if err != nil {
 				if options.ErrorHandler != nil {
 					options.ErrorHandler(w, r, err)
@@ -81,7 +91,7 @@ func (f *Form) CSRFMiddlewareWithOptions(options CSRFOptions) func(next http.Han
 				}
 
 				// Store the token
-				err = f.GetCSRFStore().Store(sessionID, token)
+				err = f.GetCSRFStore().Store(csrfStoreKey(sessionID, token), token)
 				if err != nil {
 					if options.ErrorHandler != nil {
 						options.ErrorHandler(w, r, err)
@@ -98,25 +108,25 @@ func (f *Form) CSRFMiddlewareWithOptions(options CSRFOptions) func(next http.Han
 			}
 
 			// For unsafe methods, validate the token
-			if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodDelete || r.Method == http.MethodPatch {
+			if unsafeMethod {
 				submittedToken := r.FormValue(DefaultCSRFField)
 				if submittedToken == "" {
 					if options.ErrorHandler != nil {
-						options.ErrorHandler(w, r, errors.New("token not found"))
+						options.ErrorHandler(w, r, csrf.ErrKeyOrTokenEmpty)
 						return
 					}
 					http.Error(w, "Missing CSRF token", http.StatusBadRequest)
 					return
 				}
 
-				// Validate the token
-				err := f.GetCSRFStore().Validate(sessionID, submittedToken)
+				// Consume only the submitted token; other forms stay valid.
+				err := consumeCSRFToken(f.GetCSRFStore(), csrfStoreKey(sessionID, submittedToken), submittedToken)
 				if err != nil {
 					if options.ErrorHandler != nil {
 						options.ErrorHandler(w, r, err)
 						return
 					}
-					if errors.Is(err, csrf.ErrTokenMismatch) {
+					if errors.Is(err, csrf.ErrTokenMismatch) || errors.Is(err, csrf.ErrTokenNotFound) || errors.Is(err, csrf.ErrTokenExpired) {
 						http.Error(w, "Invalid CSRF token", http.StatusForbidden)
 					} else {
 						http.Error(w, "CSRF validation error", http.StatusInternalServerError)
@@ -136,7 +146,7 @@ func (f *Form) CSRFMiddlewareWithOptions(options CSRFOptions) func(next http.Han
 				}
 
 				// Store the token
-				err = f.GetCSRFStore().Store(sessionID, token)
+				err = f.GetCSRFStore().Store(csrfStoreKey(sessionID, token), token)
 				if err != nil {
 					if options.ErrorHandler != nil {
 						options.ErrorHandler(w, r, err)
@@ -156,6 +166,29 @@ func (f *Form) CSRFMiddlewareWithOptions(options CSRFOptions) func(next http.Han
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// csrfStoreKey keeps each issued token independent and bound to its session.
+// Hashing keeps session IDs and tokens out of storage keys and diagnostics.
+func csrfStoreKey(sessionID, token string) string {
+	sum := sha256.Sum256([]byte(strconv.Itoa(len(sessionID)) + ":" + sessionID + token))
+	return hex.EncodeToString(sum[:])
+}
+
+func consumeCSRFToken(store csrf.Store, key, token string) error {
+	if consumer, ok := store.(csrf.TokenConsumer); ok {
+		return consumer.Consume(key, token)
+	}
+	if err := store.Validate(key, token); err != nil {
+		return err
+	}
+	// Preserve one-use behavior for existing Store implementations. An atomic
+	// TokenConsumer is needed to also reject simultaneous reuse across instances.
+	replacement, err := csrf.GenerateCSRFToken()
+	if err != nil {
+		return err
+	}
+	return store.Store(key, replacement)
 }
 
 // Helper function to get or create a session ID

@@ -152,7 +152,7 @@ func TestCSRFMiddleware_POST_Valid(t *testing.T) {
 	testToken := "test-csrf-token"
 
 	// Store the token
-	_ = store.Store(sessionID, testToken)
+	_ = store.Store(csrfStoreKey(sessionID, testToken), testToken)
 
 	// Create a test handler
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -203,7 +203,7 @@ func TestCSRFMiddleware_POST_Invalid(t *testing.T) {
 	testToken := "test-csrf-token"
 
 	// Store the token
-	_ = store.Store(sessionID, testToken)
+	_ = store.Store(csrfStoreKey(sessionID, testToken), testToken)
 
 	// Create a test handler
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -305,6 +305,11 @@ The middleware automatically:
 - Refreshes tokens after each submission
 - Rejects requests with missing or invalid tokens
 
+Each issued token is stored separately and bound to its session. Loading another
+page, an HTMX fragment, or a second form does not invalidate earlier forms.
+Submitting a form consumes only its token and supplies a fresh token to the
+handler, so forms in other tabs remain usable until their tokens expire.
+
 #### Custom Error Handling
 
 By default, CSRF validation failures return HTTP error responses. For a better user experience, you can provide custom error handling:
@@ -339,7 +344,19 @@ store backed by the same Redis or database service before creating the
 middleware. A request that renders a form and the later submission may reach
 different instances. Use the same token expiration on every instance.
 
-Implement `csrf.Store` with `Store` and `Validate` methods. For example, with
+Implement `csrf.Store` with `Store` and `Validate` methods. Treat the key as an
+opaque identifier for a session-bound token, rather than the raw session ID.
+Existing forms must be reloaded when deploying the change from session-only
+storage keys.
+
+Stores may also implement `csrf.TokenConsumer` with `Consume(key, token string)
+to validate and remove a token atomically. Both built-in memory stores do this.
+Shared stores should implement it with a transaction or equivalent atomic
+operation to reject simultaneous reuse across application instances. Stores
+that only implement `Store` retain sequential one-use behavior through
+validation followed by token invalidation.
+
+For example, with
 `github.com/redis/go-redis/v9`:
 
 ```go

@@ -1,6 +1,7 @@
 package csrf
 
 import (
+	"crypto/subtle"
 	"sync"
 )
 
@@ -38,8 +39,19 @@ func (s *MemoryCSRFStore) Validate(key, token string) error {
 	if !ok {
 		return ErrTokenNotFound
 	}
-	if storedToken != token {
+	if subtle.ConstantTimeCompare([]byte(storedToken), []byte(token)) != 1 {
 		return ErrTokenMismatch
+	}
+	return nil
+}
+
+// Consume validates and removes a token in one atomic operation.
+func (s *MemoryCSRFStore) Consume(key, token string) error {
+	if err := s.Validate(key, token); err != nil {
+		return err
+	}
+	if !s.tokens.CompareAndDelete(key, token) {
+		return ErrTokenNotFound
 	}
 	return nil
 }
