@@ -295,10 +295,16 @@ func (f *Form) SetTheme(name string) {
 }
 
 func (f *Form) themeFieldHTML(theme *templates.Theme, loc types.Localizer, field types.FormField, errorMap map[string][]string) (template.HTML, error) {
-	// Render label
-	labelH, err := f.themeExec(theme, "label", map[string]any{"Field": field, "Loc": loc}, nil)
-	if err != nil {
-		return "", err
+	// Render label. A single checkbox renders its own label next to the box.
+	var (
+		labelH template.HTML
+		err    error
+	)
+	if field.Type != types.FieldTypeCheckbox {
+		labelH, err = f.themeExec(theme, "label", map[string]any{"Field": field, "Loc": loc}, nil)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	// Render control
