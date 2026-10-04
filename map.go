@@ -127,9 +127,9 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 		}
 
 		if formValue == "" {
-			// A submitted empty text clears a pre-filled string.
-			if submitted && fv.Kind() == reflect.String {
-				fv.SetString("")
+			// A submitted empty value clears a pre-filled string or time.
+			if submitted && (fv.Kind() == reflect.String || isTime(field.Type)) {
+				fv.Set(reflect.Zero(fv.Type()))
 			}
 			continue
 		}
@@ -237,9 +237,22 @@ func parseTimeToFieldValue(fv reflect.Value, field reflect.StructField, formValu
 			}
 		}
 
-		fv.Set(reflect.ValueOf(parsed))
+		if fv.Kind() == reflect.Ptr {
+			fv.Set(reflect.ValueOf(&parsed))
+		} else {
+			fv.Set(reflect.ValueOf(parsed))
+		}
 	}
 	return nil
+}
+
+// isTime reports whether t is time.Time or *time.Time.
+func isTime(t reflect.Type) bool {
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	return t.PkgPath() == "time" && t.Name() == "Time"
 }
 
 func WeekStringToTime(weekStr string) (time.Time, error) {
