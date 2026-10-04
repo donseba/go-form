@@ -89,15 +89,18 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 
 		// For non-boolean fields, proceed as before
 		formValue := r.FormValue(prefix + formKey)
-		if formValue == "" {
-			continue
-		}
+		_, submitted := r.Form[prefix+formKey]
 
-		// If the field has a SetFromKey(string) error method, call it (for SortedSelect types)
+		// If the field has a SetFromKey(string) error method, call it (for SortedSelect types).
+		// A submitted empty value selects the empty choice, so a pre-filled value can be cleared.
 		if fv.CanAddr() {
 			addr := fv.Addr().Interface()
 			if setter, ok := addr.(interface{ SetFromKey(string) error }); ok {
-				if err := setter.SetFromKey(formValue); err != nil {
+				if !submitted {
+					continue
+				}
+
+				if err := setter.SetFromKey(formValue); err != nil && formValue != "" {
 					// Log and continue; mapping shouldn't abort the whole form
 					fmt.Printf("error setting key from form for field %s: %v\n", field.Name, err)
 				}
@@ -112,13 +115,23 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 					formValues = r.Form[prefix+formKey]
 				}
 
-				if len(formValues) > 0 {
+				// Browsers send nothing when no box is ticked, so on POST an absent
+				// field means an empty selection, like an unchecked checkbox.
+				if len(formValues) > 0 || r.Method == http.MethodPost {
 					if err := setter.SetFromKeys(formValues); err != nil {
 						return err
 					}
 				}
 				continue
 			}
+		}
+
+		if formValue == "" {
+			// A submitted empty text clears a pre-filled string.
+			if submitted && fv.Kind() == reflect.String {
+				fv.SetString("")
+			}
+			continue
 		}
 
 		// If this is a primitive kind, use the shared helper. For arrays/structs/pointers
