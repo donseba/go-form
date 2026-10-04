@@ -441,16 +441,20 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				elem = rValue.Field(i).Interface().(time.Time)
 			}
 
-			switch field.InputType {
-			case types.InputFieldTypeDate:
+			switch {
+			case elem.IsZero():
+				// An unset time shows an empty input instead of 0001-01-01.
+				field.Value = ""
+			case field.InputType == types.InputFieldTypeDate:
 				field.Value = elem.Format(time.DateOnly)
-			case types.InputFieldTypeTime:
+			case field.InputType == types.InputFieldTypeTime:
 				field.Value = elem.Format(time.TimeOnly)
-			case types.InputFieldTypeDateTimeLocal:
-				field.Value = elem.Format(time.DateTime)
-			case types.InputFieldTypeMonth:
+			case field.InputType == types.InputFieldTypeDateTimeLocal:
+				// The format browsers accept for datetime-local inputs.
+				field.Value = elem.Format("2006-01-02T15:04")
+			case field.InputType == types.InputFieldTypeMonth:
 				field.Value = elem.Format("01")
-			case types.InputFieldTypeWeek:
+			case field.InputType == types.InputFieldTypeWeek:
 				// For week, we use the ISO week date format
 				year, week := elem.ISOWeek()
 				field.Value = fmt.Sprintf("%d-W%02d", year, week)
