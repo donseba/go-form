@@ -74,6 +74,7 @@ func TestGoHTMLTemplates_FieldAccessIsValid(t *testing.T) {
 		"themeAttr":            func(string) string { return "" },
 		"default":              func(v any, fb any) any { return v },
 		"form_print":           func(...any) string { return "" },
+		"form_required_label":  func(...any) string { return "" },
 		"form_data_attributes": func(...any) string { return "" },
 		"form_attributes":      func(...any) string { return "" },
 		// callable blocks in some templates

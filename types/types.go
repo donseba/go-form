@@ -17,7 +17,13 @@ func (i InputFieldType) String() string {
 	return string(i)
 }
 
-// FieldValue represents a value in a dropdown or radio group
+// FieldValue represents a value in a dropdown, radio group or multi-checkbox.
+//
+// Translate prints Name through the form's translation function. Labels from
+// a values tag and struct radio groups are translated unless the field has
+// translate:"false"; labels from an Enumerator, Mapper or SortedMapper (such
+// as SortedSelect) are data and only translated with translate:"true" or
+// DefaultEnumTranslation.
 type FieldValue struct {
 	Value     string `json:"value"`
 	Name      string `json:"name"`

@@ -9,6 +9,6 @@
        {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
   {{ $value := .Field.Value }}
   {{ range $k, $option := .Field.Values }}
-  <option value="{{$option.Value}}" {{ if eq $value $option.Value }}selected{{ end }} {{ if eq $option.Disabled true }}disabled{{ end }}>{{$option.Name}}</option>
+  <option value="{{$option.Value}}" {{ if eq $value $option.Value }}selected{{ end }} {{ if eq $option.Disabled true }}disabled{{ end }}>{{ if $option.Translate }}{{ form_print $.Loc $option.Name }}{{ else }}{{ $option.Name }}{{ end }}</option>
   {{ end }}
 </select>

@@ -57,10 +57,13 @@ func collapseStructRadioGroups(fields []types.FormField) []types.FormField {
 		fields[i].Values = nil
 		fields[i].Value = ""
 		for _, ch := range fields[i].Fields {
+			// Option labels are the labels of the bool fields, which are
+			// translated like any other label.
 			fields[i].Values = append(fields[i].Values, types.FieldValue{
-				Value:    ch.Id,
-				Name:     ch.Label,
-				Disabled: ch.Disabled,
+				Value:     ch.Id,
+				Name:      ch.Label,
+				Disabled:  ch.Disabled,
+				Translate: true,
 			})
 			if s, ok := ch.Value.(string); ok && s != "" {
 				fields[i].Value = ch.Id
