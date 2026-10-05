@@ -11,7 +11,7 @@ import (
 // themeExec clones a theme template set, injects standard form functions, and executes one template.
 //
 // Contract:
-// - It always injects form_print wired to this Form's translation function.
+// - It always injects form_print and form_required_label wired to this Form's translation function.
 // - It can inject optional overrides (fields/errors/label/field etc) via funcs.
 // - It returns template.HTML and preserves template execution errors.
 func (f *Form) themeExec(theme *templates.Theme, tmplName string, data any, funcs template.FuncMap) (template.HTML, error) {
@@ -20,9 +20,10 @@ func (f *Form) themeExec(theme *templates.Theme, tmplName string, data any, func
 		return "", err
 	}
 
-	// Always inject the translated form_print.
+	// Always inject the translated form_print and required marker text.
 	cl = cl.Funcs(template.FuncMap{
-		"form_print": func(loc types.Localizer, key string, args ...any) string { return f.themePrint(loc, key, args...) },
+		"form_print":          func(loc types.Localizer, key string, args ...any) string { return f.themePrint(loc, key, args...) },
+		"form_required_label": f.requiredLabel,
 	})
 
 	// Optional overrides (fields/errors/etc.).

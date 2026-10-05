@@ -332,6 +332,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		if rType.Field(i).Tag.Get(tagValues) != "" {
 			// If the tag contains values, it is a dropdown or radio field
 			values := strings.Split(rType.Field(i).Tag.Get(tagValues), ";")
+			// Labels written in a values tag are text of the application, like
+			// field labels, so they are translated unless translate:"false".
+			translateValues := tagValue != "false"
 			var fieldValue []types.FieldValue
 			for _, v := range values {
 				if strings.Contains(v, ":") {
@@ -340,17 +343,19 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 						return nil, fmt.Errorf("invalid value format in tag %s for field %s", tagValues, fieldName)
 					}
 					fieldValue = append(fieldValue, types.FieldValue{
-						Value:    strings.TrimSpace(parts[0]),
-						Name:     strings.TrimSpace(parts[1]),
-						Disabled: false,
+						Value:     strings.TrimSpace(parts[0]),
+						Name:      strings.TrimSpace(parts[1]),
+						Disabled:  false,
+						Translate: translateValues,
 					})
 					continue
 				}
 
 				fieldValue = append(fieldValue, types.FieldValue{
-					Value:    v,
-					Name:     v,
-					Disabled: false,
+					Value:     v,
+					Name:      v,
+					Disabled:  false,
+					Translate: translateValues,
 				})
 			}
 
@@ -580,10 +585,13 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				field.InputType = types.InputFieldTypeRadioStruct
 				for _, sub := range field.Fields {
 					v := fmt.Sprint(sub.Value)
+					// Option labels are the labels of the bool fields, which
+					// are translated like any other label.
 					field.Values = append(field.Values, types.FieldValue{
-						Value:    sub.Id,
-						Name:     sub.Label,
-						Disabled: sub.Disabled,
+						Value:     sub.Id,
+						Name:      sub.Label,
+						Disabled:  sub.Disabled,
+						Translate: true,
 					})
 					if v != "" {
 						field.Value = sub.Id

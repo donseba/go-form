@@ -16,6 +16,25 @@ var (
 	ErrMapFormNotStruct  = &MapFormError{"dst must be a pointer to struct"}
 )
 
+// MapFormErrorHandler, when set, receives the submitted values MapForm could
+// not set, by form field name: a key a SortedSelect does not offer, a date in
+// the wrong format or a field type MapForm does not support. MapForm skips
+// those values and never writes output itself; the field keeps its zero or
+// previous value, so validation such as required:"true" reports it. Set it,
+// for example, to log such values while debugging:
+//
+//	form.MapFormErrorHandler = func(field string, err error) {
+//		slog.Debug("form value ignored", "field", field, "error", err)
+//	}
+var MapFormErrorHandler func(field string, err error)
+
+// mapFormError hands a value MapForm skipped to MapFormErrorHandler.
+func mapFormError(field string, err error) {
+	if MapFormErrorHandler != nil {
+		MapFormErrorHandler(field, err)
+	}
+}
+
 // MapForm maps form values from an http.Request to a struct based on the `name` tag.
 // Only exported fields are set. Supports string, int, float64, and bool fields.
 func MapForm(r *http.Request, dst any, prefixes ...string) error {
@@ -101,8 +120,9 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 				}
 
 				if err := setter.SetFromKey(formValue); err != nil && formValue != "" {
-					// Log and continue; mapping shouldn't abort the whole form
-					fmt.Printf("error setting key from form for field %s: %v\n", field.Name, err)
+					// An unknown key leaves the selection empty; mapping
+					// does not abort the whole form.
+					mapFormError(prefix+formKey, err)
 				}
 				continue
 			}
@@ -163,13 +183,13 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 					}
 				}
 			} else {
-				fmt.Printf("unsupported array field type %s for field %s\n", fv.Type().Elem().Kind(), field.Name)
+				mapFormError(prefix+formKey, fmt.Errorf("unsupported array field type %s", fv.Type().Elem().Kind()))
 			}
 		case reflect.Struct:
 			if field.Type.PkgPath() == "time" && field.Type.Name() == "Time" {
 				err := parseTimeToFieldValue(fv, field, formValue)
 				if err != nil {
-					fmt.Printf("error parsing time field %s: %s", field.Name, err)
+					mapFormError(prefix+formKey, err)
 					continue
 				}
 			}
@@ -177,12 +197,12 @@ func MapForm(r *http.Request, dst any, prefixes ...string) error {
 			if field.Type.Elem().PkgPath() == "time" && field.Type.Elem().Name() == "Time" {
 				err := parseTimeToFieldValue(fv, field, formValue)
 				if err != nil {
-					fmt.Printf("error parsing time field %s: %s", field.Name, err)
+					mapFormError(prefix+formKey, err)
 					continue
 				}
 			}
 		default:
-			fmt.Printf("unsupported field type %s for field %s\n", fv.Kind(), field.Name)
+			mapFormError(prefix+formKey, fmt.Errorf("unsupported field type %s", fv.Kind()))
 		}
 	}
 	return nil
@@ -216,8 +236,7 @@ func parseTimeToFieldValue(fv reflect.Value, field reflect.StructField, formValu
 			layout = "2006-W01"
 			tt, err := WeekStringToTime(formValue)
 			if err != nil {
-				fmt.Println("Error parsing week string:", err)
-				return err // or optionally return err
+				return err
 			}
 
 			layout = "2006-01-02"

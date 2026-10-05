@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/donseba/go-form/v2/csrf"
@@ -190,6 +191,16 @@ func (f *Form) themePrint(loc types.Localizer, key string, args ...any) string {
 		return fmt.Sprintf(key, args...)
 	}
 	return key
+}
+
+// requiredLabel is the text screen readers announce after the label of a
+// required field. Without a translation function it is the English text of
+// TranslationKeyRequiredLabel, without the "form||" context.
+func (f *Form) requiredLabel(loc types.Localizer) string {
+	if f.translationEnabled && f.translationFunc != nil {
+		return f.translationFunc(loc, TranslationKeyRequiredLabel)
+	}
+	return strings.TrimPrefix(TranslationKeyRequiredLabel, translationContext)
 }
 
 func (f *Form) formRenderFunc(loc types.Localizer, v any, errs FieldErrors, _ ...any) (template.HTML, error) {

@@ -11,6 +11,9 @@ import (
 	"unicode/utf8"
 )
 
+// translationContext starts the translation keys of go-form's own texts.
+const translationContext = "form||"
+
 var (
 	TranslationKeyRequired                      = "form||Validation required"
 	TranslationKeyMin                           = "form||Value should be greater than or equal to %v"
@@ -42,6 +45,10 @@ var (
 	TranslationKeySortedSelectUnmarshalNotFound = "form||SortedSelect: value '%v' not found in source during unmarshal"
 )
 
+// TranslationKeyRequiredLabel is the text after the label of a required field
+// that only screen readers announce; the asterisk is hidden from them.
+var TranslationKeyRequiredLabel = "form||(required)"
+
 // FieldValidationError represents a validation error for a specific field.
 type FieldValidationError struct {
 	Field string
@@ -62,11 +69,63 @@ func (e FieldValidationError) FieldError() (field, err string) {
 func validateRequired(f *Form, field reflect.StructField, value reflect.Value, loc Localizer, getErr func(string, any) string) (errs FieldErrors) {
 	req := field.Tag.Get("required")
 	if req == "true" {
-		if isEmptyValue(value) {
+		missing := isEmptyValue(value)
+		if selected, ok := selectionMade(value); ok {
+			missing = !selected
+		}
+		if missing {
 			errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: getErr(TranslationKeyRequired, nil)})
 		}
 	}
 	return
+}
+
+// selectionMade reports whether a select field (a SortedSelect,
+// SortedMultiSelect or another Mapper or SortedMapper) has a choice selected.
+// A single select counts as empty when its key is "" or not one of its
+// options, so a placeholder such as "" → "—" does not satisfy required:"true".
+// A multi-select needs at least one key that is not "". ok is false for
+// fields that are not selects.
+func selectionMade(value reflect.Value) (selected bool, ok bool) {
+	if value.Kind() == reflect.Pointer {
+		if value.IsNil() {
+			return false, false
+		}
+		value = value.Elem()
+	}
+	if !value.IsValid() || !value.CanInterface() {
+		return false, false
+	}
+
+	switch v := value.Interface().(type) {
+	case MultiSelectGetter:
+		for _, key := range v.GetKeysAsStrings() {
+			if key != "" {
+				return true, true
+			}
+		}
+		return false, true
+	case SortedMapper:
+		key := v.String()
+		if key == "" {
+			return false, true
+		}
+		for _, option := range v.SortedMapper() {
+			if option.Key() == key {
+				return true, true
+			}
+		}
+		return false, true
+	case Mapper:
+		key := v.String()
+		if key == "" {
+			return false, true
+		}
+		_, found := v.Mapper()[key]
+		return found, true
+	}
+
+	return false, false
 }
 
 func validateMinMax(f *Form, field reflect.StructField, value reflect.Value, loc Localizer, getErr func(string, any) string) (errs FieldErrors) {
@@ -297,7 +356,9 @@ func validateSortedMapper(f *Form, field reflect.StructField, value reflect.Valu
 				break
 			}
 		}
-		if !found && valStr != "" {
+		// The zero value, such as 0 for SortedSelect[int], means nothing is
+		// selected; required:"true" reports that, not this check.
+		if !found && valStr != "" && valStr != fmt.Sprint(reflect.Zero(value.Type()).Interface()) {
 			// Wrap as FieldValidationError
 			errMsg := getErr(TranslationKeyInvalidSortedMapper, valStr)
 			errs = append(errs, FieldValidationError{Field: validationFieldName(field), Err: errMsg})

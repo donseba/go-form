@@ -244,6 +244,7 @@ func (t *Theme) LoadTemplatesFS(fsys fs.FS, rootDir string) error {
 		"label":                func() template.HTML { return "" },
 		"errors":               func() []string { return nil },
 		"form_print":           funcPrint,
+		"form_required_label":  funcRequiredLabel,
 		"form_attributes":      funcAttributes,
 		"form_data_attributes": funcDataAttributes,
 	})
@@ -384,6 +385,12 @@ func (t *Theme) RenderTemplate(name string, data interface{}) (template.HTML, er
 
 // Define existing function references
 var (
+	// funcRequiredLabel is replaced by the renderer with the form's
+	// translation of TranslationKeyRequiredLabel.
+	funcRequiredLabel = func(loc types.Localizer) string {
+		_ = loc
+		return "(required)"
+	}
 	funcPrint = func(loc types.Localizer, key string, args ...any) string {
 		_ = loc
 		if len(args) > 0 {

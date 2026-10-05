@@ -119,14 +119,14 @@ Other supported tags:
 - `maxLength` — Maximum length for textarea or string input
 - `class` — Custom CSS class for the field
 - `data` — Custom data attributes (e.g., `data="custom:value,foo:bar,baz:qux"`)
-- `translate` — Enable translation for enum values (e.g., `translate:"true"` for Enumerator fields)
+- `translate` — Translate option labels: `translate:"true"` for Enumerator, Mapper and SortedMapper fields (such as `SortedSelect`), `translate:"false"` to keep labels from a `values` tag as written (see [Translating Option Labels](#translating-option-labels))
 
 ---
 
 ## Validation
 
 ### Built-in Validation
-- **required**: Ensures the field is not empty.
+- **required**: Ensures the field is not empty. For selects (`SortedSelect`, `SortedMultiSelect`, `Mapper` and `SortedMapper` fields) a choice must be selected: an empty key (such as a `"" → "—"` placeholder) or a key that is not one of the options counts as missing, and a multi-select needs at least one key. The error uses `TranslationKeyRequired`, like other required fields.
 - **min, max, step**: For numeric fields, enforces minimum, maximum, and step values.
 - **minLength, maxLength**: For string/textarea fields, enforces minimum and maximum character count (Unicode-aware).
 - **values**: For radios/dropdowns, ensures the value is one of the allowed options.
@@ -262,6 +262,30 @@ var translations = map[string]map[string]string{
     "it": {"enum||Status.active": "Attivo", "enum||Status.inactive": "Inattivo"},
 }
 ```
+
+#### Translating Option Labels
+
+Dropdowns, radio groups and multi-checkboxes follow one rule: an option label is passed to the translation function when its option asks for it (`types.FieldValue.Translate`).
+
+- Labels from a `values` tag and the labels of a struct radio group are text of your application, like field labels, so they are translated. Add `translate:"false"` to show them as written.
+- Labels from an `Enumerator`, `Mapper` or `SortedMapper` (including `SortedSelect` and `SortedMultiSelect`) are often data, such as names from a database, so they are shown as written. Add `translate:"true"` (or set `DefaultEnumTranslation`) to use them as translation keys:
+
+```go
+type MyForm struct {
+    // "Small" and "Large" are translated.
+    Size string `form:"dropdown" label:"Size" values:"s:Small;l:Large"`
+    // The labels of the source map are translation keys.
+    Role form.SortedSelect[string] `form:"dropdown" label:"Role" translate:"true"`
+    // Page titles from the database are shown as written.
+    Page form.SortedSelect[int64] `form:"dropdown" label:"Page"`
+}
+```
+
+> In v2.4.0 and earlier, multi-checkboxes and radio groups translated every option label while dropdowns translated none. Add `translate:"true"` to `SortedMultiSelect` fields whose labels are translation keys.
+
+#### Translating the Required Marker
+
+Required fields show an asterisk and, for screen readers only, the text `(required)`. That text is the translation key `form||(required)` (`form.TranslationKeyRequiredLabel`); without a translation function it shows in English.
 
 ---
 
@@ -459,6 +483,14 @@ DepartmentsMulti form.SortedMultiSelect[int64] `form:"multicheckbox" label:"Depa
 // Initialize with a source map
 form.NewSortedSelect(map[int64]string{1: "HR", 2: "IT"})
 form.NewSortedMultiSelect(map[int64]string{1: "HR", 2: "IT"})
+```
+
+`MapForm` sets a select from the posted key. A key that is not one of the options leaves the selection empty, so `required:"true"` reports it; `MapForm` does not abort or write output for it. To see such skipped values (also malformed dates), set a handler:
+
+```go
+form.MapFormErrorHandler = func(field string, err error) {
+    slog.Debug("form value ignored", "field", field, "error", err)
+}
 ```
 
 For advanced usage, see [`example/sortedselect/main.go`](example/sortedselect/main.go) — covers single and multi-select fields, supported key types, pre-filled and user-submitted values, validation, error handling, JSON and DB integration.

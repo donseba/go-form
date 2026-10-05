@@ -6,7 +6,7 @@
   {{ form_print .Loc .Field.Label }}
   {{ if eq .Field.Required true }}
     <span style="{{themeStyle "required"}}" class="{{themeClass "required"}}" aria-hidden="true">*</span>
-    <span class="sr-only">(required)</span>
+    <span class="sr-only">{{ form_required_label .Loc }}</span>
   {{ end }}
 </label>
 
