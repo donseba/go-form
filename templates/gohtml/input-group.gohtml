@@ -1,10 +1,10 @@
-<div style="{{themeStyle "input-group"}}" class="{{themeClass "input-group"}}">
+<div{{with themeStyle "input-group"}} style="{{.}}"{{end}}{{with themeClass "input-group"}} class="{{.}}"{{end}}>
   {{if .GroupBefore}}
-  <div style="{{themeStyle "input-group-text"}}" class="{{themeClass "input-group-text"}}">{{.GroupBefore}}</div>
+  <div{{with themeStyle "input-group-text"}} style="{{.}}"{{end}}{{with themeClass "input-group-text"}} class="{{.}}"{{end}}>{{.GroupBefore}}</div>
   {{end}}
   {{.Input}}
   {{if .GroupAfter}}
-  <div style="{{themeStyle "input-group-text"}}" class="{{themeClass "input-group-text"}}">{{.GroupAfter}}</div>
+  <div{{with themeStyle "input-group-text"}} style="{{.}}"{{end}}{{with themeClass "input-group-text"}} class="{{.}}"{{end}}>{{.GroupAfter}}</div>
   {{end}}
 </div>
 

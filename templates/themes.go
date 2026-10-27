@@ -48,6 +48,12 @@ var BootstrapTheme = ThemeClasses{
 	// Input groups
 	InputGroup:     StyleOption{Class: "input-group"},
 	InputGroupText: StyleOption{Class: "input-group-text"},
+
+	// The spam trap input, off-screen.
+	Honeypot: StyleOption{Class: "visually-hidden"},
+
+	// Text for screen readers only, such as "(required)".
+	VisuallyHidden: StyleOption{Class: "visually-hidden"},
 }
 
 // TailwindTheme defines Tailwind CSS v3 classes for form elements
@@ -91,6 +97,12 @@ var TailwindTheme = ThemeClasses{
 	// Input groups
 	InputGroup:     StyleOption{Class: "flex rounded-md shadow-sm"},
 	InputGroupText: StyleOption{Class: "inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 text-sm"},
+
+	// The spam trap input, off-screen.
+	Honeypot: StyleOption{Class: "sr-only"},
+
+	// Text for screen readers only, such as "(required)".
+	VisuallyHidden: StyleOption{Class: "sr-only"},
 }
 
 // TailwindV4Theme defines Tailwind CSS v4 classes for form elements.
@@ -137,6 +149,12 @@ var TailwindV4Theme = ThemeClasses{
 	// Input groups
 	InputGroup:     StyleOption{Class: "flex w-full rounded-md shadow-sm"},
 	InputGroupText: StyleOption{Class: "inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-700 dark:text-gray-200"},
+
+	// The spam trap input, off-screen.
+	Honeypot: StyleOption{Class: "sr-only"},
+
+	// Text for screen readers only, such as "(required)".
+	VisuallyHidden: StyleOption{Class: "sr-only"},
 }
 
 // PlainTheme defines simple, unstyled HTML with inline styles
@@ -144,6 +162,8 @@ var PlainTheme = ThemeClasses{
 	// Common elements
 	Wrapper:     StyleOption{Style: "margin-bottom: 0.5rem;"},
 	Label:       StyleOption{Style: "display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 500; color: #212529;"},
+	Fieldset:    StyleOption{Style: "min-width: 0; margin-left: 0; margin-right: 0; padding: 0; border: 0;"},
+	Legend:      StyleOption{Style: "padding: 0;"},
 	Error:       StyleOption{Style: "display: block; width: 100%; margin-top: 0.25rem; font-size: 0.75rem; color: #dc3545;"},
 	Description: StyleOption{Style: "margin-top: 0.25rem; font-size: 0.75rem; color: #6c757d;"},
 
@@ -173,15 +193,19 @@ var PlainTheme = ThemeClasses{
 	// Input groups
 	InputGroup:     StyleOption{Style: "display: flex; align-items: stretch; width: 100%;"},
 	InputGroupText: StyleOption{Style: "display: inline-flex; align-items: center; padding: 0 0.75rem; background: #f8f9fa; border: 1px solid #ced4da; border-right: 0; border-radius: 0.25rem 0 0 0.25rem; color: #6c757d; font-size: 0.875rem;"},
+
+	// Text for screen readers only, such as "(required)", hidden without CSS.
+	VisuallyHidden: StyleOption{Style: VisuallyHiddenStyle},
 }
 
 // Initialize themes
 func InitThemes() error {
-	// Register themes with appropriate inline style setting
-	RegisterTheme("bootstrap", BootstrapTheme, nil)   // false = uses CSS classes
-	RegisterTheme("tailwind", TailwindTheme, nil)     // false = uses CSS classes
-	RegisterTheme("tailwindv4", TailwindV4Theme, nil) // false = uses CSS classes
-	RegisterTheme("plain", PlainTheme, nil)           // true = uses inline styles
+	// Register the built-in themes. The third argument is an attribute map,
+	// nil here.
+	RegisterTheme("bootstrap", BootstrapTheme, nil)
+	RegisterTheme("tailwind", TailwindTheme, nil)
+	RegisterTheme("tailwindv4", TailwindV4Theme, nil)
+	RegisterTheme("plain", PlainTheme, nil)
 
 	// Load templates using the embedded filesystem
 	if theme, ok := GetTheme("bootstrap"); ok {

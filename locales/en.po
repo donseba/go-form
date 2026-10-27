@@ -1,0 +1,110 @@
+msgid ""
+msgstr "Language: en\nContent-Type: text/plain; charset=UTF-8\nPlural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "form||(required)"
+msgstr "(required)"
+
+msgid "form||CSRF token is missing"
+msgstr "The form token is missing. Please try again."
+
+msgid "form||Cannot assign or convert value of type %T to %s"
+msgstr "A value of type %T cannot be used as %s."
+
+msgid "form||Error processing CSRF token"
+msgstr "The form token could not be checked. Please try again."
+
+msgid "form||File should be of type %s"
+msgstr "Choose a file of type %s."
+
+msgid "form||File should not exceed %s"
+msgstr "The file must not be larger than %s."
+
+msgid "form||Invalid CSRF token"
+msgstr "The form token is not valid. Please try again."
+
+msgid "form||Invalid URL format"
+msgstr "Enter a valid URL."
+
+msgid "form||Invalid email format"
+msgstr "Enter a valid email address."
+
+msgid "form||Invalid enum value '%s' provided"
+msgstr "The choice '%s' is not allowed."
+
+msgid "form||Invalid mapper value '%s' provided"
+msgstr "The choice '%s' is not allowed."
+
+msgid "form||Invalid sorted mapper value '%s' provided"
+msgstr "The choice '%s' is not allowed."
+
+msgid "form||Invalid value '%s' provided"
+msgstr "The value '%s' is not allowed."
+
+msgid "form||SortedSelect: key '%s' not found in source"
+msgstr "The choice '%s' is not available."
+
+msgid "form||SortedSelect: source map is nil"
+msgstr "No choices are available."
+
+msgid "form||SortedSelect: value '%v' not found in source"
+msgstr "The choice '%v' is not available."
+
+msgid "form||SortedSelect: value '%v' not found in source during unmarshal"
+msgstr "The choice '%v' is not available."
+
+msgid "form||Validation required"
+msgstr "This field is required."
+
+msgid "form||Value is not in the expected format"
+msgstr "The value is not in the expected format."
+
+msgid "form||Value is not valid"
+msgstr "Enter a valid value."
+
+msgid "form||Value should be a multiple of %g"
+msgstr "Enter a multiple of %g."
+
+msgid "form||Value should be a single line without tabs or line breaks"
+msgstr "Use a single line, without tabs or line breaks."
+
+msgid "form||Value should be at least %d characters"
+msgstr "Use at least %d characters."
+
+msgid "form||Value should be either true or false"
+msgstr "Choose yes or no."
+
+msgid "form||Value should be greater than or equal to %v"
+msgstr "Enter a value of at least %v."
+
+msgid "form||Value should be in steps of %g from %g"
+msgstr "Enter a value in steps of %g from %g."
+
+msgid "form||Value should be less than or equal to %v"
+msgstr "Enter a value of at most %v."
+
+msgid "form||Value should be zero"
+msgstr "The value must be zero."
+
+msgid "form||Value should contain '%s'"
+msgstr "The value must contain '%s'."
+
+msgid "form||Value should end with '%s'"
+msgstr "The value must end with '%s'."
+
+msgid "form||Value should have at least %d items"
+msgstr "Choose at least %d options."
+
+msgid "form||Value should have at most %d items"
+msgstr "Choose at most %d options."
+
+msgid "form||Value should match %s"
+msgstr "The value must match %s."
+
+msgid "form||Value should not exceed %d characters"
+msgstr "Use at most %d characters."
+
+msgid "form||Value should start with '%s'"
+msgstr "The value must start with '%s'."

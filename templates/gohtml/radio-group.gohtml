@@ -1,17 +1,19 @@
-<div style="{{themeStyle "radio-group"}}" class="{{themeClass "radio-group"}}" role="radiogroup" aria-labelledby="{{.Field.Id}}_label">
+<div{{with themeStyle "radio-group"}} style="{{.}}"{{end}}{{with themeClass "radio-group"}} class="{{.}}"{{end}}>
   {{ range $k, $option := .Field.Values }}
-  <div style="{{themeStyle "radio-wrapper"}}" class="{{themeClass "radio-wrapper"}}">
+  <div{{with themeStyle "radio-wrapper"}} style="{{.}}"{{end}}{{with themeClass "radio-wrapper"}} class="{{.}}"{{end}}>
     <input type="radio"
            id="{{$.Field.Id}}_{{$k}}"
            name="{{$.Field.Name}}"
            value="{{$option.Value}}"
            {{ if eq $.Field.Value $option.Value }}checked{{end}}
            {{ if eq $.Field.Required true }}required{{end}}
-           style="{{themeStyle "radio"}}"
-           class="{{themeClass "radio"}} {{$.Field.Class}}"
+           {{ if or $option.Disabled $.Field.Disabled }}disabled{{ end }}
+           {{with themeStyle "radio"}}style="{{.}}"{{end}}
+           {{with form_class (themeClass "radio") $.Field.Class}}class="{{.}}"{{end}}
            aria-labelledby="{{$.Field.Id}}_{{$k}}_label"
-           {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
-    <label style="{{themeStyle "radio-label"}}" class="{{themeClass "radio-label"}}" for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label">{{ if $option.Translate }}{{ form_print $.Loc $option.Name }}{{ else }}{{ $option.Name }}{{ end }}</label>
+           {{with form_described_by $.Field}}aria-describedby="{{.}}"{{end}}
+           {{if $.Field.Errors}}aria-invalid="true"{{end}}>
+    <label{{with themeStyle "radio-label"}} style="{{.}}"{{end}}{{with themeClass "radio-label"}} class="{{.}}"{{end}} for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label">{{ if $option.Translate }}{{ form_print $.Loc $option.Name }}{{ else }}{{ $option.Name }}{{ end }}</label>
   </div>
   {{ end }}
 </div>

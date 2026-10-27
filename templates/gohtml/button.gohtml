@@ -2,8 +2,8 @@
         id="{{.Field.Id}}"
         name="{{.Field.Name}}"
         {{ if eq .Field.Disabled true }}disabled{{end}}
-        style="{{themeStyle "button"}}"
-        class="{{themeClass "button"}} {{.Field.Class}}"
+        {{with themeStyle "button"}}style="{{.}}"{{end}}
+        {{with form_class (themeClass "button") .Field.Class}}class="{{.}}"{{end}}
         aria-labelledby="{{.Field.Id}}_label"
         {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
   {{ form_print .Loc .Field.Label }}

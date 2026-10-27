@@ -19,7 +19,13 @@ type DefaultMemoryCSRFStore struct {
 	cleanup  *time.Ticker
 }
 
-// NewDefaultMemoryCSRFStore creates a store with periodic cleanup
+// The default memory store reports the lifetime of its tokens.
+var _ ExpiringStore = (*DefaultMemoryCSRFStore)(nil)
+
+// NewDefaultMemoryCSRFStore creates a store with periodic cleanup. The
+// first duration is how long a token stays valid (DefaultExpirationTime by
+// default), the second how often expired tokens are removed
+// (DefaultCleanupIntervalTime by default).
 func NewDefaultMemoryCSRFStore(durations ...time.Duration) *DefaultMemoryCSRFStore {
 	var (
 		lt = DefaultExpirationTime
@@ -55,6 +61,13 @@ func (s *DefaultMemoryCSRFStore) Store(key, token string) error {
 		Expiration: time.Now().Add(s.lifetime),
 	})
 	return nil
+}
+
+// Lifetime is how long a token stays valid after it is stored, the first
+// duration given to NewDefaultMemoryCSRFStore (DefaultExpirationTime by
+// default). It makes the store an ExpiringStore.
+func (s *DefaultMemoryCSRFStore) Lifetime() time.Duration {
+	return s.lifetime
 }
 
 func (s *DefaultMemoryCSRFStore) Validate(key, token string) error {

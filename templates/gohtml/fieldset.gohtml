@@ -1,0 +1,10 @@
+<fieldset{{with form_style (themeStyle "wrapper") (themeStyle "fieldset")}} style="{{.}}"{{end}}{{with form_class (themeClass "wrapper") (themeClass "fieldset")}} class="{{.}}"{{end}}>
+  {{ label }}
+  {{ if .Field.Description }}
+  <div{{with themeStyle "description"}} style="{{.}}"{{end}}{{with themeClass "description"}} class="{{.}}"{{end}} id="{{.Field.Id}}_description">{{ form_print .Loc .Field.Description }}</div>
+  {{ end }}
+  {{ field }}
+  {{ range $i, $error := errors }}
+  <div{{with themeStyle "error"}} style="{{.}}"{{end}}{{with themeClass "error"}} class="{{.}}"{{end}} id="{{$.Field.Id}}_error_{{$i}}" role="alert">{{ $error }}</div>
+  {{ end }}
+</fieldset>

@@ -1,4 +1,4 @@
-<div style="{{themeStyle "textarea-wrapper"}}" class="{{themeClass "textarea-wrapper"}}">
+<div{{with themeStyle "textarea-wrapper"}} style="{{.}}"{{end}}{{with themeClass "textarea-wrapper"}} class="{{.}}"{{end}}>
   <textarea
        id="{{.Field.Id}}"
        name="{{.Field.Name}}"
@@ -6,9 +6,15 @@
        cols="{{.Field.Cols}}"
        placeholder="{{ form_print .Loc .Field.Placeholder}}"
        {{if .Field.Required}}required{{end}}
-       style="{{themeStyle "textarea"}}"
-       class="{{themeClass "textarea"}} {{.Field.Class}}"
+       {{if .Field.Disabled}}disabled{{end}}
+       {{if .Field.ReadOnly}}readonly{{end}}
+       {{with .Field.MinLength}}minlength="{{.}}"{{end}}
+       {{with .Field.MaxLength}}maxlength="{{.}}"{{end}}
+       {{with .Field.AutoComplete}}autocomplete="{{.}}"{{end}}
+       {{with themeStyle "textarea"}}style="{{.}}"{{end}}
+       {{with form_class (themeClass "textarea") .Field.Class}}class="{{.}}"{{end}}
        aria-labelledby="{{.Field.Id}}_label"
-       {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}
+       {{with form_described_by .Field}}aria-describedby="{{.}}"{{end}}
+       {{if .Field.Errors}}aria-invalid="true"{{end}}
        {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>{{.Field.Value}}</textarea>
 </div>

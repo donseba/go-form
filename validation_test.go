@@ -56,6 +56,16 @@ func TestValidateForm(t *testing.T) {
 			errors: 1,
 		},
 		{
+			name:   "required filled with spaces only",
+			form:   TestForm{Username: "   ", Age: 25, Email: "user@example.com", Description: "valid"},
+			errors: 1,
+		},
+		{
+			name:   "min length not reached without surrounding spaces",
+			form:   TestForm{Username: "user", Age: 25, Email: "user@example.com", Description: "  a  "},
+			errors: 1,
+		},
+		{
 			name:   "description exactly min length",
 			form:   TestForm{Username: "user", Age: 25, Email: "user@example.com", Description: "ab"},
 			errors: 0,
@@ -349,9 +359,9 @@ func TestValidateForm_Translation(t *testing.T) {
 		locale string
 		expect string
 	}{
-		{"required error in EN", TranslationForm{Name: "", Age: 0}, "en", "Validation required"},
+		{"required error in EN", TranslationForm{Name: "", Age: 0}, "en", "This field is required."},
 		{"required error in IT", TranslationForm{Name: "", Age: 0}, "it", "è obbligatorio"},
-		{"min error in EN", TranslationForm{Name: "John", Age: 10}, "en", "Value should be greater than or equal to 18"},
+		{"min error in EN", TranslationForm{Name: "John", Age: 10}, "en", "Enter a value of at least 18."},
 		{"min error in IT", TranslationForm{Name: "John", Age: 10}, "it", "almeno 18"},
 	}
 
@@ -443,5 +453,27 @@ func TestExtendedValidations(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+type passwordForm struct {
+	Password string `form:"input,password" label:"Password" required:"true" minLength:"4"`
+}
+
+// TestPasswordTakenAsTyped checks that spaces count in a password: they may
+// be part of it.
+func TestPasswordTakenAsTyped(t *testing.T) {
+	form := NewForm()
+
+	for _, value := range []string{"    ", "  ab", "ab  "} {
+		input := passwordForm{Password: value}
+		if errs := form.ValidateForm(&input); len(errs) != 0 {
+			t.Errorf("password %q refused: %v", value, errs)
+		}
+	}
+
+	input := passwordForm{Password: " a "}
+	if errs := form.ValidateForm(&input); len(errs) != 1 {
+		t.Errorf("password %q of three characters accepted: %v", input.Password, errs)
 	}
 }

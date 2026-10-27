@@ -1,12 +1,12 @@
 <label
        {{with .Field.Id}}for="{{.}}"{{end}}
-       style="{{themeStyle "label"}}"
-       class="{{themeClass "label"}}"
+       {{with themeStyle "label"}}style="{{.}}"{{end}}
+       {{with themeClass "label"}}class="{{.}}"{{end}}
        {{with .Field.Id}}id="{{.}}_label"{{end}}>
   {{ form_print .Loc .Field.Label }}
   {{ if eq .Field.Required true }}
-    <span style="{{themeStyle "required"}}" class="{{themeClass "required"}}" aria-hidden="true">*</span>
-    <span class="sr-only">{{ form_required_label .Loc }}</span>
+    <span{{with themeStyle "required"}} style="{{.}}"{{end}}{{with themeClass "required"}} class="{{.}}"{{end}} aria-hidden="true">*</span>
+    <span{{with themeStyle "visually-hidden"}} style="{{.}}"{{end}}{{with themeClass "visually-hidden"}} class="{{.}}"{{end}}>{{ form_required_label .Loc }}</span>
   {{ end }}
 </label>
 

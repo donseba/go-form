@@ -31,7 +31,7 @@ func TestRender_StructRadioGroup_InferredFromSameNameBoolFields(t *testing.T) {
 	}
 
 	html := string(out)
-	if !strings.Contains(html, "role=\"radiogroup\"") {
+	if !strings.Contains(html, "<fieldset") {
 		t.Fatalf("expected radiogroup to render, got: %s", html)
 	}
 	if !strings.Contains(html, "type=\"radio\"") {

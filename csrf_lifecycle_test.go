@@ -1,9 +1,11 @@
 package form
 
 import (
+	"html"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -121,5 +123,155 @@ func TestCSRFSubmissionWithoutSessionDoesNotCreateCookie(t *testing.T) {
 	post := csrfRequest(csrfTestHandler(NewForm()), http.MethodPost, "/edit", "token", nil)
 	if post.Code != http.StatusBadRequest || len(post.Result().Cookies()) != 0 {
 		t.Fatalf("missing session status = %d, cookies = %v", post.Code, post.Result().Cookies())
+	}
+}
+
+// csrfFormHandler renders a form's hidden fields with the request's token,
+// as a page below the middleware does.
+func csrfFormHandler(f *Form, info Info) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hidden, err := f.Hidden(nil, WithRequestInfo(r, struct{ Name string }{}, info))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+			return
+		}
+
+		_, _ = w.Write([]byte(hidden))
+	})
+}
+
+// csrfHiddenInput is the name and value of the hidden token input in body.
+func csrfHiddenInput(t *testing.T, body string) (name, value string) {
+	t.Helper()
+
+	match := regexp.MustCompile(`<input type="hidden" name="([^"]+)" value="([^"]+)"`).FindStringSubmatch(body)
+	if match == nil {
+		t.Fatalf("no hidden token input in %s", body)
+	}
+
+	return match[1], html.UnescapeString(match[2])
+}
+
+func TestCSRFCustomFieldName(t *testing.T) {
+	tests := map[string]Info{
+		"from the middleware": {Target: "/", Method: http.MethodPost},
+		"set on the form":     {Target: "/", Method: http.MethodPost, CsrfField: "token"},
+	}
+
+	for name, info := range tests {
+		t.Run(name, func(t *testing.T) {
+			f := NewForm()
+			handler := f.CSRFMiddlewareWithOptions(CSRFOptions{FieldName: "token"})(csrfFormHandler(f, info))
+
+			get := httptest.NewRecorder()
+			handler.ServeHTTP(get, httptest.NewRequest(http.MethodGet, "/", nil))
+
+			field, token := csrfHiddenInput(t, get.Body.String())
+			if field != "token" {
+				t.Fatalf("token rendered in %q, want token", field)
+			}
+
+			values := url.Values{field: {token}}
+			post := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(values.Encode()))
+			post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			post.AddCookie(get.Result().Cookies()[0])
+
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, post)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("submission with the token in %q: %d %s", field, rec.Code, rec.Body.String())
+			}
+
+			if field, _ := csrfHiddenInput(t, rec.Body.String()); field != "token" {
+				t.Errorf("fresh token rendered in %q, want token", field)
+			}
+		})
+	}
+}
+
+func TestCSRFDefaultFieldNameIgnoresOtherFields(t *testing.T) {
+	f := NewForm()
+	handler := csrfTestHandler(f)
+	get := csrfRequest(handler, http.MethodGet, "/", "", nil)
+
+	values := url.Values{"token": {get.Header().Get("X-CSRF-Token")}}
+	post := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(values.Encode()))
+	post.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	post.AddCookie(get.Result().Cookies()[0])
+
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, post)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("token outside %q: status %d, want 400", DefaultCSRFField, rec.Code)
+	}
+}
+
+// sessionCookie is the session cookie that rec sets, or nil.
+func sessionCookie(rec *httptest.ResponseRecorder) *http.Cookie {
+	for _, cookie := range rec.Result().Cookies() {
+		if cookie.Name == csrf.DefaultSessionID {
+			return cookie
+		}
+	}
+
+	return nil
+}
+
+// expiresIn reports whether cookie expires about lifetime from now.
+func expiresIn(cookie *http.Cookie, lifetime time.Duration) bool {
+	left := time.Until(cookie.Expires)
+
+	return left > lifetime-5*time.Second && left <= lifetime+time.Second
+}
+
+func TestCSRFRenewsSessionCookie(t *testing.T) {
+	stores := map[string]struct {
+		store    csrf.Store
+		lifetime time.Duration
+	}{
+		"default store":  {csrf.NewDefaultMemoryCSRFStore(), csrf.DefaultExpirationTime},
+		"longer tokens":  {csrf.NewDefaultMemoryCSRFStore(30 * time.Minute), 30 * time.Minute},
+		"without expiry": {csrf.NewMemoryCSRFStore(), csrf.DefaultExpirationTime},
+	}
+
+	for name, test := range stores {
+		t.Run(name, func(t *testing.T) {
+			f := NewForm()
+			f.SetCSRFStore(test.store)
+			handler := csrfTestHandler(f)
+
+			first := csrfRequest(handler, http.MethodGet, "/", "", nil)
+
+			created := sessionCookie(first)
+			if created == nil || !expiresIn(created, test.lifetime) {
+				t.Fatalf("new session cookie %v, want one that expires in %s", created, test.lifetime)
+			}
+
+			// A later page renews the cookie, so that its form outlives
+			// the cookie set by the first page.
+			later := csrfRequest(handler, http.MethodGet, "/", "", created)
+
+			renewed := sessionCookie(later)
+			if renewed == nil || renewed.Value != created.Value || !expiresIn(renewed, test.lifetime) {
+				t.Fatalf("later page: cookie %v, want %s renewed for %s", renewed, created.Value, test.lifetime)
+			}
+
+			// So does an accepted submission, which gets a fresh token.
+			post := csrfRequest(handler, http.MethodPost, "/", later.Header().Get("X-CSRF-Token"), created)
+
+			submitted := sessionCookie(post)
+			if post.Code != http.StatusOK || submitted == nil || submitted.Value != created.Value {
+				t.Fatalf("submission: status %d, cookie %v, want %s renewed", post.Code, submitted, created.Value)
+			}
+
+			// A refused submission does not.
+			refused := csrfRequest(handler, http.MethodPost, "/", "wrong", created)
+			if refused.Code != http.StatusForbidden || sessionCookie(refused) != nil {
+				t.Fatalf("refused submission: status %d, cookies %v", refused.Code, refused.Result().Cookies())
+			}
+		})
 	}
 }

@@ -1,13 +1,27 @@
+{{- /* A hidden input carries its name and value only: no label refers to it and nobody sees a placeholder. */ -}}
+{{if eq .Type "hidden" -}}
+<input type="hidden" id="{{.Field.Id}}" name="{{.Field.Name}}" value="{{.Field.Value}}"{{if .Field.Disabled}} disabled{{end}}{{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
+{{- else -}}
 <input type="{{.Type}}"
        id="{{.Field.Id}}"
        name="{{.Field.Name}}"
        {{ if ne .Type "file" }}value="{{.Field.Value}}"{{ end }}
        placeholder="{{ form_print .Loc .Field.Placeholder}}"
        {{if .Field.Required}}required{{end}}
+       {{if .Field.Disabled}}disabled{{end}}
+       {{if .Field.ReadOnly}}readonly{{end}}
        {{if .Field.Min}}min="{{.Field.Min}}"{{end}}
        {{if .Field.Max}}max="{{.Field.Max}}"{{end}}
        {{if .Field.Step}}step="{{.Field.Step}}"{{end}}
-       style="{{if eq .Type "file"}}{{themeStyle "file"}}{{else}}{{themeStyle "input"}}{{end}}" class="{{if eq .Type "file"}}{{themeClass "file"}}{{else}}{{themeClass "input"}}{{end}} {{.Field.Class}}"
+       {{with .Field.MinLength}}minlength="{{.}}"{{end}}
+       {{with .Field.MaxLength}}maxlength="{{.}}"{{end}}
+       {{with .Field.Pattern}}pattern="{{.}}"{{end}}
+       {{with .Field.AutoComplete}}autocomplete="{{.}}"{{end}}
+       {{if eq .Type "file"}}{{with .Field.Accept}}accept="{{.}}"{{end}}{{end}}
+       {{if and .Field.Multiple (or (eq .Type "file") (eq .Type "email"))}}multiple{{end}}
+       {{if eq .Type "file"}}{{with themeStyle "file"}} style="{{.}}"{{end}}{{with form_class (themeClass "file") .Field.Class}} class="{{.}}"{{end}}{{else}}{{with themeStyle "input"}} style="{{.}}"{{end}}{{with form_class (themeClass "input") .Field.Class}} class="{{.}}"{{end}}{{end}}
        aria-labelledby="{{.Field.Id}}_label"
-       {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}
+       {{with form_described_by .Field}}aria-describedby="{{.}}"{{end}}
+       {{if .Field.Errors}}aria-invalid="true"{{end}}
        {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
+{{end}}

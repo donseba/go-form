@@ -1,0 +1,10 @@
+{{ if or .Field.CancelTarget (not .Field.ReadOnly) }}
+<div{{with themeStyle "form-buttons"}} style="{{.}}"{{end}}{{with themeClass "form-buttons"}} class="{{.}}"{{end}}>
+  {{ if .Field.CancelTarget }}
+    <a href="{{ .Field.CancelTarget }}"{{with themeStyle "cancel"}} style="{{.}}"{{end}}{{with themeClass "cancel"}} class="{{.}}"{{end}}>{{ if .Field.CancelText }}{{ form_print .Loc .Field.CancelText }}{{ else }}{{ form_print .Loc "Cancel" }}{{ end }}</a>
+  {{ end }}
+  {{ if not .Field.ReadOnly }}
+    <button type="submit"{{with themeStyle "button"}} style="{{.}}"{{end}}{{with themeClass "button"}} class="{{.}}"{{end}}>{{ form_print .Loc .Field.Label }}</button>
+  {{ end }}
+</div>
+{{ end }}

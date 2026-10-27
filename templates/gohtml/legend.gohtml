@@ -1,0 +1,10 @@
+<legend
+       {{with form_style (themeStyle "label") (themeStyle "legend")}}style="{{.}}"{{end}}
+       {{with form_class (themeClass "label") (themeClass "legend")}}class="{{.}}"{{end}}
+       {{with .Field.Id}}id="{{.}}_label"{{end}}>
+  {{ form_print .Loc .Field.Label }}
+  {{ if eq .Field.Required true }}
+    <span{{with themeStyle "required"}} style="{{.}}"{{end}}{{with themeClass "required"}} class="{{.}}"{{end}} aria-hidden="true">*</span>
+    <span{{with themeStyle "visually-hidden"}} style="{{.}}"{{end}}{{with themeClass "visually-hidden"}} class="{{.}}"{{end}}>{{ form_required_label .Loc }}</span>
+  {{ end }}
+</legend>

@@ -42,6 +42,18 @@ type TokenConsumer interface {
 	Consume(key, token string) error
 }
 
+// ExpiringStore is a Store whose tokens expire Lifetime after they are
+// stored, such as DefaultMemoryCSRFStore. The CSRF middleware keeps its
+// session cookie for the same time after each token it issues, so the
+// cookie lasts as long as the tokens; for other stores it uses
+// DefaultExpirationTime.
+type ExpiringStore interface {
+	Store
+
+	// Lifetime is how long a token stays valid after it is stored.
+	Lifetime() time.Duration
+}
+
 // GenerateCSRFToken creates a secure random token for CSRF protection
 func GenerateCSRFToken() (string, error) {
 	bytes := make([]byte, 32)

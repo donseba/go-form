@@ -63,6 +63,35 @@ type FormField struct {
 	Class        string            `json:"class,omitempty"`
 	Data         map[string]string `json:"data,omitempty"` // Data attributes
 	ValueMap     map[string]bool   `json:"valueMap,omitempty"`
+
+	// ReadOnly renders a text-like input or textarea with the readonly
+	// attribute (readonly:"true"). On the form itself (Info.ReadOnly) it
+	// renders every field disabled and leaves out the submit button.
+	ReadOnly bool `json:"readOnly,omitempty"`
+	// AutoComplete is the autocomplete attribute, such as "email" or
+	// "current-password" (autocomplete:"…").
+	AutoComplete string `json:"autocomplete,omitempty"`
+	// Accept lists the file types a file input offers, such as
+	// "image/*,.pdf" (accept:"…").
+	Accept string `json:"accept,omitempty"`
+	// Multiple lets a file or email input take more than one value
+	// (multiple:"true", or a []*multipart.FileHeader field).
+	Multiple bool `json:"multiple,omitempty"`
+	// MinLength is the minlength attribute (minLength:"…").
+	MinLength string `json:"minLength,omitempty"`
+	// Pattern is the pattern attribute: the pattern tag when browsers check
+	// it the same way as the server, see the pattern tag.
+	Pattern string `json:"pattern,omitempty"`
+	// Errors are the validation messages of the field while rendering; the
+	// control is then marked aria-invalid and described by them.
+	Errors []string `json:"errors,omitempty"`
+	// Honeypot is the name of the spam trap field of a form (Info.Honeypot).
+	Honeypot string `json:"honeypot,omitempty"`
+	// SortByLabel orders the translated option labels (Values with
+	// Translate) alphabetically when the form renders, in the language of
+	// the render: a SortedSelect or SortedMultiSelect with SortByLabel and
+	// translate:"true".
+	SortByLabel bool `json:"sortByLabel,omitempty"`
 }
 
 // Constants for field types
