@@ -2,12 +2,18 @@
        id="{{.Field.Id}}"
        name="{{.Field.Name}}"
        {{ if .Field.Required }}required{{end}}
-       style="{{themeStyle "select"}}"
-       class="{{themeClass "select"}} {{.Field.Class}}"
+       {{ if .Field.Disabled }}disabled{{end}}
+       {{with .Field.AutoComplete}}autocomplete="{{.}}"{{end}}
+       {{with themeStyle "select"}}style="{{.}}"{{end}}
+       {{with form_class (themeClass "select") .Field.Class}}class="{{.}}"{{end}}
        aria-labelledby="{{.Field.Id}}_label"
-       {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}
+       {{with form_described_by .Field}}aria-describedby="{{.}}"{{end}}
+       {{if .Field.Errors}}aria-invalid="true"{{end}}
        {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
   {{ $value := .Field.Value }}
+  {{ with .Field.Placeholder }}
+  <option value="" {{ if eq (printf "%v" $value) "" }}selected{{ end }}>{{ form_print $.Loc . }}</option>
+  {{ end }}
   {{ range $k, $option := .Field.Values }}
   <option value="{{$option.Value}}" {{ if eq $value $option.Value }}selected{{ end }} {{ if eq $option.Disabled true }}disabled{{ end }}>{{ if $option.Translate }}{{ form_print $.Loc $option.Name }}{{ else }}{{ $option.Name }}{{ end }}</option>
   {{ end }}

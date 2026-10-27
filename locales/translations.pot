@@ -1,0 +1,110 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Cancel"
+msgstr ""
+
+msgid "form||(required)"
+msgstr ""
+
+msgid "form||CSRF token is missing"
+msgstr ""
+
+msgid "form||Cannot assign or convert value of type %T to %s"
+msgstr ""
+
+msgid "form||Error processing CSRF token"
+msgstr ""
+
+msgid "form||File should be of type %s"
+msgstr ""
+
+msgid "form||File should not exceed %s"
+msgstr ""
+
+msgid "form||Invalid CSRF token"
+msgstr ""
+
+msgid "form||Invalid URL format"
+msgstr ""
+
+msgid "form||Invalid email format"
+msgstr ""
+
+msgid "form||Invalid enum value '%s' provided"
+msgstr ""
+
+msgid "form||Invalid mapper value '%s' provided"
+msgstr ""
+
+msgid "form||Invalid sorted mapper value '%s' provided"
+msgstr ""
+
+msgid "form||Invalid value '%s' provided"
+msgstr ""
+
+msgid "form||SortedSelect: key '%s' not found in source"
+msgstr ""
+
+msgid "form||SortedSelect: source map is nil"
+msgstr ""
+
+msgid "form||SortedSelect: value '%v' not found in source"
+msgstr ""
+
+msgid "form||SortedSelect: value '%v' not found in source during unmarshal"
+msgstr ""
+
+msgid "form||Validation required"
+msgstr ""
+
+msgid "form||Value is not in the expected format"
+msgstr ""
+
+msgid "form||Value is not valid"
+msgstr ""
+
+msgid "form||Value should be a multiple of %g"
+msgstr ""
+
+msgid "form||Value should be a single line without tabs or line breaks"
+msgstr ""
+
+msgid "form||Value should be at least %d characters"
+msgstr ""
+
+msgid "form||Value should be either true or false"
+msgstr ""
+
+msgid "form||Value should be greater than or equal to %v"
+msgstr ""
+
+msgid "form||Value should be in steps of %g from %g"
+msgstr ""
+
+msgid "form||Value should be less than or equal to %v"
+msgstr ""
+
+msgid "form||Value should be zero"
+msgstr ""
+
+msgid "form||Value should contain '%s'"
+msgstr ""
+
+msgid "form||Value should end with '%s'"
+msgstr ""
+
+msgid "form||Value should have at least %d items"
+msgstr ""
+
+msgid "form||Value should have at most %d items"
+msgstr ""
+
+msgid "form||Value should match %s"
+msgstr ""
+
+msgid "form||Value should not exceed %d characters"
+msgstr ""
+
+msgid "form||Value should start with '%s'"
+msgstr ""

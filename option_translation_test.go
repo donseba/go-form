@@ -124,7 +124,7 @@ func TestRequiredLabelTranslated(t *testing.T) {
 		t.Fatalf("render error: %v", err)
 	}
 
-	if !strings.Contains(string(html), `<span class="sr-only">(required)</span>`) {
+	if !strings.Contains(string(html), `class="sr-only">(required)</span>`) {
 		t.Fatalf("expected English required text, got: %s", html)
 	}
 
@@ -136,7 +136,7 @@ func TestRequiredLabelTranslated(t *testing.T) {
 		t.Fatalf("render error: %v", err)
 	}
 
-	if !strings.Contains(string(html), `<span class="sr-only">T(form||(required))</span>`) {
+	if !strings.Contains(string(html), `class="sr-only">T(form||(required))</span>`) {
 		t.Fatalf("expected translated required text, got: %s", html)
 	}
 }

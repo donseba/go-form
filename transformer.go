@@ -3,7 +3,10 @@ package form
 import (
 	"encoding/json"
 	"fmt"
+	"math"
+	"mime/multipart"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,6 +36,16 @@ const (
 	tagDisabled = "disabled"
 	// Enable translation support for enum values
 	tagTranslate = "translate"
+
+	tagReadOnly     = "readonly"
+	tagAutoComplete = "autocomplete"
+	tagAccept       = "accept"
+	tagMultiple     = "multiple"
+	tagMinLength    = "minLength"
+	tagPattern      = "pattern"
+	// tagWallClock marks a datetime-local field whose time is a time of
+	// day on the clock, read and shown without a time zone.
+	tagWallClock = "wallclock"
 )
 
 var (
@@ -69,22 +82,53 @@ var (
 
 type Transformer struct {
 	Fields []types.FormField `json:"fields"`
+
+	// location is the time zone date-times are shown in; nil shows them in
+	// their own zone.
+	location *time.Location
+	// overrides replace struct tags of fields, by the name they render
+	// with (Overrides).
+	overrides Overrides
+	// options are the choices of fields given at render time, by the name
+	// they render with (FieldOptions).
+	options FieldOptions
 }
 
 func NewTransformer(model interface{}) (*Transformer, error) {
-	var renderInfo *Info
-	switch wrapped := model.(type) {
-	case RenderModel:
+	return newTransformer(model, nil)
+}
+
+// newTransformer is NewTransformer showing date-times in location (when not
+// nil).
+func newTransformer(model interface{}, location *time.Location) (*Transformer, error) {
+	var (
+		renderInfo *Info
+		overrides  Overrides
+		options    FieldOptions
+	)
+
+	if wrapped, ok := model.(*RenderModel); ok && wrapped == nil {
+		return nil, fmt.Errorf("form model must not be nil")
+	}
+
+	if wrapped, ok := renderModelOf(model); ok {
 		model = wrapped.Model
-		info := wrapped.Info
-		renderInfo = &info
-	case *RenderModel:
-		if wrapped == nil {
-			return nil, fmt.Errorf("form model must not be nil")
+		renderInfo = &wrapped.Info
+		overrides = wrapped.Overrides
+		options = wrapped.Options
+	}
+
+	// A form defined at runtime.
+	if fields, ok, err := schemaFields(model); ok {
+		if err != nil {
+			return nil, err
 		}
-		model = wrapped.Model
-		info := wrapped.Info
-		renderInfo = &info
+
+		if renderInfo != nil {
+			fields = append([]types.FormField{formFieldFromInfo(*renderInfo)}, fields...)
+		}
+
+		return &Transformer{Fields: fields, location: location}, nil
 	}
 
 	modelValue := reflect.ValueOf(model)
@@ -105,7 +149,11 @@ func NewTransformer(model interface{}) (*Transformer, error) {
 		return nil, fmt.Errorf("form model must be a struct, got %s", modelValue.Kind())
 	}
 
-	tr := &Transformer{}
+	tr := &Transformer{
+		location:  location,
+		overrides: overridesOf(modelValue).merge(overrides),
+		options:   options,
+	}
 	fields, err := tr.scanModel(modelValue, modelType)
 	if err != nil {
 		return nil, err
@@ -142,6 +190,8 @@ func formFieldFromInfo(info Info) types.FormField {
 		Label:        label,
 		CancelTarget: info.CancelTarget,
 		CancelText:   info.CancelText,
+		ReadOnly:     info.ReadOnly,
+		Honeypot:     info.Honeypot,
 	}
 	for key, value := range info.Attributes {
 		if field.Attributes == nil {
@@ -174,15 +224,22 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			continue
 		}
 
-		tags := rType.Field(i).Tag
+		// Unexported fields are the model's own, such as a limit an
+		// Overrider uses; they never render.
+		if !rType.Field(i).IsExported() {
+			continue
+		}
 
-		name := tags.Get(tagName)
+		name := rType.Field(i).Tag.Get(tagName)
 		fieldName := rType.Field(i).Name
 		if name == "" {
 			name = fieldName
 		}
 
 		nname := append(names, name)
+
+		// The tags with the overrides of this render.
+		tags := t.overrides.apply(strings.Join(nname, "."), rType.Field(i)).Tag
 		field := types.FormField{
 			Id:          strings.Join(nname, "."),
 			Label:       tags.Get(tagLabel),
@@ -289,9 +346,22 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			field.Disabled = true
 		}
 
+		field.ReadOnly = tags.Get(tagReadOnly) == "true"
+		field.AutoComplete = tags.Get(tagAutoComplete)
+		field.Accept = tags.Get(tagAccept)
+		field.Multiple = tags.Get(tagMultiple) == "true"
+
 		// Check if translation is enabled: struct tag takes precedence over global default
 		tagValue := tags.Get(tagTranslate)
 		shouldTranslate := tagValue == "true" || (tagValue != "false" && DefaultEnumTranslation)
+
+		// Options given at render time replace those of the tags.
+		if choices, ok := t.options[field.Name]; ok {
+			withChoices(&field, rValue.Field(i), choices)
+			fields = append(fields, field)
+
+			continue
+		}
 
 		if rType.Field(i).Type.Implements(enumType) {
 			enums := reflect.New(rType.Field(i).Type).Interface().(Enumerator).Enum()
@@ -329,47 +399,13 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			continue
 		}
 
-		if rType.Field(i).Tag.Get(tagValues) != "" {
-			// If the tag contains values, it is a dropdown or radio field
-			values := strings.Split(rType.Field(i).Tag.Get(tagValues), ";")
-			// Labels written in a values tag are text of the application, like
-			// field labels, so they are translated unless translate:"false".
-			translateValues := tagValue != "false"
-			var fieldValue []types.FieldValue
-			for _, v := range values {
-				if strings.Contains(v, ":") {
-					parts := strings.SplitN(v, ":", 2)
-					if len(parts) != 2 {
-						return nil, fmt.Errorf("invalid value format in tag %s for field %s", tagValues, fieldName)
-					}
-					fieldValue = append(fieldValue, types.FieldValue{
-						Value:     strings.TrimSpace(parts[0]),
-						Name:      strings.TrimSpace(parts[1]),
-						Disabled:  false,
-						Translate: translateValues,
-					})
-					continue
-				}
-
-				fieldValue = append(fieldValue, types.FieldValue{
-					Value:     v,
-					Name:      v,
-					Disabled:  false,
-					Translate: translateValues,
-				})
-			}
-
-			// Set the field type based on the form tag
-			if field.Type == types.FieldTypeRadios {
-				field.Values = fieldValue
-			} else if field.Type == types.FieldTypeDropdown {
-				field.Values = fieldValue
-			} else {
-				field.Type = types.FieldTypeDropdown
-				field.Values = fieldValue
-			}
-
+		if values := tags.Get(tagValues); values != "" {
+			// Labels written in a values tag are text of the application,
+			// like field labels, so they are translated unless
+			// translate:"false".
+			withChoices(&field, rValue.Field(i), parseValuesTag(values, tagValue != "false"))
 			fields = append(fields, field)
+
 			continue
 		}
 
@@ -410,7 +446,7 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			}
 
 			// Use multicheckbox if form tag is multicheckbox, else fallback to dropdownmapped
-			if field.Type == types.FieldTypeMultiCheckbox || rType.Field(i).Tag.Get(tagForm) == "multicheckbox" {
+			if field.Type == types.FieldTypeMultiCheckbox || tags.Get(tagForm) == "multicheckbox" {
 				field.Type = types.FieldTypeMultiCheckbox
 				// For checkboxes, Value should be a map[string]bool for checked state
 				valueMap := map[string]bool{}
@@ -428,7 +464,17 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			}
 
 			field.Values = fieldValue
+
+			field.SortByLabel = sortsByLabel(rValue.Field(i), shouldTranslate)
+
 			fields = append(fields, field)
+
+			continue
+		}
+
+		// Uploaded files: *multipart.FileHeader or []*multipart.FileHeader.
+		if single, ok := fileField(rType.Field(i).Type); ok {
+			fields = append(fields, fileInput(field, single))
 
 			continue
 		}
@@ -455,10 +501,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			case field.InputType == types.InputFieldTypeTime:
 				field.Value = elem.Format(time.TimeOnly)
 			case field.InputType == types.InputFieldTypeDateTimeLocal:
-				// The format browsers accept for datetime-local inputs.
-				field.Value = elem.Format("2006-01-02T15:04")
+				field.Value = t.dateTimeLocalValue(elem, tags)
 			case field.InputType == types.InputFieldTypeMonth:
-				field.Value = elem.Format("01")
+				field.Value = elem.Format(monthLayout)
 			case field.InputType == types.InputFieldTypeWeek:
 				// For week, we use the ISO week date format
 				year, week := elem.ISOWeek()
@@ -481,6 +526,8 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 		fType := rType.Field(i).Type
 		fValue := rValue.Field(i)
 
+		field.Value = shownValue(fValue, field.Value)
+
 		if fValue.Kind() == reflect.Ptr && fValue.IsNil() {
 			fValue = reflect.New(fValue.Type().Elem()).Elem()
 			fType = fValue.Type()
@@ -502,6 +549,8 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			if tags.Get(tagMaxLength) != "" {
 				field.MaxLength = tags.Get(tagMaxLength)
 			}
+			field.MinLength = tags.Get(tagMinLength)
+			field.Pattern = clientPattern(tags.Get(tagPattern))
 
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
@@ -572,6 +621,9 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 				field.Legend = field.Label
 			}
 
+			// A nested model's own overrides yield to the outer ones.
+			t.overrides = overridesOf(fValue).prefixed(strings.Join(nname, ".")).merge(t.overrides)
+
 			var err error
 			field.Fields, err = t.scanModel(fValue, fType, nname...)
 			if err != nil {
@@ -583,6 +635,11 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 			if tags.Get(tagForm) == string(types.FieldTypeRadios) {
 				field.Type = types.FieldTypeRadios
 				field.InputType = types.InputFieldTypeRadioStruct
+
+				// The value is the chosen option, none until one is
+				// ticked; MapForm reads it back (see mapRadioGroup).
+				field.Value = ""
+
 				for _, sub := range field.Fields {
 					v := fmt.Sprint(sub.Value)
 					// Option labels are the labels of the bool fields, which
@@ -613,3 +670,145 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 }
 
 // NOTE: collapseStructRadioGroups is implemented in transformer_radio_struct.go
+
+// sortsByLabel reports whether the options of a select, value, are sorted
+// by their labels when the form renders, in the language of the render:
+// when the select sorts by label (SortByLabel) and its labels are
+// translated.
+func sortsByLabel(value reflect.Value, translated bool) bool {
+	sorter, ok := value.Interface().(labelSorter)
+
+	return ok && translated && sorter.SortedByLabel()
+}
+
+// fileInput is field as a file input for uploaded files: for one file when
+// single is set, or for several. A file input cannot be filled in again, so
+// it shows no value.
+func fileInput(field types.FormField, single bool) types.FormField {
+	if field.Type == "" || field.Type == types.FieldTypeInput {
+		field.Type = types.FieldTypeInput
+		field.InputType = types.InputFieldTypeFile
+	}
+
+	field.Value = ""
+	if !single {
+		field.Multiple = true
+	}
+
+	return field
+}
+
+// dateTimeLocalValue is elem as the value of a datetime-local input: in the
+// zone of the localizer (see TimeLocalizer), in the format browsers accept,
+// with seconds only when the step tag asks for them. A wall-clock field
+// (wallclock:"true") shows the time as it is.
+func (t *Transformer) dateTimeLocalValue(elem time.Time, tags reflect.StructTag) string {
+	if t.location != nil && tags.Get(tagWallClock) != "true" {
+		elem = elem.In(t.location)
+	}
+
+	return elem.Format(dateTimeLocalFormat(tags.Get(tagStep)))
+}
+
+// shownValue is what a field whose value is value shows: for a pointer to a
+// string, bool or number the value it points to, or nothing for a nil one,
+// and shown, the value as it is, for anything else.
+func shownValue(value reflect.Value, shown any) any {
+	pointed, isNil := pointee(value)
+	if isNil {
+		return ""
+	}
+
+	if pointed.Kind() != reflect.Pointer {
+		return pointed.Interface()
+	}
+
+	return shown
+}
+
+// Layouts of the values of month and datetime-local inputs.
+const (
+	monthLayout                = "2006-01"
+	dateTimeLocalLayout        = "2006-01-02T15:04"
+	dateTimeLocalSecondsLayout = "2006-01-02T15:04:05"
+)
+
+// dateTimeLocalFormat is the layout of a datetime-local value: with seconds
+// only when the step tag allows them, as browsers refuse seconds otherwise.
+func dateTimeLocalFormat(step string) string {
+	seconds, err := strconv.ParseFloat(step, 64)
+	if err != nil || seconds <= 0 || math.Mod(seconds, 60) == 0 {
+		return dateTimeLocalLayout
+	}
+
+	return dateTimeLocalSecondsLayout
+}
+
+var (
+	fileHeaderType  = reflect.TypeOf(&multipart.FileHeader{})
+	fileHeadersType = reflect.TypeOf([]*multipart.FileHeader{})
+)
+
+// fileField reports whether t holds uploaded files, and whether it holds one
+// (*multipart.FileHeader) rather than several ([]*multipart.FileHeader).
+func fileField(t reflect.Type) (single bool, ok bool) {
+	switch t {
+	case fileHeaderType:
+		return true, true
+	case fileHeadersType:
+		return false, true
+	}
+
+	return false, false
+}
+
+// clientPattern is the pattern tag as the pattern attribute, when browsers
+// check it the way the server does. Browsers match the whole value, while
+// the server looks for a match anywhere, so only a pattern anchored with ^
+// and $ means the same to both. Go-only syntax, such as flags or \A, would
+// make browsers ignore the attribute, so such patterns stay on the server.
+func clientPattern(pattern string) string {
+	if !strings.HasPrefix(pattern, "^") || !strings.HasSuffix(pattern, "$") || strings.HasSuffix(pattern, `\$`) {
+		return ""
+	}
+
+	for _, goOnly := range []string{"(?i", "(?m", "(?s", "(?U", "(?P<", `\A`, `\z`, "[[:", `\pL`, `\PL`} {
+		if strings.Contains(pattern, goOnly) {
+			return ""
+		}
+	}
+
+	// ^a|b$ is "starts with a or ends with b" on the server, but "a or b"
+	// in a browser.
+	if topLevelAlternation(pattern) {
+		return ""
+	}
+
+	return pattern
+}
+
+// topLevelAlternation reports whether pattern has a | outside groups and
+// character classes.
+func topLevelAlternation(pattern string) bool {
+	depth := 0
+	inClass := false
+
+	for i := 0; i < len(pattern); i++ {
+		switch c := pattern[i]; {
+		case c == '\\':
+			i++
+		case inClass:
+			inClass = c != ']'
+		case c == '[':
+			inClass = true
+		case c == '(':
+			depth++
+		case c == ')':
+			depth--
+		case c == '|' && depth == 0:
+			return true
+		}
+	}
+
+	return false
+}

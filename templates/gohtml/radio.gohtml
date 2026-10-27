@@ -1,13 +1,15 @@
-<div style="{{themeStyle "radio-wrapper"}}" class="{{themeClass "radio-wrapper"}}">
+<div{{with themeStyle "radio-wrapper"}} style="{{.}}"{{end}}{{with themeClass "radio-wrapper"}} class="{{.}}"{{end}}>
   <input type="radio"
          id="{{.Field.Id}}"
          name="{{.Field.Name}}"
          value="{{.Field.Value}}"
          {{ if eq .Field.Required true }}required{{end}}
-         style="{{themeStyle "radio"}}"
-         class="{{themeClass "radio"}} {{.Field.Class}}"
+         {{ if .Field.Disabled }}disabled{{end}}
+         {{with themeStyle "radio"}}style="{{.}}"{{end}}
+         {{with form_class (themeClass "radio") .Field.Class}}class="{{.}}"{{end}}
          aria-labelledby="{{.Field.Id}}_label"
-         {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}
+         {{with form_described_by .Field}}aria-describedby="{{.}}"{{end}}
+         {{if .Field.Errors}}aria-invalid="true"{{end}}
          {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
-  <label style="{{themeStyle "radio-label"}}" class="{{themeClass "radio-label"}}" for="{{.Field.Id}}" id="{{.Field.Id}}_label">{{ form_print .Loc .Field.Label }}</label>
+  <label{{with themeStyle "radio-label"}} style="{{.}}"{{end}}{{with themeClass "radio-label"}} class="{{.}}"{{end}} for="{{.Field.Id}}" id="{{.Field.Id}}_label">{{ form_print .Loc .Field.Label }}</label>
 </div>

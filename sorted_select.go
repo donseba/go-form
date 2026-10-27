@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"sort"
 )
 
 // SortedSelect is a generic helper that holds a typed key value and a map of key->label
@@ -14,6 +13,7 @@ import (
 type SortedSelect[T comparable] struct {
 	value  T
 	source map[T]string
+	order  selectOrder[T]
 }
 
 // entry implements SortedMap for SortedSelect
@@ -24,6 +24,44 @@ type ssEntry struct {
 
 func NewSortedSelect[T comparable](source map[T]string) SortedSelect[T] {
 	return SortedSelect[T]{source: source}
+}
+
+// NewOrderedSelect returns a select that lists its options in the order
+// given, such as pages in tree order or statuses in their natural order:
+//
+//	status := form.NewOrderedSelect(
+//		form.Option[string]{Value: "open", Label: "Open"},
+//		form.Option[string]{Value: "paid", Label: "Paid"},
+//	).Selected(current)
+func NewOrderedSelect[T comparable](options ...Option[T]) SortedSelect[T] {
+	source, keys := optionsFrom(options)
+
+	return SortedSelect[T]{source: source, order: selectOrder[T]{keys: keys}}
+}
+
+// SortByLabel returns the select listing its options alphabetically by
+// label (ignoring case) instead of by key, such as files by name rather than
+// by ID.
+func (ss SortedSelect[T]) SortByLabel() SortedSelect[T] {
+	ss.order.byLabel = true
+
+	return ss
+}
+
+// SortedByLabel reports whether the select lists its options by label
+// (SortByLabel). With translate:"true" the form sorts the options again by
+// their translated labels when it renders.
+func (ss SortedSelect[T]) SortedByLabel() bool {
+	return ss.order.byLabel
+}
+
+// Selected returns the select with val selected, for chaining after
+// NewSortedSelect or NewOrderedSelect. A value that is not one of the options
+// leaves nothing selected, as Set does.
+func (ss SortedSelect[T]) Selected(val T) SortedSelect[T] {
+	_ = ss.Set(val)
+
+	return ss
 }
 
 func (e ssEntry) Key() string   { return e.k }
@@ -55,30 +93,11 @@ func (ss *SortedSelect[T]) Set(val T) error {
 	return nil
 }
 
-// SortedMapper returns entries sorted by key string representation
-// Uses fmt.Sprint to produce string representations of keys (no converters required).
+// SortedMapper returns the options sorted by key string representation
+// (fmt.Sprint), in the given order for NewOrderedSelect, or by label after
+// SortByLabel.
 func (ss SortedSelect[T]) SortedMapper() []SortedMap {
-	if ss.source == nil {
-		return nil
-	}
-	// collect keys as strings using fmt.Sprint
-	keys := make([]string, 0, len(ss.source))
-	keyMap := make(map[string]T)
-	for k := range ss.source {
-		ks := fmt.Sprint(k)
-		// only record the formatted key once to avoid duplicate entries when Format collides
-		if _, exists := keyMap[ks]; !exists {
-			keys = append(keys, ks)
-			keyMap[ks] = k
-		}
-	}
-	sort.Strings(keys)
-	out := make([]SortedMap, 0, len(keys))
-	for _, ks := range keys {
-		k := keyMap[ks]
-		out = append(out, ssEntry{ks, ss.source[k]})
-	}
-	return out
+	return ss.order.entries(ss.source)
 }
 
 func (ss *SortedSelect[T]) Scan(val any) error {
@@ -148,9 +167,12 @@ func (ss *SortedSelect[T]) SetFromKey(key string) error {
 	return nil
 }
 
-// SetSource sets or updates the source map for SortedSelect
+// SetSource sets or updates the source map for SortedSelect. A map has no
+// order, so the options of an ordered select are sorted by key again (or by
+// label after SortByLabel).
 func (ss *SortedSelect[T]) SetSource(source map[T]string) {
 	ss.source = source
+	ss.order.keys = nil
 }
 
 // Source returns a copy of the internal source map for read-only access

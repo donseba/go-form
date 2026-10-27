@@ -28,10 +28,11 @@ type ThemeExampleForm struct {
 	Languages form.SortedMultiSelect[string] `form:"multicheckbox" label:"Languages" description:"Select languages you know"`
 }
 
-func main() {
-	f := form.NewForm()
+// themes are the themes the example switches between with ?theme=; the
+// first is the default.
+var themes = []string{"bootstrap", "tailwind", "tailwindv4", "plain"}
 
-	page := template.Must(template.New("page").Funcs(f.FuncMap()).Parse(`
+const pageTemplate = `
 <!doctype html>
 <html lang="en">
 <head>
@@ -66,72 +67,110 @@ func main() {
  </div>
 </body>
 </html>
-`))
+`
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		themeName := r.URL.Query().Get("theme")
-		if themeName == "" {
-			themeName = "bootstrap"
+// themePage is the page of one theme: a renderer of its own, whose theme
+// is set before it serves requests, and the page template with that
+// renderer's functions. Calling SetTheme on a shared renderer per request
+// would race with the requests that render.
+type themePage struct {
+	name     string
+	renderer *form.Form
+	page     *template.Template
+}
+
+func main() {
+	fmt.Println("Theme example running at http://localhost:8084/?theme=bootstrap")
+	log.Fatal(http.ListenAndServe(":8084", newHandler()))
+}
+
+// newHandler returns the handler of the example, with a page per theme,
+// made at start-up.
+func newHandler() http.Handler {
+	pages := make(map[string]themePage, len(themes))
+
+	for _, name := range themes {
+		renderer := form.NewForm()
+		renderer.SetTheme(name)
+
+		pages[name] = themePage{
+			name:     name,
+			renderer: renderer,
+			page:     template.Must(template.New("page").Funcs(renderer.FuncMap()).Parse(pageTemplate)),
 		}
-		f.SetTheme(themeName)
+	}
 
-		data := ThemeExampleForm{
-			Info: form.Info{
-				Target:       "/?theme=" + themeName,
-				Method:       http.MethodPost,
-				SubmitText:   "Save",
-				CancelTarget: "/?theme=" + themeName,
-				CancelText:   "Cancel",
-				Attributes: map[string]string{
-					"enctype": "multipart/form-data",
-				},
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		page, ok := pages[r.URL.Query().Get("theme")]
+		if !ok {
+			page = pages[themes[0]]
+		}
+
+		page.ServeHTTP(w, r)
+	})
+}
+
+// ServeHTTP shows the form in the page's theme and, after a submission,
+// the posted values.
+func (p themePage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	data := ThemeExampleForm{
+		Info: form.Info{
+			Target:       "/?theme=" + p.name,
+			Method:       http.MethodPost,
+			SubmitText:   "Save",
+			CancelTarget: "/?theme=" + p.name,
+			CancelText:   "Cancel",
+			Attributes: map[string]string{
+				"enctype": "multipart/form-data",
 			},
-		}
-		data.Languages = form.NewSortedMultiSelect(map[string]string{
-			"Go":         "Go",
-			"Python":     "Python",
-			"JavaScript": "JavaScript",
-			"Rust":       "Rust",
-		})
-		data.Interests = form.NewSortedMultiSelect(map[string]string{
-			"Reading":   "Reading",
-			"Traveling": "Traveling",
-			"Coding":    "Coding",
-			"Music":     "Music",
-		})
-
-		posted := r.Method == http.MethodPost
-		debug := ""
-		var errs form.FieldErrors
-
-		if posted {
-			if err := r.ParseMultipartForm(10 << 20); err != nil {
-				http.Error(w, "ParseMultipartForm: "+err.Error(), http.StatusBadRequest)
-				return
-			}
-			_ = form.MapForm(r, &data)
-			errList := f.ValidateForm(&data)
-			errs = errList
-
-			debug = fmt.Sprintf("Prefix=%q\nName=%q\nEmail=%q\nInterests=%q\nLanguages=%q\n", data.Prefix, data.Name, data.Email, data.Interests, data.Languages)
-			if fh, _, err := r.FormFile("Upload"); err == nil {
-				_ = fh.Close()
-				debug += "Upload=<received file>\n"
-			} else {
-				debug += "Upload=<no file>\n"
-			}
-		}
-
-		if err := page.Execute(w, map[string]any{
-			"Form":   data,
-			"Errors": errs,
-			"Posted": posted,
-			"Debug":  strings.TrimSpace(debug),
-		}); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		},
+	}
+	data.Languages = form.NewSortedMultiSelect(map[string]string{
+		"Go":         "Go",
+		"Python":     "Python",
+		"JavaScript": "JavaScript",
+		"Rust":       "Rust",
+	})
+	data.Interests = form.NewSortedMultiSelect(map[string]string{
+		"Reading":   "Reading",
+		"Traveling": "Traveling",
+		"Coding":    "Coding",
+		"Music":     "Music",
 	})
 
-	fmt.Println("Theme example running at http://localhost:8084/?theme=bootstrap")
-	log.Fatal(http.ListenAndServe(":8084", nil))
+	posted := r.Method == http.MethodPost
+	debug := ""
+
+	var errs form.FieldErrors
+
+	if posted {
+		if err := r.ParseMultipartForm(10 << 20); err != nil {
+			http.Error(w, "ParseMultipartForm: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		_ = form.MapForm(r, &data)
+		errs = p.renderer.ValidateForm(&data)
+
+		debug = fmt.Sprintf(
+			"Prefix=%q\nName=%q\nEmail=%q\nInterests=%q\nLanguages=%q\n",
+			data.Prefix, data.Name, data.Email, data.Interests, data.Languages,
+		)
+
+		if fh, _, err := r.FormFile("Upload"); err == nil {
+			_ = fh.Close()
+			debug += "Upload=<received file>\n"
+		} else {
+			debug += "Upload=<no file>\n"
+		}
+	}
+
+	if err := p.page.Execute(w, map[string]any{
+		"Form":   data,
+		"Errors": errs,
+		"Posted": posted,
+		"Debug":  strings.TrimSpace(debug),
+	}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

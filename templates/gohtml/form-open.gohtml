@@ -1,0 +1,5 @@
+<form action="{{.Field.Target}}"
+      method="{{.Field.Method}}"
+      {{with form_style (themeStyle "form") form_open_style}}style="{{.}}"{{end}}
+      {{with form_class (themeClass "form") form_open_class}}class="{{.}}"{{end}}
+      {{ if .Field.Attributes }}{{ form_attributes .Field.Attributes }}{{end}}{{ form_open_attributes }}>

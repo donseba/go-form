@@ -54,6 +54,14 @@ func TestGoHTMLTemplates_FieldAccessIsValid(t *testing.T) {
 		"Class":        {},
 		"Data":         {},
 		"ValueMap":     {}, // allow ValueMap for multicheckbox
+		"ReadOnly":     {},
+		"AutoComplete": {},
+		"Accept":       {},
+		"Multiple":     {},
+		"MinLength":    {},
+		"Pattern":      {},
+		"Errors":       {},
+		"Honeypot":     {},
 	}
 
 	allowedRoot := map[string]struct{}{
@@ -77,6 +85,12 @@ func TestGoHTMLTemplates_FieldAccessIsValid(t *testing.T) {
 		"form_required_label":  func(...any) string { return "" },
 		"form_data_attributes": func(...any) string { return "" },
 		"form_attributes":      func(...any) string { return "" },
+		"form_described_by":    func(...any) string { return "" },
+		"form_class":           ClassList,
+		"form_style":           func(...any) template.CSS { return "" },
+		"form_open_class":      func() string { return "" },
+		"form_open_style":      func() template.CSS { return "" },
+		"form_open_attributes": func() template.HTMLAttr { return "" },
 		// callable blocks in some templates
 		"errors": func() []string { return nil },
 		"field":  func() template.HTML { return "" },
@@ -123,6 +137,18 @@ func TestGoHTMLTemplates_FieldAccessIsValid(t *testing.T) {
 		t.Fatalf("no gohtml templates found in embedded FS")
 	}
 
+	// Templates may call each other ({{ template "form-open" . }}), so each
+	// file is parsed with the definitions of all the others.
+	others := make(map[string]string, len(files))
+	for _, path := range files {
+		b, err := fs.ReadFile(TemplateFS, path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+
+		others[strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))] = string(b)
+	}
+
 	for _, path := range files {
 		path := path
 		name := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
@@ -136,6 +162,16 @@ func TestGoHTMLTemplates_FieldAccessIsValid(t *testing.T) {
 			tpl, err := template.New(name).Funcs(allowedFuncs).Option("missingkey=error").Parse(tplStr)
 			if err != nil {
 				t.Fatalf("failed to parse template %s: %v", path, err)
+			}
+
+			for other, content := range others {
+				if other == name {
+					continue
+				}
+
+				if _, err := tpl.New(other).Parse(content); err != nil {
+					t.Fatalf("failed to parse template %s: %v", other, err)
+				}
 			}
 
 			var sb strings.Builder

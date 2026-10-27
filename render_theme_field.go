@@ -36,5 +36,36 @@ func (f *Form) themeWrapField(theme *templates.Theme, loc types.Localizer, field
 			return nil
 		},
 	}
-	return f.themeExec(theme, "wrapper", map[string]any{"Field": field, "Loc": loc}, funcs)
+	return f.themeExec(
+		theme,
+		themeTemplate(theme, field, "wrapper", "fieldset"),
+		map[string]any{"Field": field, "Loc": loc},
+		funcs,
+	)
+}
+
+// radioGroup reports whether field renders as a group of radio buttons,
+// one per option.
+func radioGroup(field types.FormField) bool {
+	return field.Type == types.FieldTypeRadios &&
+		(field.InputType == types.InputFieldTypeRadioStruct || field.InputType == types.InputFieldTypeRadioGroup)
+}
+
+// optionGroup reports whether field renders as a group of options, which
+// is a fieldset with a legend: a group of radio buttons, or a
+// multicheckbox, a checkbox per option.
+func optionGroup(field types.FormField) bool {
+	return radioGroup(field) || field.Type == types.FieldTypeMultiCheckbox
+}
+
+// themeTemplate is the template of a part of field: group for a group of
+// options (see optionGroup), which is a fieldset with a legend, when the
+// theme has that template, and name otherwise, such as for a theme whose
+// templates all come from a folder of its own (Theme.LoadTemplates).
+func themeTemplate(theme *templates.Theme, field types.FormField, name, group string) string {
+	if optionGroup(field) && theme.Templates.Lookup(group) != nil {
+		return group
+	}
+
+	return name
 }

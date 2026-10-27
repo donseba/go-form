@@ -1,4 +1,4 @@
 {{range errors}}
-<div style="{{themeStyle "error"}}" class="{{themeClass "error"}}" role="alert">{{ . }}</div>
+<div{{with themeStyle "error"}} style="{{.}}"{{end}}{{with themeClass "error"}} class="{{.}}"{{end}} role="alert">{{ . }}</div>
 {{end}}
 

@@ -22,7 +22,11 @@ Open:
 
 ## Notes
 
-- For file uploads the form must use `enctype="multipart/form-data"`.
-- This example keeps rendering explicit (it renders `label`, `input`, `wrapper`, and then `form`).
-  The next step would be to move this wiring into the `form` package (e.g. a `ThemeRenderer`) so
-  users can render a full struct with one call, like they do with the TemplateMap approach.
+- The example makes a renderer per theme at start-up, each with its own page template, and picks one
+  per request. An application selects its theme once, before it serves requests: `SetTheme` on a
+  renderer that is rendering for other requests races with them.
+- A form with a file input gets `enctype="multipart/form-data"` automatically; `MapForm` maps uploads to `*multipart.FileHeader` fields.
+- The `form` package puts the theme's `label`, control, `wrapper` and `form` templates together, so
+  this example renders the whole struct with one call: `{{ form_render .Form .Errors }}`. To lay out
+  the fields yourself, render them one at a time with `form_open`, `form_field`, `form_buttons` and
+  `form_close` (see [Laying Out Fields Yourself](../../README.md#laying-out-fields-yourself)).

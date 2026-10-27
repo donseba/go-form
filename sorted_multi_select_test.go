@@ -111,8 +111,14 @@ func TestSortedMultiSelect_MapForm_InvalidValue(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	_ = req.ParseForm()
 
+	// As for a SortedSelect, an unknown key leaves nothing selected
+	// rather than failing the whole form.
 	err := MapForm(req, f)
-	if err == nil {
-		t.Errorf("Expected error for invalid value, got nil")
+	if err != nil {
+		t.Errorf("MapForm returned %v for an unknown key", err)
+	}
+
+	if got := f.Colors.Get(); len(got) != 0 {
+		t.Errorf("Expected nothing selected, got %v", got)
 	}
 }

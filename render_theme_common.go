@@ -3,7 +3,10 @@ package form
 import (
 	"fmt"
 	"html/template"
+	"maps"
 	"reflect"
+	"slices"
+	"strings"
 
 	"github.com/donseba/go-form/v2/templates"
 	"github.com/donseba/go-form/v2/types"
@@ -24,21 +27,16 @@ func (f *Form) getTheme() (*templates.Theme, error) {
 	return theme, nil
 }
 
-// csrfHiddenInputHTML extracts CSRF settings from the model and returns a hidden input.
-func csrfHiddenInputHTML(v any) template.HTML {
-	switch wrapped := v.(type) {
-	case RenderModel:
-		return csrfHiddenInputHTMLFromInfo(wrapped.Info)
-	case *RenderModel:
-		if wrapped != nil {
-			return csrfHiddenInputHTMLFromInfo(wrapped.Info)
-		}
+// modelInfo returns the form metadata of a model: the Info of a
+// RenderModel, of GetFormInfo, or of an Info embedded as the first field.
+func modelInfo(v any) (Info, bool) {
+	if wrapped, ok := renderModelOf(v); ok {
+		return wrapped.Info, true
 	}
 
 	// Prefer explicit GetFormInfo.
 	if fm, ok := v.(interface{ GetFormInfo() Info }); ok {
-		info := fm.GetFormInfo()
-		return csrfHiddenInputHTMLFromInfo(info)
+		return fm.GetFormInfo(), true
 	}
 
 	rval := reflect.ValueOf(v)
@@ -49,12 +47,22 @@ func csrfHiddenInputHTML(v any) template.HTML {
 	}
 	if rval.IsValid() && rval.Kind() == reflect.Struct && rval.NumField() > 0 {
 		firstField := rval.Field(0)
-		if firstField.IsValid() && firstField.Type() == reflect.TypeOf(Info{}) {
-			return csrfHiddenInputHTMLFromInfo(firstField.Interface().(Info))
+		if firstField.IsValid() && firstField.Type() == reflect.TypeOf(Info{}) && firstField.CanInterface() {
+			return firstField.Interface().(Info), true
 		}
 	}
 
-	return ""
+	return Info{}, false
+}
+
+// csrfHiddenInputHTML extracts CSRF settings from the model and returns a hidden input.
+func csrfHiddenInputHTML(v any) template.HTML {
+	info, ok := modelInfo(v)
+	if !ok {
+		return ""
+	}
+
+	return csrfHiddenInputHTMLFromInfo(info)
 }
 
 func csrfHiddenInputHTMLFromInfo(info Info) template.HTML {
@@ -70,6 +78,29 @@ func csrfHiddenInputHTMLFromInfo(info Info) template.HTML {
 	return template.HTML(fmt.Sprintf(`<input type="hidden" name="%s" value="%s">`,
 		template.HTMLEscapeString(csrfFieldName),
 		template.HTMLEscapeString(info.CsrfValue)))
+}
+
+// hiddenInputsHTML renders the hidden inputs of Info.Hidden: one per value,
+// in name order.
+func hiddenInputsHTML(info Info) template.HTML {
+	if len(info.Hidden) == 0 {
+		return ""
+	}
+
+	var out strings.Builder
+
+	for _, name := range slices.Sorted(maps.Keys(info.Hidden)) {
+		for _, value := range info.Hidden[name] {
+			out.WriteString(`<input type="hidden" name="`)
+			out.WriteString(template.HTMLEscapeString(name))
+			out.WriteString(`" value="`)
+			out.WriteString(template.HTMLEscapeString(value))
+			out.WriteString(`">`)
+		}
+	}
+
+	//nolint:gosec // Fixed markup around escaped names and values.
+	return template.HTML(out.String())
 }
 
 // renderGroupFields renders all fields inside a group by delegating to themeFieldHTML.

@@ -1,18 +1,18 @@
-<div style="{{themeStyle "multicheckbox"}}" class="{{themeClass "multicheckbox"}} {{.Field.Class}}">
+<div{{with themeStyle "multicheckbox"}} style="{{.}}"{{end}}{{with form_class (themeClass "multicheckbox") .Field.Class}} class="{{.}}"{{end}}>
   {{ range $k, $option := .Field.Values }}
-  <div style="{{themeStyle "checkbox-wrapper"}}" class="{{themeClass "checkbox-wrapper"}}">
+  <div{{with themeStyle "checkbox-wrapper"}} style="{{.}}"{{end}}{{with themeClass "checkbox-wrapper"}} class="{{.}}"{{end}}>
     <input type="checkbox"
            id="{{$.Field.Id}}_{{$k}}"
            name="{{$.Field.Name}}"
            value="{{$option.Value}}"
            {{ if (index $.Field.ValueMap $option.Value) }}checked{{end}}
-           {{ if eq $option.Disabled true }}disabled{{ end }}
-           style="{{themeStyle "checkbox"}}"
-           class="{{themeClass "checkbox"}}"
+           {{ if or $option.Disabled $.Field.Disabled }}disabled{{ end }}
+           {{with themeStyle "checkbox"}}style="{{.}}"{{end}}
+           {{with themeClass "checkbox"}}class="{{.}}"{{end}}
            aria-labelledby="{{$.Field.Id}}_{{$k}}_label"
-           {{if $.Field.Description}}aria-describedby="{{$.Field.Id}}_description"{{end}}>
-    <label style="{{themeStyle "checkbox-label"}}" class="{{themeClass "checkbox-label"}}" for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label">{{ if $option.Translate }}{{ form_print $.Loc $option.Name }}{{ else }}{{ $option.Name }}{{ end }}</label>
+           {{with form_described_by $.Field}}aria-describedby="{{.}}"{{end}}
+           {{if $.Field.Errors}}aria-invalid="true"{{end}}>
+    <label{{with themeStyle "checkbox-label"}} style="{{.}}"{{end}}{{with themeClass "checkbox-label"}} class="{{.}}"{{end}} for="{{$.Field.Id}}_{{$k}}" id="{{$.Field.Id}}_{{$k}}_label">{{ if $option.Translate }}{{ form_print $.Loc $option.Name }}{{ else }}{{ $option.Name }}{{ end }}</label>
   </div>
   {{ end }}
 </div>
-

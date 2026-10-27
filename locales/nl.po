@@ -1,0 +1,110 @@
+msgid ""
+msgstr "Language: nl\nContent-Type: text/plain; charset=UTF-8\nPlural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Cancel"
+msgstr "Annuleren"
+
+msgid "form||(required)"
+msgstr "(verplicht)"
+
+msgid "form||CSRF token is missing"
+msgstr "Het formuliertoken ontbreekt. Probeer het opnieuw."
+
+msgid "form||Cannot assign or convert value of type %T to %s"
+msgstr "Een waarde van type %T kan niet als %s worden gebruikt."
+
+msgid "form||Error processing CSRF token"
+msgstr "Het formuliertoken kon niet worden gecontroleerd. Probeer het opnieuw."
+
+msgid "form||File should be of type %s"
+msgstr "Kies een bestand van het type %s."
+
+msgid "form||File should not exceed %s"
+msgstr "Het bestand mag niet groter zijn dan %s."
+
+msgid "form||Invalid CSRF token"
+msgstr "Het formuliertoken is ongeldig. Probeer het opnieuw."
+
+msgid "form||Invalid URL format"
+msgstr "Vul een geldige URL in."
+
+msgid "form||Invalid email format"
+msgstr "Vul een geldig e-mailadres in."
+
+msgid "form||Invalid enum value '%s' provided"
+msgstr "De keuze '%s' is niet toegestaan."
+
+msgid "form||Invalid mapper value '%s' provided"
+msgstr "De keuze '%s' is niet toegestaan."
+
+msgid "form||Invalid sorted mapper value '%s' provided"
+msgstr "De keuze '%s' is niet toegestaan."
+
+msgid "form||Invalid value '%s' provided"
+msgstr "De waarde '%s' is niet toegestaan."
+
+msgid "form||SortedSelect: key '%s' not found in source"
+msgstr "De keuze '%s' is niet beschikbaar."
+
+msgid "form||SortedSelect: source map is nil"
+msgstr "Er zijn geen keuzes beschikbaar."
+
+msgid "form||SortedSelect: value '%v' not found in source"
+msgstr "De keuze '%v' is niet beschikbaar."
+
+msgid "form||SortedSelect: value '%v' not found in source during unmarshal"
+msgstr "De keuze '%v' is niet beschikbaar."
+
+msgid "form||Validation required"
+msgstr "Dit veld is verplicht."
+
+msgid "form||Value is not in the expected format"
+msgstr "De waarde heeft niet de verwachte vorm."
+
+msgid "form||Value is not valid"
+msgstr "Vul een geldige waarde in."
+
+msgid "form||Value should be a multiple of %g"
+msgstr "Vul een veelvoud van %g in."
+
+msgid "form||Value should be a single line without tabs or line breaks"
+msgstr "Gebruik één regel, zonder tabs of regeleinden."
+
+msgid "form||Value should be at least %d characters"
+msgstr "Gebruik minstens %d tekens."
+
+msgid "form||Value should be either true or false"
+msgstr "Kies ja of nee."
+
+msgid "form||Value should be greater than or equal to %v"
+msgstr "Vul een waarde van minstens %v in."
+
+msgid "form||Value should be in steps of %g from %g"
+msgstr "Vul een waarde in stappen van %g vanaf %g in."
+
+msgid "form||Value should be less than or equal to %v"
+msgstr "Vul een waarde van hoogstens %v in."
+
+msgid "form||Value should be zero"
+msgstr "De waarde moet nul zijn."
+
+msgid "form||Value should contain '%s'"
+msgstr "De waarde moet '%s' bevatten."
+
+msgid "form||Value should end with '%s'"
+msgstr "De waarde moet eindigen op '%s'."
+
+msgid "form||Value should have at least %d items"
+msgstr "Kies minstens %d opties."
+
+msgid "form||Value should have at most %d items"
+msgstr "Kies hoogstens %d opties."
+
+msgid "form||Value should match %s"
+msgstr "De waarde moet gelijk zijn aan %s."
+
+msgid "form||Value should not exceed %d characters"
+msgstr "Gebruik hoogstens %d tekens."
+
+msgid "form||Value should start with '%s'"
+msgstr "De waarde moet beginnen met '%s'."

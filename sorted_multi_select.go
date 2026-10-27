@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"sort"
 )
 
 // SortedMultiSelect is a generic helper for multi-select dropdowns with custom key types.
@@ -12,18 +11,45 @@ import (
 type SortedMultiSelect[T comparable] struct {
 	values []T
 	source map[T]string
+	order  selectOrder[T]
 }
 
-type smsEntry struct {
-	k string
-	v string
-}
-
-func (e smsEntry) Key() string   { return e.k }
-func (e smsEntry) Value() string { return e.v }
-
+// NewSortedMultiSelect returns a multi-select with the options of source,
+// value to label, listed by key (see SortedMapper), with nothing selected.
 func NewSortedMultiSelect[T comparable](source map[T]string) SortedMultiSelect[T] {
 	return SortedMultiSelect[T]{source: source}
+}
+
+// NewOrderedMultiSelect returns a multi-select that lists its options in the
+// order given, like NewOrderedSelect.
+func NewOrderedMultiSelect[T comparable](options ...Option[T]) SortedMultiSelect[T] {
+	source, keys := optionsFrom(options)
+
+	return SortedMultiSelect[T]{source: source, order: selectOrder[T]{keys: keys}}
+}
+
+// SortByLabel returns the multi-select listing its options alphabetically by
+// label (ignoring case) instead of by key.
+func (sms SortedMultiSelect[T]) SortByLabel() SortedMultiSelect[T] {
+	sms.order.byLabel = true
+
+	return sms
+}
+
+// SortedByLabel reports whether the multi-select lists its options by
+// label (SortByLabel). With translate:"true" the form sorts the options
+// again by their translated labels when it renders.
+func (sms SortedMultiSelect[T]) SortedByLabel() bool {
+	return sms.order.byLabel
+}
+
+// Selected returns the multi-select with vals selected, for chaining after
+// NewSortedMultiSelect or NewOrderedMultiSelect. If one of the values is not
+// an option, nothing is selected, as Set does.
+func (sms SortedMultiSelect[T]) Selected(vals ...T) SortedMultiSelect[T] {
+	_ = sms.Set(vals)
+
+	return sms
 }
 
 // Get returns the current selected values.
@@ -58,6 +84,10 @@ func (sms *SortedMultiSelect[T]) Set(vals []T) error {
 }
 
 // SetFromKeys sets the selected values from a slice of string keys (as submitted by forms).
+// A key that is not an option is an error and leaves nothing selected; a
+// multi-select without a source returns an error and keeps its values.
+// MapForm records such submitted keys as an invalid value of the field and
+// goes on with the other fields, as for a SortedSelect.
 func (sms *SortedMultiSelect[T]) SetFromKeys(keys []string) error {
 	if sms == nil || sms.source == nil {
 		return fmt.Errorf("%s", TranslationKeySortedSelectSourceNil)
@@ -85,27 +115,10 @@ func (sms *SortedMultiSelect[T]) SetFromKeys(keys []string) error {
 	return nil
 }
 
-// SortedMapper returns entries sorted by key string representation.
+// SortedMapper returns the options sorted by key string representation, in
+// the given order for NewOrderedMultiSelect, or by label after SortByLabel.
 func (sms SortedMultiSelect[T]) SortedMapper() []SortedMap {
-	if sms.source == nil {
-		return nil
-	}
-	keys := make([]string, 0, len(sms.source))
-	keyMap := make(map[string]T)
-	for k := range sms.source {
-		ks := fmt.Sprint(k)
-		if _, exists := keyMap[ks]; !exists {
-			keys = append(keys, ks)
-			keyMap[ks] = k
-		}
-	}
-	sort.Strings(keys)
-	out := make([]SortedMap, 0, len(keys))
-	for _, ks := range keys {
-		k := keyMap[ks]
-		out = append(out, smsEntry{ks, sms.source[k]})
-	}
-	return out
+	return sms.order.entries(sms.source)
 }
 
 // Scan implements database/sql.Scanner for []T.
@@ -168,8 +181,11 @@ func joinStrings(ss []string, sep string) string {
 }
 
 // SetSource sets or updates the source map for SortedMultiSelect.
+// A map has no order, so the options of an ordered multi-select are sorted
+// by key again (or by label after SortByLabel).
 func (sms *SortedMultiSelect[T]) SetSource(source map[T]string) {
 	sms.source = source
+	sms.order.keys = nil
 }
 
 // Source returns a copy of the internal source map for read-only access.

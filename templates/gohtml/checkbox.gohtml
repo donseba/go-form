@@ -1,12 +1,14 @@
-<div style="{{themeStyle "checkbox-wrapper"}}" class="{{themeClass "checkbox-wrapper"}}">
+<div{{with themeStyle "checkbox-wrapper"}} style="{{.}}"{{end}}{{with themeClass "checkbox-wrapper"}} class="{{.}}"{{end}}>
   <input type="checkbox"
          id="{{.Field.Id}}"
          name="{{.Field.Name}}"
          {{ if eq .Field.Required true }}required{{end}}
+         {{ if .Field.Disabled }}disabled{{end}}
          {{ if eq .Field.Value true }}checked{{end}}
-         style="{{themeStyle "checkbox"}}" class="{{themeClass "checkbox"}} {{.Field.Class}}"
+        {{with themeStyle "checkbox"}} style="{{.}}"{{end}}{{with form_class (themeClass "checkbox") .Field.Class}} class="{{.}}"{{end}}
          aria-labelledby="{{.Field.Id}}_label"
-         {{if .Field.Description}}aria-describedby="{{.Field.Id}}_description"{{end}}
+         {{with form_described_by .Field}}aria-describedby="{{.}}"{{end}}
+         {{if .Field.Errors}}aria-invalid="true"{{end}}
          {{if .Field.Data}}{{ form_data_attributes .Field.Data }}{{end}}>
-  <label style="{{themeStyle "checkbox-label"}}" class="{{themeClass "checkbox-label"}}" for="{{.Field.Id}}" id="{{.Field.Id}}_label">{{ form_print .Loc .Field.Label }}</label>
+  <label{{with themeStyle "checkbox-label"}} style="{{.}}"{{end}}{{with themeClass "checkbox-label"}} class="{{.}}"{{end}} for="{{.Field.Id}}" id="{{.Field.Id}}_label">{{ form_print .Loc .Field.Label }}</label>
 </div>
