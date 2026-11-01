@@ -92,7 +92,6 @@ func main() {
 		var submitted DemoForm
 		var submittedJSON string
 		if r.Method == http.MethodPost {
-			submitted = data // copy for display
 			err := form.MapForm(r, &data)
 			if err != nil {
 				http.Error(w, "Error mapping form: "+err.Error(), http.StatusBadRequest)

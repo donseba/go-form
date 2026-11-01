@@ -266,7 +266,7 @@ func (m *mapper) skip(name string, field reflect.StructField, err error) {
 // mapStruct maps the values below prefix onto dst, a pointer to a struct.
 func (m *mapper) mapStruct(dst any, prefix string) error {
 	v := reflect.ValueOf(dst)
-	if v.Kind() != reflect.Ptr || v.IsNil() {
+	if v.Kind() != reflect.Pointer || v.IsNil() {
 		return ErrMapFormNotPointer
 	}
 
@@ -941,7 +941,7 @@ func WallTime(wall time.Time, location *time.Location) time.Time {
 
 // isTime reports whether t is time.Time or *time.Time.
 func isTime(t reflect.Type) bool {
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 

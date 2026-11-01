@@ -22,7 +22,7 @@ func collapseStructRadioGroups(fields []types.FormField) []types.FormField {
 			continue
 		}
 		// Explicit opt-in: parent must be declared as radios + radio_group.
-		if !(fields[i].Type == types.FieldTypeGroup && fields[i].InputType == types.InputFieldTypeRadioGroup) {
+		if fields[i].Type != types.FieldTypeGroup || fields[i].InputType != types.InputFieldTypeRadioGroup {
 			continue
 		}
 		if len(fields[i].Fields) == 0 {

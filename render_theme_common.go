@@ -40,7 +40,7 @@ func modelInfo(v any) (Info, bool) {
 	}
 
 	rval := reflect.ValueOf(v)
-	if rval.Kind() == reflect.Ptr || rval.Kind() == reflect.Interface {
+	if rval.Kind() == reflect.Pointer || rval.Kind() == reflect.Interface {
 		if !rval.IsNil() {
 			rval = rval.Elem()
 		}

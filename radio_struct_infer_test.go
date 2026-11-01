@@ -17,9 +17,9 @@ func TestRender_StructRadioGroup_InferredFromSameNameBoolFields(t *testing.T) {
 	}
 
 	m := M{}
-	m.Info.Target = "/"
-	m.Info.Method = "POST"
-	m.Info.SubmitText = "Submit"
+	m.Target = "/"
+	m.Method = "POST"
+	m.SubmitText = "Submit"
 	m.RadioGroup.Option1 = true
 
 	f := NewForm()

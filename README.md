@@ -6,6 +6,9 @@
 
 # go-form
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/donseba/go-form/v2.svg)](https://pkg.go.dev/github.com/donseba/go-form/v2)
+[![codecov](https://codecov.io/gh/donseba/go-form/graph/badge.svg)](https://codecov.io/gh/donseba/go-form)
+
 [Documentation](https://docs.gowebthings.com/go-form) · Part of [go-webthings](https://gowebthings.com/components).
 
 A Go library for rendering HTML forms from Go structs using struct tags and Go templates. Supports multiple template styles (Plain, Bootstrap 5, Tailwind CSS) and a wide range of HTML input types.
