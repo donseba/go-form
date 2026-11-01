@@ -28,8 +28,8 @@ func TestCancelButton_RenderedOnlyWhenConfigured(t *testing.T) {
 	// cancel enabled
 	{
 		m := WithCancel{Text: "x"}
-		m.Info.CancelTarget = "/back"
-		m.Info.CancelText = "Go back"
+		m.CancelTarget = "/back"
+		m.CancelText = "Go back"
 
 		themeSets := []struct {
 			name  string
@@ -83,8 +83,8 @@ func TestCancelRendersForThemes(t *testing.T) {
 			}
 
 			m := F{}
-			m.Info.CancelTarget = "/cancel"
-			m.Info.CancelText = "Cancel"
+			m.CancelTarget = "/cancel"
+			m.CancelText = "Cancel"
 
 			f := NewForm()
 			f.SetTheme(ts.theme)

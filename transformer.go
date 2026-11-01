@@ -138,7 +138,7 @@ func newTransformer(model interface{}, location *time.Location) (*Transformer, e
 	modelType := modelValue.Type()
 
 	// check if we received a pointer
-	for modelValue.Kind() == reflect.Ptr || modelValue.Kind() == reflect.Interface {
+	for modelValue.Kind() == reflect.Pointer || modelValue.Kind() == reflect.Interface {
 		if modelValue.IsNil() {
 			return nil, fmt.Errorf("form model must not be nil")
 		}
@@ -528,12 +528,12 @@ func (t *Transformer) scanModel(rValue reflect.Value, rType reflect.Type, names 
 
 		field.Value = shownValue(fValue, field.Value)
 
-		if fValue.Kind() == reflect.Ptr && fValue.IsNil() {
+		if fValue.Kind() == reflect.Pointer && fValue.IsNil() {
 			fValue = reflect.New(fValue.Type().Elem()).Elem()
 			fType = fValue.Type()
 		}
 
-		if fValue.Kind() == reflect.Ptr || fValue.Kind() == reflect.Interface {
+		if fValue.Kind() == reflect.Pointer || fValue.Kind() == reflect.Interface {
 			fValue = fValue.Elem()
 			fType = fType.Elem()
 		}

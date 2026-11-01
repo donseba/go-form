@@ -26,7 +26,7 @@ func isHexColor(val any, field reflect.StructField) (out form.FieldErrors) {
 		return out
 	}
 	for _, c := range s[1:] {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') && (c < 'A' || c > 'F') {
 			out = append(out, form.FieldValidationError{
 				Field: field.Name,
 				Err:   "must be a valid hex color (e.g. #aabbcc)",

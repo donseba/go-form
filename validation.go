@@ -1020,7 +1020,7 @@ func (f *Form) internalFormValidation(form any, loc Localizer) FieldErrors {
 	v := reflect.ValueOf(form)
 
 	overrides := overridesOf(v)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 
@@ -1176,7 +1176,7 @@ func (f *Form) validateStruct(form any, loc Localizer, outer Overrides, options 
 	v := reflect.ValueOf(form)
 
 	overrides := overridesOf(v).merge(outer)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 
@@ -1332,7 +1332,7 @@ func isEmptyValue(v reflect.Value) bool {
 		return v.Float() == 0
 	case reflect.Slice, reflect.Map, reflect.Array:
 		return v.Len() == 0
-	case reflect.Ptr, reflect.Interface:
+	case reflect.Pointer, reflect.Interface:
 		return v.IsNil()
 	default:
 		// For unhandled kinds, treat as empty only if zero value
@@ -1341,7 +1341,7 @@ func isEmptyValue(v reflect.Value) bool {
 		de := reflect.DeepEqual(v.Interface(), z.Interface())
 
 		// Use fmt.Sprint for a more forgiving comparison (e.g., for UUIDs, time.Time, etc.)
-		if de == false && fmt.Sprint(v.Interface()) == fmt.Sprint(z.Interface()) {
+		if !de && fmt.Sprint(v.Interface()) == fmt.Sprint(z.Interface()) {
 			return true
 		}
 
